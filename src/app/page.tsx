@@ -19,7 +19,7 @@ export default function Home() {
       <div id="content" className="mt-40 w-full max-w-full px-6">
         <div className="flex items-center">
           <hr className="flex-grow border-t border-[#405168]" />
-          <span className="mx-4 text-[#405168]">โพสต์ล่าสุด</span>
+          <span className="mx-4 text-[#405168] font-semibold">โพสต์ล่าสุด</span>
           <hr className="flex-grow border-t border-[#405168]" />
         </div>
       </div>
