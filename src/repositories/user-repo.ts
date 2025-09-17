@@ -9,8 +9,10 @@ export async function createAuthUser(email: string, password: string, firstName:
   // console.log(email, password);
   const { data, error } = await supabase.auth.admin.createUser({
     email,
-    password: password
+    password: password,
+    email_confirm: true
   });
+
   if (error) throw error;
   else {     // rollback ถ้าสมัครไม่สำเร็จ
     try {
@@ -34,3 +36,39 @@ export async function createProfile(id: string, firstName: string, lastName: str
   if (error) throw error;
   return true;
 }
+export async function signInWithPassword(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    return { success: false, message: error.message };
+  }
+
+  const { data: profile_data, error: profile_error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("uuid", data.user.id)
+    .single();
+
+  if (profile_error) {
+    return { success: false, message: profile_error.message };
+  }
+
+
+  return {
+    success: true,
+    uuid: data.user.id,
+    firstName: profile_data.first_name,
+    lastName: profile_data.last_name,
+    userRole: profile_data.user_role,
+    session: data.session,
+    //firstName: profile_data.first, // ถ้า field ชื่อ first มีจริง
+  };
+}
+
+
+// export async function signInWithToken(email: string) {
+  
+// }

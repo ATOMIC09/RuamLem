@@ -10,7 +10,6 @@ import "dotenv/config";
 //   return await Bun.password.verify(password, hash);
 // }
 
-
 export function validatePassword(password: string): boolean {
   /* ความยาวขั้นต่ำ 8
      มีพมิพ์เล็ก หรือ พิมพ์ใหญ่อย่างน้อย 1
