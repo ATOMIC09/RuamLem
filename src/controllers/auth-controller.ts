@@ -1,5 +1,5 @@
 import { validatePassword } from "../services/auth-service";
-import { createAuthUser,signInWithPassword} from "../repositories/user-repo";
+import { createAuthUser, signInWithPassword} from "../repositories/user-repo";
 
 
 export async function signUpController(email:string, password:string, firstname:string, lastname:string) {
