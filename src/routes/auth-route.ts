@@ -1,8 +1,9 @@
 import { Elysia } from "elysia";
-import { signUpController , signInController} from "../controllers/auth-controller"
+import { signUpController, signInController, signOutController } from "../controllers/auth-controller"
 import { decryptRSA } from "../services/auth-service";
+// import { supabase } from "../supabase";
 
-export const Routes = (app: Elysia) => {
+export const authRoute = (app: Elysia) => {
   app.post("/auth/signup", async (c) => {
     try {
       const body = await c.request.json();
@@ -22,8 +23,7 @@ export const Routes = (app: Elysia) => {
     }
   });
 
-
-  app.post("/auth/signin", async (c) => {
+  app.post("/auth/signIn", async (c) => {
 
     const body = await c.request.json();
     const encryptedData = body.data;
@@ -34,6 +34,32 @@ export const Routes = (app: Elysia) => {
 
     return signInController(email, password);
   });
+
+  app.post("/auth/signOut", async (c) => {
+
+    const authHeader = c.request.headers.get("authorization");
+    if (!authHeader) return { status: 401, message: "No token" };
+    const token = authHeader.split(" ")[1];
+
+    return signOutController(token);
+  });
+
+  // app.get("/name", async (c) => {
+  //   const authHeader = c.request.headers.get("authorization");
+  //   if (!authHeader) return { success: false, message: "No token" };
+
+  //   const token = authHeader.split(" ")[1];
+
+  //   const { data: user, error } = await supabase.auth.getClaims(token);
+  //   if (error || !user) {
+  //     return {sccess: false, message: "Invalid session"};
+  //   }
+
+  //   return{
+  //     success: true,
+  //     name: user
+  //   };
+  // });
 
   return app;
 }

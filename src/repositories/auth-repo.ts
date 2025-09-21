@@ -32,28 +32,6 @@ export async function createAuthUser(email: string, password: string, firstName:
   }
 }
 
-
-
-// export async function createAuthUser(email: string, password: string, firstName: string, lastName: string) {
-//   // console.log(email, password);
-//   const { data, error } = await supabase.auth.signUp({
-//     email,
-//     password: password,
-//     // email_confirm: true
-//   });
-
-//   if (error) throw error;
-//   else {     // rollback ถ้าสมัครไม่สำเร็จ
-//     try {
-//       await createProfile(data.user.id, firstName, lastName);
-//       return data.user.id;
-//     } catch (err) {
-//       await supabase.auth.admin.deleteUser(data.user.id);
-//       throw err;
-//     }
-//   }
-// }
-
 // สร้าง profile 
 export async function createProfile(id: string, firstName: string, lastName: string) {
   const { error } = await supabase.from("profiles").insert({
@@ -65,6 +43,7 @@ export async function createProfile(id: string, firstName: string, lastName: str
   if (error) throw error;
   return true;
 }
+
 export async function signInWithPassword(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -84,8 +63,6 @@ export async function signInWithPassword(email: string, password: string) {
   if (profile_error) {
     return { success: false, message: profile_error.message };
   }
-
-
   return {
     success: true,
     uuid: data.user.id,
@@ -95,3 +72,18 @@ export async function signInWithPassword(email: string, password: string) {
     session: data.session,
   };
 }
+
+export async function signOutWithSession(token:string) {
+  const { error } = await supabase.auth.admin.signOut(token);
+  if(!error){
+    return {success:true};
+  }
+  else{
+    return {
+      success:false,
+      error:error
+    };
+  }
+}
+
+

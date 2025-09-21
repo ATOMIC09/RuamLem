@@ -1,11 +1,11 @@
 import { Elysia } from "elysia";
-import { Routes } from "./routes/auth-route";
-
-// const app = new Elysia();
+import { authRoute } from "./routes/auth-route";
+import { fileRoute } from "./routes/file-route";
 
 const app = new Elysia();
 
-Routes(app);
+authRoute(app);
+fileRoute(app);
 
 app.listen(3030, () =>{
   console.log("server running on http://localhost:3030");

@@ -1,5 +1,5 @@
 import { validatePassword } from "../services/auth-service";
-import { createAuthUser, signInWithPassword} from "../repositories/user-repo";
+import { createAuthUser, signInWithPassword, signOutWithSession} from "../repositories/auth-repo";
 
 
 export async function signUpController(email:string, password:string, firstname:string, lastname:string) {
@@ -26,7 +26,10 @@ export async function signUpController(email:string, password:string, firstname:
   }
 }
 
-
 export async function signInController(email:string, password:string) {
-  return signInWithPassword(email, password)
+  return signInWithPassword(email, password);
+}
+
+export async function signOutController(token:string) {
+  return signOutWithSession(token);
 }
