@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IoMdEye, IoMdEyeOff, IoMdMail } from "react-icons/io";
+import { IoMdEye, IoMdEyeOff, IoMdPerson } from "react-icons/io";
 import { useAuth } from "../hooks/use-auth";
 
 export default function SignInPage() {
-    const [email, setEmail] = useState("");
+    const [emailOrUsername, setEmailOrUsername] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -21,22 +21,29 @@ export default function SignInPage() {
         setIsLoading(true);
         setError("");
 
+        // Helper function to determine if input is email
+        const isEmail = (input: string) => {
+            return input.includes('@') && input.includes('.');
+        };
+
         // Mock authentication - replace with actual API call
         try {
-            if (email && password) {
+            if (emailOrUsername && password) {
                 // Simulate API call delay
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // Mock successful login
+                // Mock successful login - in real app, this would be handled by your backend
+                const userEmail = isEmail(emailOrUsername) ? emailOrUsername : `${emailOrUsername}@example.com`;
+                
                 signIn({
                     id: 1,
-                    name: "John Doe",
-                    email: email
+                    name: "John Doe", // In real app, this would come from your backend response
+                    email: userEmail
                 });
                 
                 router.push("/"); // Redirect to home page
             } else {
-                setError("กรุณากรอกอีเมลและรหัสผ่าน");
+                setError("กรุณากรอกชื่อผู้ใช้หรืออีเมล และรหัสผ่าน");
             }
         } catch {
             setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
@@ -73,22 +80,22 @@ export default function SignInPage() {
                             </div>
                         )}
 
-                        {/* Email Input */}
+                        {/* Email or Username Input */}
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-[#1c2a48] mb-2">
-                                อีเมล
+                            <label htmlFor="emailOrUsername" className="block text-sm font-medium text-[#1c2a48] mb-2">
+                                ชื่อผู้ใช้ หรือ อีเมล
                             </label>
                             <div className="relative">
                                 <input
-                                    type="email"
-                                    id="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    type="text"
+                                    id="emailOrUsername"
+                                    value={emailOrUsername}
+                                    onChange={(e) => setEmailOrUsername(e.target.value)}
                                     className="w-full pl-12 pr-4 py-3 border border-[#405168] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48]"
-                                    placeholder="your@email.com"
+                                    placeholder="ชื่อผู้ใช้ หรือ your@email.com"
                                     required
                                 />
-                                <IoMdMail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#7a8b99]" size={20} />
+                                <IoMdPerson className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#7a8b99]" size={20} />
                             </div>
                         </div>
 
