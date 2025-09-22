@@ -1,3 +1,5 @@
+import Postbox from "./components/postbox";
+
 export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center pt-40">
@@ -22,6 +24,10 @@ export default function Home() {
           <span className="mx-4 text-[#405168] font-semibold">โพสต์ล่าสุด</span>
           <hr className="flex-grow border-t border-[#405168]" />
         </div>
+      </div>
+      {/* Postbox */}
+      <div className="mt-10 w-full max-w-full px-6">
+        <Postbox />
       </div>
     </div>
   );
