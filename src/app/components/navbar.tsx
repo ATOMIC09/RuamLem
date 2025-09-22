@@ -1,4 +1,5 @@
 import { GiOpenBook } from "react-icons/gi";
+import Link from "next/link";
 
 export default function Navbar() {
     return (
@@ -10,10 +11,10 @@ export default function Navbar() {
             </div>
             {/* Menu */}
             <div className="ml-auto space-x-6 hidden md:flex items-center">
-                <a href="#" className="hover:text-[#5e7593] transition-colors">HOME</a>
-                <a href="#" className="hover:text-[#5e7593] transition-colors">COMMUNITY</a>
+                <Link href="/" className="hover:text-[#5e7593] transition-colors">HOME</Link>
+                <Link href="/community" className="hover:text-[#5e7593] transition-colors">COMMUNITY</Link>
                 {/* Sign in */}
-                <a href="#" className="px-4 py-1 border border-[#405168] rounded-4xl hover:bg-[#405168] hover:text-white transition-colors">SIGN IN</a>
+                <Link href="#" className="px-4 py-1 border border-[#405168] rounded-4xl hover:bg-[#405168] hover:text-white transition-colors">SIGN IN</Link>
             </div>
         </nav>
     );
