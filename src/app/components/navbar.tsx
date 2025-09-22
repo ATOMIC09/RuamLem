@@ -5,11 +5,13 @@ import { IoMdMenu, IoMdClose } from "react-icons/io";
 import Link from "next/link";
 import { useAuth } from "../hooks/use-auth";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
     const { isSignedIn, user, signOut, signIn } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showSignInModal, setShowSignInModal] = useState(false);
+    const pathname = usePathname();
 
     // Close mobile menu when route changes
     useEffect(() => {
@@ -39,11 +41,15 @@ export default function Navbar() {
 
                 {/* Desktop Menu */}
                 <div className="hidden md:flex items-center space-x-6">
-                    <Link href="/" className="hover:text-[#5e7593] transition-colors font-medium">
-                        HOME
+                    <Link href="/" className={`hover:text-[#5e7593] transition-colors text-base ${
+                        pathname === '/' ? 'font-bold text-[#1c2a48]' : 'font-medium'
+                    }`}>
+                        หน้าหลัก
                     </Link>
-                    <Link href="/community" className="hover:text-[#5e7593] transition-colors font-medium">
-                        COMMUNITY
+                    <Link href="/community" className={`hover:text-[#5e7593] transition-colors text-base ${
+                        pathname === '/community' ? 'font-bold text-[#1c2a48]' : 'font-medium'
+                    }`}>
+                        ชุมชน
                     </Link>
                     
                     {/* Authentication Section */}
@@ -61,18 +67,18 @@ export default function Navbar() {
                             </span>
                             <button 
                                 onClick={handleSignOut} 
-                                className="px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-sm font-medium cursor-pointer"
+                                className="px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-base font-medium cursor-pointer"
                             >
-                                SIGN OUT
+                                ออกจากระบบ
                             </button>
                         </div>
                     ) : (
                         // Not signed in state
                         <button 
                             onClick={() => setShowSignInModal(true)}
-                            className="px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-sm font-medium cursor-pointer"
+                            className="px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-base font-medium cursor-pointer"
                         >
-                            SIGN IN
+                            เข้าสู่ระบบ
                         </button>
                     )}
                 </div>
@@ -94,17 +100,21 @@ export default function Navbar() {
                         <div className="px-6 py-4 space-y-4">
                             <Link 
                                 href="/" 
-                                className="block py-2 text-[#405168] hover:text-[#5e7593] transition-colors font-medium"
+                                className={`block py-2 text-[#405168] hover:text-[#5e7593] transition-colors text-base ${
+                                    pathname === '/' ? 'font-bold' : 'font-medium'
+                                }`}
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
-                                HOME
+                                หน้าหลัก
                             </Link>
                             <Link 
                                 href="/community" 
-                                className="block py-2 text-[#405168] hover:text-[#5e7593] transition-colors font-medium"
+                                className={`block py-2 text-[#405168] hover:text-[#5e7593] transition-colors text-base ${
+                                    pathname === '/community' ? 'font-bold' : 'font-medium'
+                                }`}
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
-                                COMMUNITY
+                                ชุมชน
                             </Link>
                             
                             <div className="pt-4 border-t border-[#dee5ed]">
@@ -122,9 +132,9 @@ export default function Navbar() {
                                         </div>
                                         <button 
                                             onClick={handleSignOut}
-                                            className="w-full px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-sm font-medium"
+                                            className="w-full px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-base font-medium"
                                         >
-                                            SIGN OUT
+                                            ออกจากระบบ
                                         </button>
                                     </div>
                                 ) : (
@@ -133,9 +143,9 @@ export default function Navbar() {
                                             setShowSignInModal(true);
                                             setIsMobileMenuOpen(false);
                                         }}
-                                        className="w-full px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-sm font-medium"
+                                        className="w-full px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-base font-medium"
                                     >
-                                        SIGN IN
+                                        เข้าสู่ระบบ
                                     </button>
                                 )}
                             </div>
