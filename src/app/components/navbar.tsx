@@ -57,7 +57,7 @@ export default function Navbar() {
                         // Loading state
                         <div className="flex items-center space-x-2">
                             <div className="w-4 h-4 border-2 border-[#405168] border-t-transparent rounded-full animate-spin"></div>
-                            <span className="text-sm text-[#7a8b99]">Loading...</span>
+                            <span className="text-sm text-[#7a8b99]">กำลังโหลด...</span>
                         </div>
                     ) : isSignedIn ? (
                         // Signed in state
@@ -67,7 +67,7 @@ export default function Navbar() {
                             </span>
                             <button 
                                 onClick={handleSignOut} 
-                                className="px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-base font-medium cursor-pointer"
+                                className="px-4 py-2 border border-[#e0e7f1] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all text-base font-medium cursor-pointer shadow-sm bg-white text-[#405168]"
                             >
                                 ออกจากระบบ
                             </button>
@@ -76,7 +76,7 @@ export default function Navbar() {
                         // Not signed in state
                         <button 
                             onClick={() => setShowSignInModal(true)}
-                            className="px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-base font-medium cursor-pointer"
+                            className="px-4 py-2 border border-[#e0e7f1] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all text-base font-medium cursor-pointer shadow-sm bg-white text-[#405168]"
                         >
                             เข้าสู่ระบบ
                         </button>
@@ -121,7 +121,7 @@ export default function Navbar() {
                                 {isSignedIn === null ? (
                                     <div className="flex items-center space-x-2 py-2">
                                         <div className="w-4 h-4 border-2 border-[#405168] border-t-transparent rounded-full animate-spin"></div>
-                                        <span className="text-sm text-[#7a8b99]">Loading...</span>
+                                        <span className="text-sm text-[#7a8b99]">กำลังโหลด...</span>
                                     </div>
                                 ) : isSignedIn ? (
                                     <div className="space-y-3">
@@ -132,7 +132,7 @@ export default function Navbar() {
                                         </div>
                                         <button 
                                             onClick={handleSignOut}
-                                            className="w-full px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-base font-medium"
+                                            className="w-full px-4 py-2 border border-[#e0e7f1] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all text-base font-medium shadow-sm bg-white text-[#405168]"
                                         >
                                             ออกจากระบบ
                                         </button>
@@ -143,7 +143,7 @@ export default function Navbar() {
                                             setShowSignInModal(true);
                                             setIsMobileMenuOpen(false);
                                         }}
-                                        className="w-full px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-base font-medium"
+                                        className="w-full px-4 py-2 border border-[#e0e7f1] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all text-base font-medium shadow-sm bg-white text-[#405168]"
                                     >
                                         เข้าสู่ระบบ
                                     </button>
@@ -158,7 +158,7 @@ export default function Navbar() {
             {showSignInModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowSignInModal(false)}></div>
-                    <div className="relative bg-white rounded-3xl border border-[#405168] shadow-xl max-w-md w-full p-8">
+                    <div className="relative bg-white rounded-3xl border border-[#e0e7f1] shadow-xl max-w-md w-full p-8">
                         <button 
                             onClick={() => setShowSignInModal(false)}
                             className="absolute top-4 right-4 p-2 text-[#7a8b99] hover:text-[#405168] transition-colors cursor-pointer"
@@ -182,7 +182,7 @@ export default function Navbar() {
                                 
                                 <Link 
                                     href="/signup"
-                                    className="block w-full px-6 py-3 border border-[#405168] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] transition-colors font-medium"
+                                    className="block w-full px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all font-medium shadow-sm bg-white"
                                     onClick={() => setShowSignInModal(false)}
                                 >
                                     สร้างบัญชีใหม่

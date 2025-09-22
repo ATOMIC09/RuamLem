@@ -34,7 +34,7 @@ export default function PreviewPost() {
             </div>
             {/* PDF Attachments download button*/}
             <div className="pt-2 border-t border-[#f0f4f8]">
-                <button className="flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors w-full justify-center border border-[#e0e7f1] group">
+                <button className="flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors w-full justify-center border border-[#e0e7f1] group cursor-pointer">
                     <GoPaperclip className="mr-2 group-hover:scale-110 transition-transform" />
                     <span className="text-sm font-medium truncate">Midterm Note.pdf</span>
                 </button>

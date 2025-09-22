@@ -114,7 +114,7 @@ export default function Home() {
             </div>
             <Link
               href="/community"
-              className="flex items-center gap-2 px-6 py-3 bg-white border border-[#405168] text-[#405168] rounded-3xl hover:bg-[#405168] hover:text-white transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-white border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all shadow-sm font-medium cursor-pointer"
             >
               <IoMdTrendingUp />
               ดูทั้งหมด

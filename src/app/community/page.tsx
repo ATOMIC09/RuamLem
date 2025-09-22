@@ -19,19 +19,19 @@ export default function CommunityPage() {
         <div className="flex justify-between items-center mt-6 gap-4">
           <div className="flex items-center gap-3">
             <span className="text-sm text-[#5e7593]">จัดเรียงโดย:</span>
-            <select className="px-3 py-2 bg-white border border-[#405168] rounded-2xl text-[#405168] focus:outline-none focus:ring-2 focus:ring-[#5e7593] text-sm">
+            <select className="px-3 py-2 bg-white border border-[#e0e7f1] rounded-3xl text-[#405168] focus:outline-none focus:ring-2 focus:ring-[#5e7593] text-sm cursor-pointer shadow-sm hover:shadow-md transition-shadow">
               <option>ล่าสุด</option>
               <option>ยอดนิยม</option>
               <option>เก่าสุด</option>
               <option>ตามชื่อ</option>
             </select>
-            <button className="flex items-center gap-1 px-3 py-2 text-sm text-[#5e7593] hover:text-[#405168] transition-colors">
+            <button className="flex items-center gap-1 px-4 py-2 text-sm text-[#5e7593] hover:text-[#405168] transition-colors bg-white border border-[#e0e7f1] rounded-3xl hover:shadow-md shadow-sm cursor-pointer">
               <HiSortDescending />
               กลับด้าน
             </button>
           </div>
           
-          <PostButton className="px-6 py-3 shadow-sm">
+          <PostButton className="px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium shadow-sm hover:shadow-md cursor-pointer">
             เพิ่มโพสต์
           </PostButton>
         </div>
@@ -54,7 +54,7 @@ export default function CommunityPage() {
         
         {/* Load More Button */}
         <div className="text-center mt-8">
-          <button className="px-8 py-3 bg-white border border-[#405168] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] transition-colors">
+          <button className="px-8 py-3 bg-white border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all shadow-sm font-medium cursor-pointer">
             โหลดเพิ่มเติม
           </button>
         </div>
