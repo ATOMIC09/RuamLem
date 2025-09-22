@@ -71,7 +71,7 @@ export default function SignInPage() {
                 </div>
 
                 {/* Sign In Form */}
-                <div className="bg-white rounded-3xl border border-[#405168] shadow-sm p-8">
+                <div className="bg-white rounded-3xl border border-[#e0e7f1] shadow-sm p-8">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Error Message */}
                         {error && (
@@ -91,7 +91,7 @@ export default function SignInPage() {
                                     id="emailOrUsername"
                                     value={emailOrUsername}
                                     onChange={(e) => setEmailOrUsername(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3 border border-[#405168] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48]"
+                                    className="w-full pl-12 pr-4 py-3 border border-[#e0e7f1] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48] shadow-sm hover:shadow-md transition-shadow"
                                     placeholder="ชื่อผู้ใช้ หรือ your@email.com"
                                     required
                                 />
@@ -110,7 +110,7 @@ export default function SignInPage() {
                                     id="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-4 pr-12 py-3 border border-[#405168] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48]"
+                                    className="w-full pl-4 pr-12 py-3 border border-[#e0e7f1] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48] shadow-sm hover:shadow-md transition-shadow"
                                     placeholder="••••••••"
                                     required
                                 />
@@ -135,7 +135,7 @@ export default function SignInPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] disabled:bg-[#7a8b99] disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
+                            className="w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] disabled:bg-[#7a8b99] disabled:cursor-not-allowed transition-colors font-medium cursor-pointer shadow-sm hover:shadow-md"
                         >
                             {isLoading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
                         </button>
@@ -146,7 +146,7 @@ export default function SignInPage() {
                             <button
                                 type="button"
                                 onClick={handleDemoSignIn}
-                                className="w-full px-4 py-2 text-sm bg-[#e0e7f1] text-[#5e7593] rounded-full hover:bg-[#d1d9e4] transition-colors cursor-pointer"
+                                className="w-full px-4 py-2 text-sm bg-[#f0f4f8] text-[#5e7593] rounded-3xl hover:bg-[#e0e7f1] hover:shadow-md transition-all cursor-pointer border border-[#e0e7f1] shadow-sm"
                             >
                                 🧪 เข้าสู่ระบบทดสอบ
                             </button>

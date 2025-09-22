@@ -86,7 +86,7 @@ export default function SignUpPage() {
                 </div>
 
                 {/* Sign Up Form */}
-                <div className="bg-white rounded-3xl border border-[#405168] shadow-sm p-8">
+                <div className="bg-white rounded-3xl border border-[#e0e7f1] shadow-sm p-8">
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Error Message */}
                         {error && (
@@ -106,7 +106,7 @@ export default function SignUpPage() {
                                     id="name"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3 border border-[#405168] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48]"
+                                    className="w-full pl-12 pr-4 py-3 border border-[#e0e7f1] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48] shadow-sm hover:shadow-md transition-shadow"
                                     placeholder="ชื่อบัญชี"
                                     required
                                 />
@@ -125,7 +125,7 @@ export default function SignUpPage() {
                                     id="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3 border border-[#405168] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48]"
+                                    className="w-full pl-12 pr-4 py-3 border border-[#e0e7f1] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48] shadow-sm hover:shadow-md transition-shadow"
                                     placeholder="your@email.com"
                                     required
                                 />
@@ -144,7 +144,7 @@ export default function SignUpPage() {
                                     id="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-4 pr-12 py-3 border border-[#405168] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48]"
+                                    className="w-full pl-4 pr-12 py-3 border border-[#e0e7f1] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48] shadow-sm hover:shadow-md transition-shadow"
                                     placeholder="อย่างน้อย 6 ตัวอักษร"
                                     required
                                     minLength={6}
@@ -170,7 +170,7 @@ export default function SignUpPage() {
                                     id="confirmPassword"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="w-full pl-4 pr-12 py-3 border border-[#405168] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48]"
+                                    className="w-full pl-4 pr-12 py-3 border border-[#e0e7f1] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48] shadow-sm hover:shadow-md transition-shadow"
                                     placeholder="กรอกรหัสผ่านอีกครั้ง"
                                     required
                                 />
@@ -191,12 +191,12 @@ export default function SignUpPage() {
                                 id="terms"
                                 checked={acceptTerms}
                                 onChange={(e) => setAcceptTerms(e.target.checked)}
-                                className="mt-1 w-4 h-4 text-[#405168] bg-gray-100 border-[#405168] rounded focus:ring-[#5e7593] focus:ring-2"
+                                className="mt-1 w-4 h-4 text-[#405168] bg-gray-100 border-[#e0e7f1] rounded focus:ring-[#5e7593] focus:ring-2 cursor-pointer"
                                 required
                             />
                             <label htmlFor="terms" className="text-sm text-[#7a8b99]">
                                 ฉันยอมรับ{" "}
-                                <Link href="/terms" className="text-[#405168] hover:text-[#5e7593] underline">
+                                <Link href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#405168] hover:text-[#5e7593] underline">
                                     เงื่อนไขการใช้งาน
                                 </Link>{" "}
                             </label>
@@ -206,7 +206,7 @@ export default function SignUpPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] disabled:bg-[#7a8b99] disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
+                            className="w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] disabled:bg-[#7a8b99] disabled:cursor-not-allowed transition-colors font-medium cursor-pointer shadow-sm hover:shadow-md"
                         >
                             {isLoading ? "กำลังสร้างบัญชี..." : "สร้างบัญชี"}
                         </button>

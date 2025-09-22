@@ -165,14 +165,14 @@ export default function TermsPage() {
                 </div>
 
                 {/* Back to Sign Up */}
-                <div className="text-center mt-8">
+                {/* <div className="text-center mt-8">
                     <Link 
                         href="/signup" 
                         className="text-[#405168] hover:text-[#5e7593] font-medium transition-colors"
                     >
                         ← กลับไปหน้าสร้างบัญชี
                     </Link>
-                </div>
+                </div> */}
             </div>
         </div>
     );
