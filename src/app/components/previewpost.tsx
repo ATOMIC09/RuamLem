@@ -4,15 +4,15 @@ import { GoPaperclip } from "react-icons/go";
 
 export default function PreviewPost() {
     return (
-        <div className="w-full p-4 text-[#5e7593] border rounded-3xl border-[#405168] bg-white">
+        <div className="w-full bg-white p-6 rounded-3xl shadow-sm border border-[#e0e7f1] text-[#5e7593] hover:shadow-md transition-shadow cursor-pointer">
             {/* Author */}
-            <div className="flex items-center mb-2">
+            <div className="flex items-center mb-4">
                 <Image
                     src="/anonym.jpg"
                     alt="Author"
                     width={40}
                     height={40}
-                    className="w-10 h-10 rounded-full mr-2"
+                    className="w-10 h-10 rounded-full mr-3"
                 />
                 {/* Username and Postdate */}
                 <div className="flex-grow">
@@ -21,7 +21,7 @@ export default function PreviewPost() {
                 </div>
                 {/* Post tags */}
                 <div className="flex-shrink-0">
-                    <span className="px-2 py-1 text-xs bg-[#e0e7f1] text-[#5e7593] rounded-full">
+                    <span className="px-3 py-1 text-xs bg-[#f0f4f8] text-[#5e7593] rounded-full border border-[#e0e7f1]">
                         <IoMdPricetag className="inline-block mr-1" />
                         Software Engineering
                     </span>
@@ -29,14 +29,14 @@ export default function PreviewPost() {
             </div>
             {/* Post content */}
             {/* Title */}
-            <div className="mb-2">
-                <h2 className="text-2xl font-semibold text-[#1c2a48]">สรุปมิดเทอมวิชา SoftEng</h2>
+            <div className="mb-4">
+                <h2 className="text-xl font-bold text-[#1c2a48] line-clamp-2">สรุปมิดเทอมวิชา SoftEng</h2>
             </div>
             {/* PDF Attachments download button*/}
-            <div className="">
-                <button className="flex items-center px-4 py-2 bg-[#e0e7f1] text-[#5e7593] rounded-full hover:bg-[#d1d9e4] cursor-pointer">
-                    <GoPaperclip className="mr-2" />
-                    Midterm Note.pdf
+            <div className="pt-2 border-t border-[#f0f4f8]">
+                <button className="flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors w-full justify-center border border-[#e0e7f1] group">
+                    <GoPaperclip className="mr-2 group-hover:scale-110 transition-transform" />
+                    <span className="text-sm font-medium truncate">Midterm Note.pdf</span>
                 </button>
             </div>
 
