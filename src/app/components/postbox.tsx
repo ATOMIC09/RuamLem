@@ -34,7 +34,7 @@ export default function Postbox() {
                 ฉันไม่แน่ใจว่าขาดอะไรอีกบ้าง แต่คิดว่าน่าจะครบแล้วนะ
             </div>
             {/* PDF Attachments download button*/}
-            <div className="mb-4">
+            <div className="">
                 <button className="flex items-center px-4 py-2 bg-[#e0e7f1] text-[#5e7593] rounded-full hover:bg-[#d1d9e4] cursor-pointer">
                     <GoPaperclip className="mr-2" />
                     Midterm Note.pdf
