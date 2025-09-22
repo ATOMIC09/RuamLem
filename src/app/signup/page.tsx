@@ -185,7 +185,7 @@ export default function SignUpPage() {
                         </div>
 
                         {/* Terms and Conditions */}
-                        <div className="flex items-start space-x-3">
+                        <div className="flex items-center space-x-3">
                             <input
                                 type="checkbox"
                                 id="terms"
@@ -199,10 +199,6 @@ export default function SignUpPage() {
                                 <Link href="/terms" className="text-[#405168] hover:text-[#5e7593] underline">
                                     เงื่อนไขการใช้งาน
                                 </Link>{" "}
-                                และ{" "}
-                                <Link href="/privacy" className="text-[#405168] hover:text-[#5e7593] underline">
-                                    นโยบายความเป็นส่วนตัว
-                                </Link>
                             </label>
                         </div>
 
