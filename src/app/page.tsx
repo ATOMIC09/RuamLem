@@ -123,9 +123,33 @@ export default function Home() {
 
           {/* Posts Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <Postbox />
-            <Postbox />
-            <Postbox />
+            <Postbox post={{
+              id: "1",
+              title: "สรุปมิดเทอมวิชา Software Engineering",
+              content: "ฉันไม่แน่ใจว่าขาดอะไรอีกบ้าง แต่คิดว่าน่าจะครบแล้วนะ",
+              author: { name: "John Doe", avatar: "/anonym.jpg" },
+              createdAt: "วันศุกร์ เวลา 13:40 น.",
+              category: "Software Engineering",
+              attachments: [{ name: "Midterm Note.pdf", size: "2.5 MB", type: "pdf" }]
+            }} />
+            <Postbox post={{
+              id: "2",
+              title: "เทคนิคการทำโจทย์คณิตศาสตร์",
+              content: "สรุปเทคนิคการแก้โจทย์คณิตศาสตร์สำหรับการสอบ รวมสูตรสำคัญและวิธีการคิด",
+              author: { name: "Jane Smith", avatar: "/anonym.jpg" },
+              createdAt: "วันพฤหัสบดี เวลา 15:20 น.",
+              category: "คณิตศาสตร์",
+              attachments: [{ name: "Math Techniques.pdf", size: "1.8 MB", type: "pdf" }]
+            }} />
+            <Postbox post={{
+              id: "3",
+              title: "สรุปไวยากรณ์ภาษาอังกฤษ",
+              content: "รวมกฎไวยากรณ์สำคัญ ๆ ที่ต้องรู้สำหรับการสอบ พร้อมตัวอย่างประโยค",
+              author: { name: "Mike Johnson", avatar: "/anonym.jpg" },
+              createdAt: "วันพุธ เวลา 09:15 น.",
+              category: "ภาษาอังกฤษ",
+              attachments: [{ name: "English Grammar.pdf", size: "3.2 MB", type: "pdf" }]
+            }} />
           </div>
         </div>
       </div>

@@ -46,10 +46,38 @@ export default function CommunityPage() {
         
         {/* Responsive Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          <PreviewPost />
-          <PreviewPost />
-          <PreviewPost />
-          <PreviewPost />
+          <PreviewPost post={{
+            id: "1",
+            title: "สรุปมิดเทอมวิชา Software Engineering",
+            author: { name: "John Doe", avatar: "/anonym.jpg" },
+            createdAt: "วันศุกร์ เวลา 13:40 น.",
+            category: "Software Engineering",
+            attachments: [{ name: "Midterm Note.pdf", size: "2.5 MB", type: "pdf" }]
+          }} />
+          <PreviewPost post={{
+            id: "2",
+            title: "เทคนิคการทำโจทย์คณิตศาสตร์",
+            author: { name: "Jane Smith", avatar: "/anonym.jpg" },
+            createdAt: "วันพฤหัสบดี เวลา 15:20 น.",
+            category: "คณิตศาสตร์",
+            attachments: [{ name: "Math Techniques.pdf", size: "1.8 MB", type: "pdf" }]
+          }} />
+          <PreviewPost post={{
+            id: "3",
+            title: "สรุปไวยากรณ์ภาษาอังกฤษ",
+            author: { name: "Mike Johnson", avatar: "/anonym.jpg" },
+            createdAt: "วันพุธ เวลา 09:15 น.",
+            category: "ภาษาอังกฤษ",
+            attachments: [{ name: "English Grammar.pdf", size: "3.2 MB", type: "pdf" }]
+          }} />
+          <PreviewPost post={{
+            id: "4",
+            title: "สรุปเคมีอนินทรีย์",
+            author: { name: "Sarah Wilson", avatar: "/anonym.jpg" },
+            createdAt: "วันจันทร์ เวลา 11:30 น.",
+            category: "เคมี",
+            attachments: [{ name: "Inorganic Chemistry.pdf", size: "4.1 MB", type: "pdf" }]
+          }} />
         </div>
         
         {/* Load More Button */}
