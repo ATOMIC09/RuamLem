@@ -158,14 +158,17 @@ export default function Home() {
       <div className="w-full py-16 px-6 bg-[#405168] text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">พร้อมเริ่มต้นแชร์ความรู้แล้วหรือยัง?</h2>
-          <p className="text-xl mb-8 opacity-90">เข้าร่วมชุมชนนักเรียนที่ใหญ่ที่สุดในประเทศไทย</p>
+          <p className="text-xl mb-8 opacity-90">เข้าร่วมชุมชนเพื่อสังคมที่ดีกว่า</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <PostButton className="bg-white text-[#405168] hover:bg-gray-100 hover:text-[#405168]">
               เริ่มโพสต์เลย
             </PostButton>
-            <button className="px-8 py-4 border-2 border-white text-white rounded-3xl hover:bg-white hover:text-[#405168] transition-colors text-lg font-medium cursor-pointer">
+            <Link 
+              href="/signup"
+              className="px-8 py-4 border-2 border-white text-white rounded-3xl hover:bg-white hover:text-[#405168] transition-colors text-lg font-medium cursor-pointer"
+            >
               สมัครสมาชิก
-            </button>
+            </Link>
           </div>
         </div>
       </div>
