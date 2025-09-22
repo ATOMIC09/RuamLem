@@ -1,8 +1,7 @@
-import Link from "next/link";
-import { IoMdAdd } from "react-icons/io";
 import { HiSortDescending } from "react-icons/hi";
 import SearchBox from "../components/searchbox";
 import PreviewPost from "../components/previewpost";
+import PostButton from "../components/post-button";
 
 export default function CommunityPage() {
   return (
@@ -32,13 +31,9 @@ export default function CommunityPage() {
             </button>
           </div>
           
-          <Link 
-            href="/post" 
-            className="flex items-center gap-2 px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors shadow-sm"
-          >
-            <IoMdAdd size={20} />
+          <PostButton className="px-6 py-3 shadow-sm">
             เพิ่มโพสต์
-          </Link>
+          </PostButton>
         </div>
       </div>
 

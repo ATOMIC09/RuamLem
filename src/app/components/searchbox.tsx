@@ -1,5 +1,4 @@
 import { SlMagnifier } from "react-icons/sl";
-import { LuListFilter } from "react-icons/lu";
 
 export default function SearchBox() {
     return (

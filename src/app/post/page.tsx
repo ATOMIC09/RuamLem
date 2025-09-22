@@ -4,8 +4,9 @@ import Image from "next/image";
 import { useState } from "react";
 import { IoMdPricetag, IoMdAdd, IoMdClose } from "react-icons/io";
 import { GoPaperclip } from "react-icons/go";
+import AuthGuard from "../components/auth-guard";
 
-export default function AddPostPage() {
+function AddPostForm() {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [tags, setTags] = useState<string[]>([]);
@@ -177,5 +178,13 @@ export default function AddPostPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function AddPostPage() {
+    return (
+        <AuthGuard>
+            <AddPostForm />
+        </AuthGuard>
     );
 }

@@ -1,21 +1,198 @@
+"use client";
+
 import { GiOpenBook } from "react-icons/gi";
+import { IoMdMenu, IoMdClose } from "react-icons/io";
 import Link from "next/link";
+import { useAuth } from "../hooks/use-auth";
+import { useState, useEffect } from "react";
 
 export default function Navbar() {
+    const { isSignedIn, user, signOut, signIn } = useAuth();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [showSignInModal, setShowSignInModal] = useState(false);
+
+    // Close mobile menu when route changes
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, []);
+
+    // Handle demo sign in
+    const handleDemoSignIn = () => {
+        signIn({ id: 1, name: 'John Doe', email: 'john@example.com' });
+        setShowSignInModal(false);
+    };
+
+    // Handle sign out
+    const handleSignOut = () => {
+        signOut();
+        setIsMobileMenuOpen(false);
+    };
+
     return (
-        <nav className="w-full h-16 px-6 bg-white text-[#405168] flex items-center justify-center border-b-2 border-[#dee5ed]">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-                <GiOpenBook className="text-2xl sm:text-3xl" />
-                <span className="font-semibold text-lg sm:text-2xl">RuamLem</span>
-            </div>
-            {/* Menu */}
-            <div className="ml-auto space-x-6 hidden md:flex items-center">
-                <Link href="/" className="hover:text-[#5e7593] transition-colors">HOME</Link>
-                <Link href="/community" className="hover:text-[#5e7593] transition-colors">COMMUNITY</Link>
-                {/* Sign in */}
-                <Link href="#" className="px-4 py-1 border border-[#405168] rounded-4xl hover:bg-[#405168] hover:text-white transition-colors">SIGN IN</Link>
-            </div>
-        </nav>
+        <>
+            <nav className="w-full h-16 px-6 bg-white text-[#405168] flex items-center justify-between border-b-2 border-[#dee5ed] sticky top-0 z-50">
+                {/* Logo */}
+                <Link href="/" className="flex items-center space-x-2 hover:text-[#5e7593] transition-colors">
+                    <GiOpenBook className="text-2xl sm:text-3xl" />
+                    <span className="font-semibold text-lg sm:text-2xl">RuamLem</span>
+                </Link>
+
+                {/* Desktop Menu */}
+                <div className="hidden md:flex items-center space-x-6">
+                    <Link href="/" className="hover:text-[#5e7593] transition-colors font-medium">
+                        HOME
+                    </Link>
+                    <Link href="/community" className="hover:text-[#5e7593] transition-colors font-medium">
+                        COMMUNITY
+                    </Link>
+                    
+                    {/* Authentication Section */}
+                    {isSignedIn === null ? (
+                        // Loading state
+                        <div className="flex items-center space-x-2">
+                            <div className="w-4 h-4 border-2 border-[#405168] border-t-transparent rounded-full animate-spin"></div>
+                            <span className="text-sm text-[#7a8b99]">Loading...</span>
+                        </div>
+                    ) : isSignedIn ? (
+                        // Signed in state
+                        <div className="flex items-center space-x-4">
+                            <span className="text-sm text-[#7a8b99]">
+                                สวัสดี, <span className="font-medium text-[#405168]">{user?.name}</span>
+                            </span>
+                            <button 
+                                onClick={handleSignOut} 
+                                className="px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-sm font-medium cursor-pointer"
+                            >
+                                SIGN OUT
+                            </button>
+                        </div>
+                    ) : (
+                        // Not signed in state
+                        <button 
+                            onClick={() => setShowSignInModal(true)}
+                            className="px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-sm font-medium cursor-pointer"
+                        >
+                            SIGN IN
+                        </button>
+                    )}
+                </div>
+
+                {/* Mobile Menu Button */}
+                <button
+                    className="md:hidden p-2"
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                >
+                    {isMobileMenuOpen ? <IoMdClose size={24} /> : <IoMdMenu size={24} />}
+                </button>
+            </nav>
+
+            {/* Mobile Menu Overlay */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-40 md:hidden">
+                    <div className="fixed inset-0 bg-black opacity-50" onClick={() => setIsMobileMenuOpen(false)}></div>
+                    <div className="fixed top-16 left-0 right-0 bg-white border-b-2 border-[#dee5ed] shadow-lg">
+                        <div className="px-6 py-4 space-y-4">
+                            <Link 
+                                href="/" 
+                                className="block py-2 text-[#405168] hover:text-[#5e7593] transition-colors font-medium"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                HOME
+                            </Link>
+                            <Link 
+                                href="/community" 
+                                className="block py-2 text-[#405168] hover:text-[#5e7593] transition-colors font-medium"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                COMMUNITY
+                            </Link>
+                            
+                            <div className="pt-4 border-t border-[#dee5ed]">
+                                {isSignedIn === null ? (
+                                    <div className="flex items-center space-x-2 py-2">
+                                        <div className="w-4 h-4 border-2 border-[#405168] border-t-transparent rounded-full animate-spin"></div>
+                                        <span className="text-sm text-[#7a8b99]">Loading...</span>
+                                    </div>
+                                ) : isSignedIn ? (
+                                    <div className="space-y-3">
+                                        <div className="py-2">
+                                            <span className="text-sm text-[#7a8b99]">
+                                                สวัสดี, <span className="font-medium text-[#405168]">{user?.name}</span>
+                                            </span>
+                                        </div>
+                                        <button 
+                                            onClick={handleSignOut}
+                                            className="w-full px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-sm font-medium"
+                                        >
+                                            SIGN OUT
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button 
+                                        onClick={() => {
+                                            setShowSignInModal(true);
+                                            setIsMobileMenuOpen(false);
+                                        }}
+                                        className="w-full px-4 py-2 border border-[#405168] rounded-full hover:bg-[#405168] hover:text-white transition-colors text-sm font-medium"
+                                    >
+                                        SIGN IN
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Sign In Modal */}
+            {showSignInModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowSignInModal(false)}></div>
+                    <div className="relative bg-white rounded-3xl border border-[#405168] shadow-xl max-w-md w-full p-8">
+                        <button 
+                            onClick={() => setShowSignInModal(false)}
+                            className="absolute top-4 right-4 p-2 text-[#7a8b99] hover:text-[#405168] transition-colors cursor-pointer"
+                        >
+                            <IoMdClose size={20} />
+                        </button>
+                        
+                        <div className="text-center">
+                            <div className="text-4xl mb-4">🔐</div>
+                            <h2 className="text-2xl font-bold text-[#1c2a48] mb-4">เข้าสู่ระบบ</h2>
+                            <p className="text-[#7a8b99] mb-6">เข้าสู่ระบบเพื่อเริ่มแชร์ความรู้</p>
+                            
+                            <div className="space-y-4">
+                                <Link 
+                                    href="/signin"
+                                    className="block w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium"
+                                    onClick={() => setShowSignInModal(false)}
+                                >
+                                    เข้าสู่ระบบ
+                                </Link>
+                                
+                                <Link 
+                                    href="/signup"
+                                    className="block w-full px-6 py-3 border border-[#405168] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] transition-colors font-medium"
+                                    onClick={() => setShowSignInModal(false)}
+                                >
+                                    สร้างบัญชีใหม่
+                                </Link>
+                                
+                                {/* Demo Sign In */}
+                                <div className="pt-4 border-t border-[#e0e7f1]">
+                                    <p className="text-sm text-[#7a8b99] mb-3">สำหรับการทดสอบ:</p>
+                                    <button
+                                        onClick={handleDemoSignIn}
+                                        className="w-full px-4 py-2 text-sm bg-[#e0e7f1] text-[#5e7593] rounded-full hover:bg-[#d1d9e4] transition-colors cursor-pointer"
+                                    >
+                                        🧪 เข้าสู่ระบบทดสอบ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
