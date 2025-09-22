@@ -16,22 +16,25 @@ export default function CommunityPage() {
         <SearchBox />
         
         {/* Action Bar */}
-        <div className="flex justify-between items-center mt-6 gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-[#5e7593]">จัดเรียงโดย:</span>
-            <select className="px-3 py-2 bg-white border border-[#e0e7f1] rounded-3xl text-[#405168] focus:outline-none focus:ring-2 focus:ring-[#5e7593] text-sm cursor-pointer shadow-sm hover:shadow-md transition-shadow">
-              <option>ล่าสุด</option>
-              <option>ยอดนิยม</option>
-              <option>เก่าสุด</option>
-              <option>ตามชื่อ</option>
-            </select>
-            <button className="flex items-center gap-1 px-4 py-2 text-sm text-[#5e7593] hover:text-[#405168] transition-colors bg-white border border-[#e0e7f1] rounded-3xl hover:shadow-md shadow-sm cursor-pointer">
-              <HiSortDescending />
-              กลับด้าน
-            </button>
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-6 gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <span className="text-sm text-[#5e7593] text-center sm:text-left">จัดเรียงโดย:</span>
+            <div className="flex gap-2">
+              <select className="flex-1 sm:flex-none px-3 py-2 bg-white border border-[#e0e7f1] rounded-3xl text-[#405168] focus:outline-none focus:ring-2 focus:ring-[#5e7593] text-sm cursor-pointer shadow-sm hover:shadow-md transition-shadow">
+                <option>ล่าสุด</option>
+                <option>ยอดนิยม</option>
+                <option>เก่าสุด</option>
+                <option>ตามชื่อ</option>
+              </select>
+              <button className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 text-sm text-[#5e7593] hover:text-[#405168] transition-colors bg-white border border-[#e0e7f1] rounded-3xl hover:shadow-md shadow-sm cursor-pointer">
+                <HiSortDescending />
+                <span className="hidden sm:inline">กลับด้าน</span>
+                <span className="sm:hidden">↕</span>
+              </button>
+            </div>
           </div>
           
-          <PostButton className="px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium shadow-sm hover:shadow-md cursor-pointer">
+          <PostButton className="w-full sm:w-auto px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium shadow-sm hover:shadow-md cursor-pointer">
             เพิ่มโพสต์
           </PostButton>
         </div>
