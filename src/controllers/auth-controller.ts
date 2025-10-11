@@ -33,3 +33,7 @@ export async function signInController(email:string, password:string) {
 export async function signOutController(token:string) {
   return signOutWithSession(token);
 }
+
+export async function forgetPassword(email:string) {
+  return 0;
+}

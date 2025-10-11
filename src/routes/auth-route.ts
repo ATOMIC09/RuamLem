@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { signUpController, signInController, signOutController } from "../controllers/auth-controller"
+import { signUpController, signInController, signOutController, forgetPassword } from "../controllers/auth-controller"
 import { decryptRSA } from "../services/auth-service";
 // import { supabase } from "../supabase";
 
@@ -14,6 +14,8 @@ export const authRoute = (app: Elysia) => {
 
       // console.log(decryptedJSON);
       const { email, firstName, lastName, password } = JSON.parse(decryptedJSON);
+
+      console.log(email, firstName, lastName, password);
 
       const result = await signUpController(email, password, firstName, lastName);
       return result;
@@ -42,6 +44,23 @@ export const authRoute = (app: Elysia) => {
     const token = authHeader.split(" ")[1];
 
     return signOutController(token);
+  });
+
+  app.post("/auth/forget", async (c) =>{
+    const body = await c.request.json();
+    const email = body.email;
+
+    if(!email){
+      return {
+        error: "email is empty"
+      }
+    }
+
+    // console.log(email);
+
+    return forgetPassword(email);
+
+
   });
 
   // app.get("/name", async (c) => {

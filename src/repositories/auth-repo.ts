@@ -13,9 +13,10 @@ export async function createAuthUser(email: string, password: string, firstName:
       password,
     });
 
+
     if (error) throw error;
     if (!data.user) throw new Error("Failed to create user");
-
+    
     const userId = data.user.id;
 
     try {

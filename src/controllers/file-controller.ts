@@ -14,7 +14,7 @@ export async function uploadFile(token: string, file: File) {
         if (error || !user) {
             return { sccess: false, message: "Invalid session" };
         } else {
-            return uploadPDF(file);
+            return uploadPDF(file, "0", "0");
         }
     }
     catch (err: any) {
@@ -22,14 +22,14 @@ export async function uploadFile(token: string, file: File) {
     }
 }
 
-export async function downloadFile(token: string) {
+export async function downloadFile(token: string, realnameFile:string) {
     try {
 
         const { data: user, error } = await supabase.auth.getClaims(token);
         if (error || !user) {
             return { sccess: false, message: "Invalid session" };
         } else {
-            return downloadPDF("010123107_2559-1.pdf");
+            return downloadPDF(realnameFile);
         }
     }
     catch (err: any) {
