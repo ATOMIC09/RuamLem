@@ -3,7 +3,8 @@ import { supabase } from "../supabase";
 export async function uploadPDF(file: File, user_id:string, post_id:string) {
     try {
         const timestamp = Date.now();
-        const fileName = `${timestamp}_${file.name}`;
+        const fileName = `${timestamp}_${user_id}`;
+        console.log(fileName)
         const filePath = fileName;
         // const filePath = `${file.name}`;
         const { data, error: uploadError } = await supabase.storage
@@ -11,6 +12,8 @@ export async function uploadPDF(file: File, user_id:string, post_id:string) {
             .upload(filePath, file);
 
         if (uploadError) {
+
+            // console.log(uploadError)
             return { success: false, message: uploadError.message };
         }
 

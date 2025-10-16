@@ -1,5 +1,5 @@
 import { validatePassword } from "../services/auth-service";
-import { createAuthUser, signInWithPassword, signOutWithSession} from "../repositories/auth-repo";
+import { createAuthUser, signInWithPassword, signOutWithSession, forgetPassword} from "../repositories/auth-repo";
 
 
 export async function signUpController(email:string, password:string, firstname:string, lastname:string) {
@@ -34,6 +34,6 @@ export async function signOutController(token:string) {
   return signOutWithSession(token);
 }
 
-export async function forgetPassword(email:string) {
-  return 0;
+export async function forgetPasswordController(email:string) {
+  return forgetPassword(email);
 }

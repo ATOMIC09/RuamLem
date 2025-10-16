@@ -1,10 +1,10 @@
 import { Elysia } from "elysia";
-import { signUpController, signInController, signOutController, forgetPassword } from "../controllers/auth-controller"
+import { signUpController, signInController, signOutController, forgetPasswordController } from "../controllers/auth-controller"
 import { decryptRSA } from "../services/auth-service";
 // import { supabase } from "../supabase";
 
 export const authRoute = (app: Elysia) => {
-  app.post("/auth/signup", async (c) => {
+  app.post("/auth/signUp", async (c) => {
     try {
       const body = await c.request.json();
       const encryptedData = body.data;
@@ -15,7 +15,7 @@ export const authRoute = (app: Elysia) => {
       // console.log(decryptedJSON);
       const { email, firstName, lastName, password } = JSON.parse(decryptedJSON);
 
-      console.log(email, firstName, lastName, password);
+      // console.log(email, firstName, lastName, password);
 
       const result = await signUpController(email, password, firstName, lastName);
       return result;
@@ -58,7 +58,7 @@ export const authRoute = (app: Elysia) => {
 
     // console.log(email);
 
-    return forgetPassword(email);
+    return forgetPasswordController(email);
 
 
   });

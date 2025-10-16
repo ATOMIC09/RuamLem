@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { post, comment } from "../controllers/post-controller";
+import { post, comment, getPostController, getPostAfterController, getCommentController, getPostFilterController } from "../controllers/post-controller";
 
 export const postRoute = (app: Elysia) => {
     app.post("/post", async (c) => {
@@ -33,8 +33,41 @@ export const postRoute = (app: Elysia) => {
         const postId = body.post_id;
         const postBody = body.post_body;
 
+
+        // console.log(postId, postBody);
+
         
         return comment(token, postId, postBody);
+    });
+
+     app.post("/getPost", async (c) => {
+        const body = await c.request.json();
+        const count = body.count;
+        
+        return getPostController(count);
+    });
+
+    app.post("/getPostFilter", async (c) => {
+        const body = await c.request.json();
+        const tags =  body.tags;
+        const count = body.count;
+        
+        return getPostFilterController(tags, count);
+    });
+
+    app.post("/getPostAfter", async (c) => {
+        const body = await c.request.json();
+        const lastId = body.lastId;
+        const count = body.count;
+        
+        return getPostAfterController(lastId, count);
+    });
+
+    app.post("/getComment", async (c) => {
+        const body = await c.request.json();
+        const postId = body.postId;
+        
+        return getCommentController(postId);
     });
 
 

@@ -61,6 +61,9 @@ export async function signInWithPassword(email: string, password: string) {
     .eq("uuid", data.user.id)
     .single();
 
+
+  
+    // console.log(profile_data)
   if (profile_error) {
     return { success: false, message: profile_error.message };
   }
@@ -87,4 +90,26 @@ export async function signOutWithSession(token:string) {
   }
 }
 
+
+export async function forgetPassword(email: string) {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "https://google.co.th", 
+    });
+
+    if (error) throw error;
+
+    console.log(error)
+
+    return {
+      status: 200,
+      message: "ส่งอีเมลรีเซ็ตรหัสผ่านแล้ว กรุณาตรวจสอบกล่องจดหมายของคุณ",
+    };
+  } catch (err: any) {
+    return {
+      status: 500,
+      message: err.message,
+    };
+  }
+}
 

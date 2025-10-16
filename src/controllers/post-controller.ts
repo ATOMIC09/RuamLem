@@ -1,7 +1,8 @@
 import { status } from "elysia";
 import { supabase } from "../supabase";
 import { uploadPDF } from "../repositories/file-repo";
-import { uploadPost, uploadComment } from "../repositories/post-repo";
+import { uploadPost, uploadComment, getComment, getPost, getPostAfter, getPostFilter } from "../repositories/post-repo";
+import { asHookType } from "elysia/dist/utils";
 
 
 export async function post(token: string, title: string, body: string, tag: string, file: File) {
@@ -25,6 +26,7 @@ export async function post(token: string, title: string, body: string, tag: stri
 
         const fileResult = await uploadPDF(file, userId, postResult.postId);
         if (!fileResult.success) {
+            console.log(fileResult.success)
             await supabase.from("post_tags").delete().eq("post_id", postResult.postId);
             await supabase.from("posts").delete().eq("id", postResult.postId);
             throw new Error("Upload PDF failed, rolled back post");
@@ -58,4 +60,44 @@ export async function comment(token: string, postId: string, body: string) {
         return { status: 500, message: err.message };
     }
 
+}
+
+// no filter
+export async function getPostController(count: number) {
+    try {
+        return getPost(count);
+    }
+    catch (err: any) {
+        return { status: 500, message: err.message };
+    }
+
+}
+
+export async function getPostAfterController(lastId: number, count: number = 10) {
+    try {
+        return getPostAfter(lastId, count);
+    }
+    catch (err: any) {
+        return { status: 500, message: err.message };
+    }
+}
+
+
+export async function getPostFilterController(tags: string, count: number = 10) {
+    try {
+        return getPostFilter(tags, count);
+    }
+    catch (err: any) {
+        return { status: 500, message: err.message };
+    }
+}
+
+
+export async function getCommentController(post_id: number) {
+    try {
+        return getComment(post_id);
+    }
+    catch (err: any) {
+        return { status: 500, message: err.message };
+    }
 }
