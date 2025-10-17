@@ -168,7 +168,7 @@ export async function getPostFilter(tags: string, count: number = 10) {
 export async function getComment(post_id: number) {
   try {
     const { data: dataComment, error: errorComment } = await supabase
-      .from("comment")
+      .from("comments")
       .select("*")
       .eq("post_id", post_id)
       .order("created_at", { ascending: false });;
