@@ -37,8 +37,16 @@ export default function SignInPage() {
             });
 
             if (response.error) {
-                // Show the backend error message (e.g., "Invalid login credentials")
-                setError(response.message || response.error);
+                // Translate backend error messages to Thai
+                let errorMessage = response.message || response.error;
+                
+                if (errorMessage.includes('Email not confirmed')) {
+                    errorMessage = 'อีเมลยังไม่ได้รับการยืนยัน กรุณาตรวจสอบอีเมลและคลิกลิงก์ยืนยันบัญชี';
+                } else if (errorMessage.includes('Invalid login credentials')) {
+                    errorMessage = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+                }
+                
+                setError(errorMessage);
                 setIsLoading(false);
                 return;
             }
