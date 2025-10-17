@@ -29,7 +29,7 @@ export async function downloadFile(token: string, realnameFile:string) {
 
         const { data: user, error } = await supabase.auth.getClaims(token);
         if (error || !user) {
-            return { sccess: false, message: "Invalid session" };
+            return { success: false, message: "Invalid session" };
         } else {
             return downloadPDF(realnameFile);
         }

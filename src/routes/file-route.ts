@@ -36,9 +36,16 @@ export const fileRoute = (app: Elysia) => {
         const authHeader = c.request.headers.get("authorization");
         if (!authHeader) return { status: 401, message: "No token" };
         const token = authHeader.split(" ")[1];
-        const name = ""
+        
+        // Extract filename from query parameters
+        const url = new URL(c.request.url);
+        const filename = url.searchParams.get("filename");
+        
+        if (!filename) {
+            return { success: false, message: "Filename parameter is required" };
+        }
 
-        return downloadFile(token, name);
+        return downloadFile(token, filename);
 
     }, {
         detail: {
