@@ -16,7 +16,7 @@ export async function uploadFile(token: string, file: File) {
         } else {
             const userId = user.claims.sub; // Get actual user ID
             console.log("👤 User ID from token:", userId);
-            return uploadPDF(file, userId, null, token); // Pass token for storage auth
+            return uploadPDF(file, userId, null); // null for standalone file upload
         }
     }
     catch (err: any) {
