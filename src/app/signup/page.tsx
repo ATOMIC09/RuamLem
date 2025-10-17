@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IoMdEye, IoMdEyeOff, IoMdPerson, IoMdMail } from "react-icons/io";
+import { FaCheckCircle } from "react-icons/fa";
 import { useAuth } from "../hooks/use-auth";
 import * as authService from "@/services/auth.service";
 import { validatePassword } from "@/lib/crypto";
@@ -19,6 +20,8 @@ export default function SignUpPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [acceptTerms, setAcceptTerms] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
     
     const { signIn } = useAuth();
     const router = useRouter();
@@ -83,6 +86,15 @@ export default function SignUpPage() {
                 return;
             }
 
+            // Check if signup was successful (email confirmation required)
+            if (response.message) {
+                setSuccessMessage(response.message);
+                setIsSuccess(true);
+                setIsLoading(false);
+                return;
+            }
+
+            // If somehow we got user and token (shouldn't happen with email confirmation)
             if (response.user && response.token) {
                 // Sign in the user
                 signIn({
@@ -94,8 +106,6 @@ export default function SignUpPage() {
                 }, response.token);
                 
                 router.push("/"); // Redirect to home page
-            } else {
-                setError("การลงทะเบียนสำเร็จ แต่ไม่สามารถเข้าสู่ระบบได้");
             }
         } catch {
             setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
@@ -103,6 +113,43 @@ export default function SignUpPage() {
             setIsLoading(false);
         }
     };
+
+    // Success state - show email confirmation message
+    if (isSuccess) {
+        return (
+            <div className="min-h-screen bg-gradient-to-b from-[#f8f9fa] to-white flex items-center justify-center p-6">
+                <div className="w-full max-w-md">
+                    <div className="bg-white rounded-3xl border border-[#e0e7f1] shadow-sm p-8 text-center">
+                        <FaCheckCircle className="text-5xl text-green-500 mx-auto mb-4" />
+                        <h1 className="text-2xl font-bold text-[#1c2a48] mb-4">ลงทะเบียนสำเร็จ!</h1>
+                        <p className="text-[#7a8b99] mb-2 leading-relaxed">
+                            {successMessage}
+                        </p>
+                        <p className="text-[#7a8b99] mb-6 leading-relaxed">
+                            กรุณาคลิกลิงก์ในอีเมลเพื่อยืนยันบัญชีของคุณ
+                        </p>
+
+                        <div className="space-y-4">
+                            <div className="p-4 bg-[#f0f4f8] rounded-2xl border border-[#e0e7f1]">
+                                <p className="text-sm text-[#5e7593] leading-relaxed">
+                                    📧 โปรดตรวจสอบกล่องจดหมายและโฟลเดอร์สแปมของคุณ
+                                    <br />
+                                    ส่งไปยัง: <span className="font-medium text-[#1c2a48]">{email}</span>
+                                </p>
+                            </div>
+
+                            <Link
+                                href="/signin"
+                                className="block w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium text-center shadow-sm hover:shadow-md"
+                            >
+                                ไปหน้าเข้าสู่ระบบ
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#f8f9fa] to-white flex items-center justify-center p-6">

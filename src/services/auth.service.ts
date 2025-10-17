@@ -101,7 +101,7 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
     const encryptedData = await encryptRSA(payload);
 
     // Send to backend
-    const backendResponse = await apiRequest<BackendAuthResponse>('/auth/signUp', {
+    const signUpResponse = await apiRequest<{ message?: string; error?: string }>('/auth/signUp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -109,18 +109,48 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
       body: JSON.stringify({ data: encryptedData }),
     });
 
-    // Transform response to frontend format
-    const response = transformAuthResponse(backendResponse);
-
-    // Store token if provided
-    if (response.token) {
-      setAuthToken(response.token);
+    // Check for signup errors
+    if (signUpResponse.error) {
+      let errorMessage = signUpResponse.error;
+      
+      // Handle database constraint errors with user-friendly messages
+      if (errorMessage.includes('duplicate key') || errorMessage.includes('unique constraint')) {
+        errorMessage = 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น';
+      } else if (errorMessage.includes('User already registered')) {
+        errorMessage = 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น';
+      }
+      
+      return {
+        error: errorMessage,
+        message: errorMessage,
+      };
     }
 
-    return response;
-  } catch (error) {
+    // If signup successful, return success without auto-signin
+    // User needs to confirm email first
+    if (signUpResponse.message) {
+      return {
+        message: 'ลงทะเบียนสำเร็จ! กรุณาตรวจสอบอีเมลเพื่อยืนยันบัญชีของคุณ',
+      };
+    }
+
     return {
-      error: error instanceof Error ? error.message : 'การลงทะเบียนล้มเหลว',
+      error: 'Invalid response format',
+    };
+  } catch (error) {
+    let errorMessage = 'การลงทะเบียนล้มเหลว';
+    
+    if (error instanceof Error) {
+      // Handle database constraint errors
+      if (error.message.includes('duplicate key') || error.message.includes('unique constraint')) {
+        errorMessage = 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    return {
+      error: errorMessage,
     };
   }
 }
