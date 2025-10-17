@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { IoMdMail, IoMdArrowBack } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
+import * as authService from "@/services/auth.service";
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
@@ -24,12 +25,16 @@ export default function ForgotPasswordPage() {
             return;
         }
 
-        // Mock API call - replace with actual password reset logic
+        // Call API
         try {
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            const response = await authService.forgotPassword(email);
             
-            // Mock successful email sent
+            if (response.error) {
+                setError(response.error);
+                setIsLoading(false);
+                return;
+            }
+            
             setIsEmailSent(true);
         } catch {
             setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
@@ -43,9 +48,11 @@ export default function ForgotPasswordPage() {
         setError("");
 
         try {
-            // Simulate resend API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            // You could show a toast or temporary message here
+            const response = await authService.forgotPassword(email);
+            
+            if (response.error) {
+                setError(response.error);
+            }
         } catch {
             setError("ไม่สามารถส่งอีเมลได้ กรุณาลองใหม่อีกครั้ง");
         } finally {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IoMdEye, IoMdEyeOff, IoMdPerson } from "react-icons/io";
 import { useAuth } from "../hooks/use-auth";
+import * as authService from "@/services/auth.service";
 
 export default function SignInPage() {
     const [emailOrUsername, setEmailOrUsername] = useState("");
@@ -21,29 +22,39 @@ export default function SignInPage() {
         setIsLoading(true);
         setError("");
 
-        // Helper function to determine if input is email
-        const isEmail = (input: string) => {
-            return input.includes('@') && input.includes('.');
-        };
+        // Validation
+        if (!emailOrUsername || !password) {
+            setError("กรุณากรอกอีเมลและรหัสผ่าน");
+            setIsLoading(false);
+            return;
+        }
 
-        // Mock authentication - replace with actual API call
+        // Call API
         try {
-            if (emailOrUsername && password) {
-                // Simulate API call delay
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Mock successful login - in real app, this would be handled by your backend
-                const userEmail = isEmail(emailOrUsername) ? emailOrUsername : `${emailOrUsername}@example.com`;
-                
+            const response = await authService.signIn({
+                email: emailOrUsername, // The backend expects email
+                password,
+            });
+
+            if (response.error) {
+                setError(response.error);
+                setIsLoading(false);
+                return;
+            }
+
+            if (response.user && response.token) {
+                // Sign in the user
                 signIn({
-                    id: 1,
-                    name: "John Doe", // In real app, this would come from your backend response
-                    email: userEmail
-                });
+                    id: response.user.id,
+                    name: `${response.user.firstName} ${response.user.lastName}`,
+                    email: response.user.email,
+                    firstName: response.user.firstName,
+                    lastName: response.user.lastName,
+                }, response.token);
                 
                 router.push("/"); // Redirect to home page
             } else {
-                setError("กรุณากรอกชื่อผู้ใช้หรืออีเมล และรหัสผ่าน");
+                setError("การเข้าสู่ระบบล้มเหลว");
             }
         } catch {
             setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
@@ -80,19 +91,19 @@ export default function SignInPage() {
                             </div>
                         )}
 
-                        {/* Email or Username Input */}
+                        {/* Email Input */}
                         <div>
                             <label htmlFor="emailOrUsername" className="block text-sm font-medium text-[#1c2a48] mb-2">
-                                ชื่อผู้ใช้ หรือ อีเมล
+                                อีเมล
                             </label>
                             <div className="relative">
                                 <input
-                                    type="text"
+                                    type="email"
                                     id="emailOrUsername"
                                     value={emailOrUsername}
                                     onChange={(e) => setEmailOrUsername(e.target.value)}
                                     className="w-full pl-12 pr-4 py-3 border border-[#e0e7f1] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48] shadow-sm hover:shadow-md transition-shadow"
-                                    placeholder="ชื่อผู้ใช้ หรือ your@email.com"
+                                    placeholder="your@email.com"
                                     required
                                 />
                                 <IoMdPerson className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#7a8b99]" size={20} />

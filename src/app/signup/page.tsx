@@ -5,9 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IoMdEye, IoMdEyeOff, IoMdPerson, IoMdMail } from "react-icons/io";
 import { useAuth } from "../hooks/use-auth";
+import * as authService from "@/services/auth.service";
+import { validatePassword } from "@/lib/crypto";
 
 export default function SignUpPage() {
-    const [name, setName] = useState("");
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,8 +29,14 @@ export default function SignUpPage() {
         setError("");
 
         // Basic validation
-        if (!name.trim()) {
+        if (!firstName.trim()) {
             setError("กรุณากรอกชื่อ");
+            setIsLoading(false);
+            return;
+        }
+
+        if (!lastName.trim()) {
+            setError("กรุณากรอกนามสกุล");
             setIsLoading(false);
             return;
         }
@@ -38,8 +47,10 @@ export default function SignUpPage() {
             return;
         }
 
-        if (password.length < 6) {
-            setError("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
+        // Validate password
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.valid) {
+            setError(passwordValidation.message || "รหัสผ่านไม่ถูกต้อง");
             setIsLoading(false);
             return;
         }
@@ -56,19 +67,35 @@ export default function SignUpPage() {
             return;
         }
 
-        // Mock registration - replace with actual API call
+        // Call API
         try {
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Mock successful registration
-            signIn({
-                id: Date.now(), // Mock ID
-                name: name.trim(),
-                email: email
+            const response = await authService.signUp({
+                email,
+                firstName: firstName.trim(),
+                lastName: lastName.trim(),
+                password,
             });
-            
-            router.push("/"); // Redirect to home page
+
+            if (response.error) {
+                setError(response.error);
+                setIsLoading(false);
+                return;
+            }
+
+            if (response.user && response.token) {
+                // Sign in the user
+                signIn({
+                    id: response.user.id,
+                    name: `${response.user.firstName} ${response.user.lastName}`,
+                    email: response.user.email,
+                    firstName: response.user.firstName,
+                    lastName: response.user.lastName,
+                }, response.token);
+                
+                router.push("/"); // Redirect to home page
+            } else {
+                setError("การลงทะเบียนสำเร็จ แต่ไม่สามารถเข้าสู่ระบบได้");
+            }
         } catch {
             setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
         } finally {
@@ -95,19 +122,38 @@ export default function SignUpPage() {
                             </div>
                         )}
 
-                        {/* Name Input */}
+                        {/* First Name Input */}
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-[#1c2a48] mb-2">
-                                ชื่อบัญชี
+                            <label htmlFor="firstName" className="block text-sm font-medium text-[#1c2a48] mb-2">
+                                ชื่อ
                             </label>
                             <div className="relative">
                                 <input
                                     type="text"
-                                    id="name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
+                                    id="firstName"
+                                    value={firstName}
+                                    onChange={(e) => setFirstName(e.target.value)}
                                     className="w-full pl-12 pr-4 py-3 border border-[#e0e7f1] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48] shadow-sm hover:shadow-md transition-shadow"
-                                    placeholder="ชื่อบัญชี"
+                                    placeholder="ชื่อ"
+                                    required
+                                />
+                                <IoMdPerson className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#7a8b99]" size={20} />
+                            </div>
+                        </div>
+
+                        {/* Last Name Input */}
+                        <div>
+                            <label htmlFor="lastName" className="block text-sm font-medium text-[#1c2a48] mb-2">
+                                นามสกุล
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    id="lastName"
+                                    value={lastName}
+                                    onChange={(e) => setLastName(e.target.value)}
+                                    className="w-full pl-12 pr-4 py-3 border border-[#e0e7f1] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48] shadow-sm hover:shadow-md transition-shadow"
+                                    placeholder="นามสกุล"
                                     required
                                 />
                                 <IoMdPerson className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#7a8b99]" size={20} />
@@ -145,9 +191,9 @@ export default function SignUpPage() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="w-full pl-4 pr-12 py-3 border border-[#e0e7f1] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#5e7593] focus:border-transparent text-[#1c2a48] shadow-sm hover:shadow-md transition-shadow"
-                                    placeholder="อย่างน้อย 6 ตัวอักษร"
+                                    placeholder="อย่างน้อย 8 ตัวอักษร (ต้องมีตัวอักษรและตัวเลข)"
                                     required
-                                    minLength={6}
+                                    minLength={8}
                                 />
                                 <button
                                     type="button"

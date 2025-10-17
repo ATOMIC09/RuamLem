@@ -1,0 +1,165 @@
+// Authentication service
+
+import { apiRequest, setAuthToken, removeAuthToken, getAuthHeaders } from '@/lib/api';
+import { encryptRSA } from '@/lib/crypto';
+
+export interface SignUpData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+}
+
+export interface SignInData {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  user?: {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+  token?: string;
+  error?: string;
+  message?: string;
+}
+
+export async function signUp(data: SignUpData): Promise<AuthResponse> {
+  try {
+    // Prepare data for encryption
+    const payload = JSON.stringify({
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      password: data.password,
+    });
+
+    // Encrypt the payload
+    const encryptedData = await encryptRSA(payload);
+
+    // Send to backend
+    const response = await apiRequest<AuthResponse>('/auth/signUp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ data: encryptedData }),
+    });
+
+    // Store token if provided
+    if (response.token) {
+      setAuthToken(response.token);
+    }
+
+    return response;
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'การลงทะเบียนล้มเหลว',
+    };
+  }
+}
+
+export async function signIn(data: SignInData): Promise<AuthResponse> {
+  try {
+    // Prepare data for encryption
+    const payload = JSON.stringify({
+      email: data.email,
+      password: data.password,
+    });
+
+    // Encrypt the payload
+    const encryptedData = await encryptRSA(payload);
+
+    // Send to backend
+    const response = await apiRequest<AuthResponse>('/auth/signIn', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ data: encryptedData }),
+    });
+
+    // Store token if provided
+    if (response.token) {
+      setAuthToken(response.token);
+    }
+
+    return response;
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'การเข้าสู่ระบบล้มเหลว',
+    };
+  }
+}
+
+export async function signOut(): Promise<void> {
+  try {
+    await apiRequest('/auth/signOut', {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+      },
+    });
+  } catch (error) {
+    console.error('Sign out error:', error);
+  } finally {
+    removeAuthToken();
+  }
+}
+
+export async function forgotPassword(email: string): Promise<{ message?: string; error?: string }> {
+  try {
+    const response = await apiRequest<{ message?: string; error?: string }>('/auth/forget', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    return response;
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'การส่งอีเมลรีเซ็ตรหัสผ่านล้มเหลว',
+    };
+  }
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<{ message?: string; error?: string }> {
+  try {
+    const response = await apiRequest<{ message?: string; error?: string }>('/auth/reset-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token, newPassword }),
+    });
+
+    return response;
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'การรีเซ็ตรหัสผ่านล้มเหลว',
+    };
+  }
+}
+
+export async function verifyResetToken(token: string): Promise<{ valid?: boolean; error?: string }> {
+  try {
+    const response = await apiRequest<{ valid?: boolean; error?: string }>('/auth/verify-reset-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token }),
+    });
+
+    return response;
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'การตรวจสอบโทเค็นล้มเหลว',
+    };
+  }
+}
