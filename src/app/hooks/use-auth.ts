@@ -5,7 +5,7 @@ import { getAuthToken, removeAuthToken, setAuthToken } from "@/lib/api";
 import * as authService from "@/services/auth.service";
 
 interface User {
-    id: number;
+    id: string;  // Changed from number to string (UUID)
     name: string;
     email: string;
     firstName?: string;

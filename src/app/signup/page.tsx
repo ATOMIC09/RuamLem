@@ -77,7 +77,8 @@ export default function SignUpPage() {
             });
 
             if (response.error) {
-                setError(response.error);
+                // Show the backend error message
+                setError(response.message || response.error);
                 setIsLoading(false);
                 return;
             }

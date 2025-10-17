@@ -37,7 +37,8 @@ export default function SignInPage() {
             });
 
             if (response.error) {
-                setError(response.error);
+                // Show the backend error message (e.g., "Invalid login credentials")
+                setError(response.message || response.error);
                 setIsLoading(false);
                 return;
             }
@@ -65,7 +66,7 @@ export default function SignInPage() {
 
     const handleDemoSignIn = () => {
         signIn({
-            id: 1,
+            id: "demo-user-id",
             name: "John Doe",
             email: "john@example.com"
         });

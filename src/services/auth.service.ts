@@ -15,9 +15,33 @@ export interface SignInData {
   password: string;
 }
 
+// Backend response format (actual response from Supabase)
+interface BackendAuthResponse {
+  success?: boolean;
+  uuid?: string;
+  firstName?: string;
+  lastName?: string;
+  userRole?: string;
+  session?: {
+    access_token: string;
+    token_type: string;
+    expires_in: number;
+    expires_at: number;
+    refresh_token: string;
+    user: {
+      id: string;
+      email: string;
+      [key: string]: unknown;
+    };
+  };
+  error?: string;
+  message?: string;
+}
+
+// Frontend format
 export interface AuthResponse {
   user?: {
-    id: number;
+    id: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -25,6 +49,42 @@ export interface AuthResponse {
   token?: string;
   error?: string;
   message?: string;
+}
+
+// Transform backend response to frontend format
+function transformAuthResponse(backendResponse: BackendAuthResponse): AuthResponse {
+  // Handle explicit error responses
+  if (backendResponse.error) {
+    return {
+      error: backendResponse.error,
+      message: backendResponse.message,
+    };
+  }
+
+  // Handle failure responses (success: false)
+  if (backendResponse.success === false) {
+    return {
+      error: backendResponse.message || 'Authentication failed',
+      message: backendResponse.message,
+    };
+  }
+
+  // Handle success responses with session
+  if (backendResponse.success && backendResponse.session) {
+    return {
+      user: {
+        id: backendResponse.uuid || backendResponse.session.user.id,
+        email: backendResponse.session.user.email,
+        firstName: backendResponse.firstName || '',
+        lastName: backendResponse.lastName || '',
+      },
+      token: backendResponse.session.access_token,
+    };
+  }
+
+  return {
+    error: 'Invalid response format',
+  };
 }
 
 export async function signUp(data: SignUpData): Promise<AuthResponse> {
@@ -41,13 +101,16 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
     const encryptedData = await encryptRSA(payload);
 
     // Send to backend
-    const response = await apiRequest<AuthResponse>('/auth/signUp', {
+    const backendResponse = await apiRequest<BackendAuthResponse>('/auth/signUp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ data: encryptedData }),
     });
+
+    // Transform response to frontend format
+    const response = transformAuthResponse(backendResponse);
 
     // Store token if provided
     if (response.token) {
@@ -74,13 +137,16 @@ export async function signIn(data: SignInData): Promise<AuthResponse> {
     const encryptedData = await encryptRSA(payload);
 
     // Send to backend
-    const response = await apiRequest<AuthResponse>('/auth/signIn', {
+    const backendResponse = await apiRequest<BackendAuthResponse>('/auth/signIn', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ data: encryptedData }),
     });
+
+    // Transform response to frontend format
+    const response = transformAuthResponse(backendResponse);
 
     // Store token if provided
     if (response.token) {
