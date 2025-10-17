@@ -24,15 +24,9 @@ export async function uploadFile(token: string, file: File) {
     }
 }
 
-export async function downloadFile(token: string, realnameFile:string) {
+export async function downloadFile(realnameFile:string) {
     try {
-
-        const { data: user, error } = await supabase.auth.getClaims(token);
-        if (error || !user) {
-            return { success: false, message: "Invalid session" };
-        } else {
-            return downloadPDF(realnameFile);
-        }
+        return downloadPDF(realnameFile);
     }
     catch (err: any) {
         return { status: 500, message: err.message };

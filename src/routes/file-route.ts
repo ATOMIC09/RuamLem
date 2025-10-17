@@ -33,10 +33,6 @@ export const fileRoute = (app: Elysia) => {
     });
 
     app.get("/download/file", async (c) => {
-        const authHeader = c.request.headers.get("authorization");
-        if (!authHeader) return { status: 401, message: "No token" };
-        const token = authHeader.split(" ")[1];
-        
         // Extract filename from query parameters
         const url = new URL(c.request.url);
         const filename = url.searchParams.get("filename");
@@ -45,14 +41,13 @@ export const fileRoute = (app: Elysia) => {
             return { success: false, message: "Filename parameter is required" };
         }
 
-        return downloadFile(token, filename);
+        return downloadFile(filename);
 
     }, {
         detail: {
             tags: ['Files'],
             summary: 'Download File',
-            description: 'Download a file (requires authentication)',
-            security: [{ bearerAuth: [] }]
+            description: 'Download a file (no authentication required)'
         }
     });
 
