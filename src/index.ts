@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+import { cors } from "@elysiajs/cors";
 import { openapi } from "@elysiajs/openapi";
 import { authRoute } from "./routes/auth-route";
 import { fileRoute } from "./routes/file-route";
@@ -6,6 +7,10 @@ import { postRoute } from "./routes/post-route";
  
 
 const app = new Elysia()
+  .use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+  }))
   .use(openapi({
     documentation: {
       info: {
