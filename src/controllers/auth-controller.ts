@@ -1,5 +1,5 @@
 import { validatePassword } from "../services/auth-service";
-import { createAuthUser, signInWithPassword, signOutWithSession, forgetPassword} from "../repositories/auth-repo";
+import { createAuthUser, signInWithPassword, signOutWithSession, forgetPassword, updatePassword, verifyResetToken} from "../repositories/auth-repo";
 
 
 export async function signUpController(email:string, password:string, firstname:string, lastname:string) {
@@ -36,4 +36,24 @@ export async function signOutController(token:string) {
 
 export async function forgetPasswordController(email:string) {
   return forgetPassword(email);
+}
+
+export async function resetPasswordController(token: string, newPassword: string) {
+  try {
+    if (!newPassword) {
+      return { error: "New password is required" };
+    }
+
+    if (!validatePassword(newPassword)) {
+      return { error: "Password does not meet requirements" };
+    }
+
+    return updatePassword(token, newPassword);
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function verifyResetTokenController(token: string) {
+  return verifyResetToken(token);
 }

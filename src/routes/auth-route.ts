@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { signUpController, signInController, signOutController, forgetPasswordController } from "../controllers/auth-controller"
+import { signUpController, signInController, signOutController, forgetPasswordController, resetPasswordController, verifyResetTokenController } from "../controllers/auth-controller"
 import { decryptRSA } from "../services/auth-service";
 // import { supabase } from "../supabase";
 
@@ -94,22 +94,38 @@ export const authRoute = (app: Elysia) => {
     }
   });
 
-  // app.get("/name", async (c) => {
-  //   const authHeader = c.request.headers.get("authorization");
-  //   if (!authHeader) return { success: false, message: "No token" };
+  // API endpoint to reset password (for frontend)
+  app.post("/auth/reset-password", async ({ body }) => {
+    const token = body.token;
+    const newPassword = body.newPassword;
 
-  //   const token = authHeader.split(" ")[1];
+    return resetPasswordController(token, newPassword);
+  }, {
+    body: t.Object({
+      token: t.String({ description: "Reset token from email link" }),
+      newPassword: t.String({ description: "New password" })
+    }),
+    detail: {
+      tags: ['Auth'],
+      summary: 'Reset Password',
+      description: 'Reset password using token from email'
+    }
+  });
 
-  //   const { data: user, error } = await supabase.auth.getClaims(token);
-  //   if (error || !user) {
-  //     return {sccess: false, message: "Invalid session"};
-  //   }
-
-  //   return{
-  //     success: true,
-  //     name: user
-  //   };
-  // });
+  // Verify reset token (optional - for frontend to check if token is valid)
+  app.post("/auth/verify-reset-token", async ({ body }) => {
+    const token = body.token;
+    return verifyResetTokenController(token);
+  }, {
+    body: t.Object({
+      token: t.String({ description: "Reset token to verify" })
+    }),
+    detail: {
+      tags: ['Auth'],
+      summary: 'Verify Reset Token',
+      description: 'Verify if reset token is valid'
+    }
+  });
 
   return app;
 }

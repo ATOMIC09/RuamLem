@@ -94,12 +94,10 @@ export async function signOutWithSession(token:string) {
 export async function forgetPassword(email: string) {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://google.co.th", 
+      redirectTo: "http://localhost:3000/reset-password", 
     });
 
     if (error) throw error;
-
-    console.log(error)
 
     return {
       status: 200,
@@ -109,6 +107,71 @@ export async function forgetPassword(email: string) {
     return {
       status: 500,
       message: err.message,
+    };
+  }
+}
+
+export async function updatePassword(token: string, newPassword: string) {
+  try {
+    // Set the session using the token from the reset link
+    const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+      access_token: token,
+      refresh_token: token, // In recovery flow, both tokens are the same
+    });
+
+    if (sessionError) throw sessionError;
+
+    // Update the password
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (updateError) throw updateError;
+
+    return {
+      status: 200,
+      message: "รหัสผ่านถูกอัปเดตเรียบร้อยแล้ว",
+    };
+  } catch (err: any) {
+    return {
+      status: 500,
+      message: err.message,
+    };
+  }
+}
+
+export async function verifyResetToken(token: string) {
+  try {
+    // Verify the token by setting the session
+    const { data, error } = await supabase.auth.setSession({
+      access_token: token,
+      refresh_token: token,
+    });
+
+    if (error || !data.user) throw error || new Error("No user found");
+
+    // Get user profile information
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("uuid", data.user.id)
+      .single();
+
+    return {
+      status: 200,
+      message: "Token is valid",
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        firstName: profile?.first_name || null,
+        lastName: profile?.last_name || null,
+        userRole: profile?.user_role || null
+      },
+    };
+  } catch (err: any) {
+    return {
+      status: 400,
+      message: "Invalid or expired token",
     };
   }
 }
