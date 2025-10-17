@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { uploadFile, downloadFile } from "../controllers/file-controller";
 
 export const fileRoute = (app: Elysia) => {
@@ -17,6 +17,13 @@ export const fileRoute = (app: Elysia) => {
 
         return uploadFile(token, file);
 
+    }, {
+        detail: {
+            tags: ['Files'],
+            summary: 'Upload File',
+            description: 'Upload a PDF file (requires authentication)',
+            security: [{ bearerAuth: [] }]
+        }
     });
 
     app.get("/download/file", async (c) => {
@@ -27,6 +34,13 @@ export const fileRoute = (app: Elysia) => {
 
         return downloadFile(token, name);
 
+    }, {
+        detail: {
+            tags: ['Files'],
+            summary: 'Download File',
+            description: 'Download a file (requires authentication)',
+            security: [{ bearerAuth: [] }]
+        }
     });
 
     return app;

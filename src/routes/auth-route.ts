@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { signUpController, signInController, signOutController, forgetPasswordController } from "../controllers/auth-controller"
 import { decryptRSA } from "../services/auth-service";
 // import { supabase } from "../supabase";
@@ -23,6 +23,15 @@ export const authRoute = (app: Elysia) => {
     } catch (err: any) {
       return { error: err.message };
     }
+  }, {
+    body: t.Object({
+      data: t.String({ description: "RSA encrypted user registration data" })
+    }),
+    detail: {
+      tags: ['Auth'],
+      summary: 'User Registration',
+      description: 'Register a new user with encrypted credentials'
+    }
   });
 
   app.post("/auth/signIn", async (c) => {
@@ -35,6 +44,15 @@ export const authRoute = (app: Elysia) => {
     const { email, password } = JSON.parse(decryptedJSON);
 
     return signInController(email, password);
+  }, {
+    body: t.Object({
+      data: t.String({ description: "RSA encrypted login credentials" })
+    }),
+    detail: {
+      tags: ['Auth'],
+      summary: 'User Login',
+      description: 'Authenticate user with encrypted credentials'
+    }
   });
 
   app.post("/auth/signOut", async (c) => {
@@ -44,6 +62,13 @@ export const authRoute = (app: Elysia) => {
     const token = authHeader.split(" ")[1];
 
     return signOutController(token);
+  }, {
+    detail: {
+      tags: ['Auth'],
+      summary: 'User Logout',
+      description: 'Sign out the authenticated user',
+      security: [{ bearerAuth: [] }]
+    }
   });
 
   app.post("/auth/forget", async (c) =>{
@@ -61,6 +86,15 @@ export const authRoute = (app: Elysia) => {
     return forgetPasswordController(email);
 
 
+  }, {
+    body: t.Object({
+      email: t.String({ description: "User email address" })
+    }),
+    detail: {
+      tags: ['Auth'],
+      summary: 'Forgot Password',
+      description: 'Send password reset email to user'
+    }
   });
 
   // app.get("/name", async (c) => {

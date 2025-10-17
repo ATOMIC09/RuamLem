@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { post, comment, getPostController, getPostAfterController, getCommentController, getPostFilterController } from "../controllers/post-controller";
 
 export const postRoute = (app: Elysia) => {
@@ -22,6 +22,13 @@ export const postRoute = (app: Elysia) => {
 
         return post(token, title, body, tag, file);
 
+    }, {
+        detail: {
+            tags: ['Posts'],
+            summary: 'Create Post',
+            description: 'Create a new post with PDF attachment',
+            security: [{ bearerAuth: [] }]
+        }
     });
 
     app.post("/comment", async (c) => {
@@ -38,6 +45,17 @@ export const postRoute = (app: Elysia) => {
 
         
         return comment(token, postId, postBody);
+    }, {
+        body: t.Object({
+            post_id: t.String({ description: "ID of the post to comment on" }),
+            post_body: t.String({ description: "Comment content" })
+        }),
+        detail: {
+            tags: ['Posts'],
+            summary: 'Add Comment',
+            description: 'Add a comment to a post',
+            security: [{ bearerAuth: [] }]
+        }
     });
 
      app.post("/getPost", async (c) => {
@@ -56,6 +74,15 @@ export const postRoute = (app: Elysia) => {
             // If JSON parsing fails, use default count
             return getPostController(10);
         }
+    }, {
+        body: t.Optional(t.Object({
+            count: t.Optional(t.Number({ description: "Number of posts to retrieve (default: 10)" }))
+        })),
+        detail: {
+            tags: ['Posts'],
+            summary: 'Get Posts',
+            description: 'Retrieve a list of posts'
+        }
     });
 
     app.post("/getPostFilter", async (c) => {
@@ -71,6 +98,16 @@ export const postRoute = (app: Elysia) => {
             return getPostFilterController(tags, count);
         } catch (error) {
             return { status: 400, message: "Invalid JSON in request body" };
+        }
+    }, {
+        body: t.Object({
+            tags: t.String({ description: "Tag to filter posts by" }),
+            count: t.Optional(t.Number({ description: "Number of posts to retrieve (default: 10)" }))
+        }),
+        detail: {
+            tags: ['Posts'],
+            summary: 'Get Posts by Tag',
+            description: 'Retrieve posts filtered by specific tag'
         }
     });
 
@@ -88,6 +125,16 @@ export const postRoute = (app: Elysia) => {
         } catch (error) {
             return { status: 400, message: "Invalid JSON in request body" };
         }
+    }, {
+        body: t.Object({
+            lastId: t.Number({ description: "ID of the last post from previous request (for pagination)" }),
+            count: t.Optional(t.Number({ description: "Number of posts to retrieve (default: 10)" }))
+        }),
+        detail: {
+            tags: ['Posts'],
+            summary: 'Get Posts After ID',
+            description: 'Retrieve posts after a specific post ID (pagination)'
+        }
     });
 
     app.post("/getComment", async (c) => {
@@ -102,6 +149,15 @@ export const postRoute = (app: Elysia) => {
             return getCommentController(postId);
         } catch (error) {
             return { status: 400, message: "Invalid JSON in request body" };
+        }
+    }, {
+        body: t.Object({
+            postId: t.Number({ description: "ID of the post to get comments for" })
+        }),
+        detail: {
+            tags: ['Posts'],
+            summary: 'Get Comments',
+            description: 'Retrieve comments for a specific post'
         }
     });
 
