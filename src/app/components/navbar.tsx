@@ -12,15 +12,18 @@ export default function Navbar() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showSignInModal, setShowSignInModal] = useState(false);
     const pathname = usePathname();
+    const [, setForceUpdate] = useState(0);
 
-    // Close mobile menu when route changes
+    // Close mobile menu and force auth check when route changes
     useEffect(() => {
         setIsMobileMenuOpen(false);
-    }, []);
+        // Force a re-render to check auth state after navigation
+        setForceUpdate(prev => prev + 1);
+    }, [pathname]);
 
     // Handle demo sign in
     const handleDemoSignIn = () => {
-        signIn({ id: 1, name: 'John Doe', email: 'john@example.com' });
+        signIn({ id: 'demo-user-id', name: 'John Doe', email: 'john@example.com' });
         setShowSignInModal(false);
     };
 

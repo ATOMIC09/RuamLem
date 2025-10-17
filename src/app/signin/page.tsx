@@ -53,7 +53,10 @@ export default function SignInPage() {
                     lastName: response.user.lastName,
                 }, response.token);
                 
-                router.push("/"); // Redirect to home page
+                // Small delay to ensure event propagates before navigation
+                setTimeout(() => {
+                    router.push("/"); // Redirect to home page
+                }, 100);
             } else {
                 setError("การเข้าสู่ระบบล้มเหลว");
             }
