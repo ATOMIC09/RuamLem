@@ -12,9 +12,11 @@ export async function uploadFile(token: string, file: File) {
         //    console.log(token, file.name, file.type, file.size)
         const { data: user, error } = await supabase.auth.getClaims(token);
         if (error || !user) {
-            return { sccess: false, message: "Invalid session" };
+            return { success: false, message: "Invalid session" };
         } else {
-            return uploadPDF(file, "0", "0");
+            const userId = user.claims.sub; // Get actual user ID
+            console.log("👤 User ID from token:", userId);
+            return uploadPDF(file, userId, null, token); // Pass token for storage auth
         }
     }
     catch (err: any) {

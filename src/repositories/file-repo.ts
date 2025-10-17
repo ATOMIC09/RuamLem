@@ -1,6 +1,6 @@
 import { supabase } from "../supabase";
 
-export async function uploadPDF(file: File, user_id:string, post_id:string) {
+export async function uploadPDF(file: File, user_id: string, post_id: string | null) {
     try {
         const timestamp = Date.now();
         const fileName = `${timestamp}_${user_id}`;
@@ -12,27 +12,39 @@ export async function uploadPDF(file: File, user_id:string, post_id:string) {
             .upload(filePath, file);
 
         if (uploadError) {
-
-            // console.log(uploadError)
+            console.log("❌ Storage upload error:", uploadError);
             return { success: false, message: uploadError.message };
         }
 
+        console.log("✅ File uploaded to storage:", filePath);
+
+        const insertData = {
+            file_name: file.name,
+            file_url: filePath,
+            file_size: file.size,
+            post_id: post_id, // Can be null for standalone files
+            user_id: user_id
+        };
+
+        console.log("💾 Inserting file record:", insertData);
 
         const {data: fileTable, error: errorFileTable} = await supabase
         .from("files")
-        .insert([{
-            file_name:file.name,
-            file_url:filePath,
-            file_size:file.size,
-            post_id:post_id,
-            user_id:user_id
-        }])
+        .insert([insertData])
         .select("id")
         .single();
 
-        return { success: true, path: filePath };
+        if (errorFileTable) {
+            console.log("❌ Database insert error:", errorFileTable);
+            return { success: false, message: errorFileTable.message };
+        }
+
+        console.log("✅ File record inserted:", fileTable);
+
+        return { success: true, path: filePath, fileId: fileTable.id };
     }
     catch (err: any) {
+        console.log("❌ Upload error:", err);
         return { status: 500, message: err.message };
     }
 

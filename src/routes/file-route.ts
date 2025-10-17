@@ -7,6 +7,7 @@ export const fileRoute = (app: Elysia) => {
         if (!authHeader) return { status: 401, message: "No token" };
         const token = authHeader.split(" ")[1];
 
+        console.log("🔑 Token received:", token.substring(0, 20) + "...");
 
         const formData = await c.request.formData();
         const file = formData.get("pdf") as File;
@@ -15,7 +16,12 @@ export const fileRoute = (app: Elysia) => {
             return { status: 400, message: "No file uploaded" };
         }
 
-        return uploadFile(token, file);
+        console.log("📁 File received:", file.name, "Size:", file.size, "Type:", file.type);
+
+        const result = await uploadFile(token, file);
+        console.log("📤 Upload result:", result);
+        
+        return result;
 
     }, {
         detail: {
