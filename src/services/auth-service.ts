@@ -12,7 +12,7 @@ import "dotenv/config";
 
 export function validatePassword(password: string): boolean {
   /* ความยาวขั้นต่ำ 8
-     มีพมิพ์เล็ก หรือ พิมพ์ใหญ่อย่างน้อย 1
+     มีพิมพ์เล็ก หรือ พิมพ์ใหญ่อย่างน้อย 1
      เเละมีเลข
    */
   if (password.length < 8) return false;
