@@ -11,6 +11,9 @@ export async function createAuthUser(email: string, password: string, firstName:
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: 'http://localhost:3000/confirm-email'
+      }
     });
 
 
