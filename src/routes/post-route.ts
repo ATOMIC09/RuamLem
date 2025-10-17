@@ -58,21 +58,13 @@ export const postRoute = (app: Elysia) => {
         }
     });
 
-     app.post("/getPost", async (c) => {
+     app.post("/getPost", async ({ body }) => {
         try {
-            let count = 10; // default value
-            
-            // Check if request has a body
-            const contentLength = c.request.headers.get("content-length");
-            if (contentLength && parseInt(contentLength) > 0) {
-                const body = await c.request.json();
-                count = body.count || 10;
-            }
-            
+            const count = body?.count || 10;
             return getPostController(count);
-        } catch (error) {
-            // If JSON parsing fails, use default count
-            return getPostController(10);
+        } catch (error: any) {
+            console.log("Error in getPost:", error);
+            return { status: 500, message: "Internal server error", error: error.message };
         }
     }, {
         body: t.Optional(t.Object({
@@ -85,9 +77,8 @@ export const postRoute = (app: Elysia) => {
         }
     });
 
-    app.post("/getPostFilter", async (c) => {
+    app.post("/getPostFilter", async ({ body }) => {
         try {
-            const body = await c.request.json();
             const tags = body.tags;
             const count = body.count || 10;
             
@@ -96,8 +87,9 @@ export const postRoute = (app: Elysia) => {
             }
             
             return getPostFilterController(tags, count);
-        } catch (error) {
-            return { status: 400, message: "Invalid JSON in request body" };
+        } catch (error: any) {
+            console.log("Error in getPostFilter:", error);
+            return { status: 500, message: "Internal server error", error: error.message };
         }
     }, {
         body: t.Object({
@@ -111,9 +103,8 @@ export const postRoute = (app: Elysia) => {
         }
     });
 
-    app.post("/getPostAfter", async (c) => {
+    app.post("/getPostAfter", async ({ body }) => {
         try {
-            const body = await c.request.json();
             const lastId = body.lastId;
             const count = body.count || 10;
             
@@ -122,8 +113,9 @@ export const postRoute = (app: Elysia) => {
             }
             
             return getPostAfterController(lastId, count);
-        } catch (error) {
-            return { status: 400, message: "Invalid JSON in request body" };
+        } catch (error: any) {
+            console.log("Error in getPostAfter:", error);
+            return { status: 500, message: "Internal server error", error: error.message };
         }
     }, {
         body: t.Object({
@@ -137,9 +129,8 @@ export const postRoute = (app: Elysia) => {
         }
     });
 
-    app.post("/getComment", async (c) => {
+    app.post("/getComment", async ({ body }) => {
         try {
-            const body = await c.request.json();
             const postId = body.postId;
             
             if (!postId) {
@@ -147,8 +138,9 @@ export const postRoute = (app: Elysia) => {
             }
             
             return getCommentController(postId);
-        } catch (error) {
-            return { status: 400, message: "Invalid JSON in request body" };
+        } catch (error: any) {
+            console.log("Error in getComment:", error);
+            return { status: 500, message: "Internal server error", error: error.message };
         }
     }, {
         body: t.Object({
