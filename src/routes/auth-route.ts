@@ -4,9 +4,8 @@ import { decryptRSA } from "../services/auth-service";
 // import { supabase } from "../supabase";
 
 export const authRoute = (app: Elysia) => {
-  app.post("/auth/signUp", async (c) => {
+  app.post("/auth/signUp", async ({ body }) => {
     try {
-      const body = await c.request.json();
       const encryptedData = body.data;
 
       // decrypt
@@ -34,9 +33,8 @@ export const authRoute = (app: Elysia) => {
     }
   });
 
-  app.post("/auth/signIn", async (c) => {
+  app.post("/auth/signIn", async ({ body }) => {
 
-    const body = await c.request.json();
     const encryptedData = body.data;
 
     const decryptedJSON = decryptRSA(encryptedData);
@@ -71,8 +69,7 @@ export const authRoute = (app: Elysia) => {
     }
   });
 
-  app.post("/auth/forget", async (c) =>{
-    const body = await c.request.json();
+  app.post("/auth/forget", async ({ body }) =>{
     const email = body.email;
 
     if(!email){

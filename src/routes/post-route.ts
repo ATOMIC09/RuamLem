@@ -31,18 +31,15 @@ export const postRoute = (app: Elysia) => {
         }
     });
 
-    app.post("/comment", async (c) => {
-        const authHeader = c.request.headers.get("authorization");
+    app.post("/comment", async ({ request, body }) => {
+        const authHeader = request.headers.get("authorization");
         if (!authHeader) return { status: 401, message: "No token" };
         const token = authHeader.split(" ")[1];
 
-        const body = await c.request.json();
         const postId = body.post_id;
         const postBody = body.post_body;
 
-
         // console.log(postId, postBody);
-
         
         return comment(token, postId, postBody);
     }, {
