@@ -35,13 +35,15 @@ export default function PreviewPost({ post }: PreviewPostProps) {
             <div className="w-full bg-white p-6 rounded-3xl shadow-sm border border-[#e0e7f1] text-[#5e7593] hover:shadow-md transition-shadow cursor-pointer">
             {/* Author */}
             <div className="flex items-center mb-4">
-                <Image
-                    src={postData.author.avatar}
-                    alt="Author"
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full mr-3"
-                />
+                {postData.author.avatar && (
+                    <Image
+                        src={postData.author.avatar}
+                        alt="Author"
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full mr-3"
+                    />
+                )}
                 {/* Username and Postdate */}
                 <div className="flex-grow">
                     <div className="font-bold text-[#1c2a48]">{postData.author.name}</div>

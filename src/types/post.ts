@@ -1,7 +1,7 @@
 // Types for the post system
 export interface PostAuthor {
   name: string;
-  avatar: string;
+  avatar?: string;
 }
 
 export interface PostAttachment {

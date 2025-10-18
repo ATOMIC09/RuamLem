@@ -1,9 +1,34 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { HiSortDescending } from "react-icons/hi";
 import SearchBox from "../components/searchbox";
 import PreviewPost from "../components/previewpost";
 import PostButton from "../components/post-button";
+import * as postService from "@/services/post.service";
+import AuthGuard from "../components/auth-guard";
 
-export default function CommunityPage() {
+function CommunityPageContent() {
+  const [posts, setPosts] = useState<postService.Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    setIsLoading(true);
+    setError("");
+    const result = await postService.getPosts(10);
+    if (result.error) {
+      setError(result.error);
+    } else if (result.posts) {
+      setPosts(result.posts);
+    }
+    setIsLoading(false);
+  };
+
   return (
     <div className="flex flex-col min-h-screen items-center p-8 sm:p-20">
       {/* Page Header */}
@@ -42,70 +67,84 @@ export default function CommunityPage() {
 
       {/* Posts Grid */}
       <div className="w-full max-w-6xl mx-auto">
+        {/* Error State */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm text-center">
+            {error}
+          </div>
+        )}
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-16">
+            <p className="text-[#5e7593]">กำลังโหลดโพสต์...</p>
+          </div>
+        )}
+
         {/* Stats Bar */}
-        <div className="mb-6 text-center">
-          <p className="text-sm text-[#7a8b99]">แสดง 4 โพสต์ จากทั้งหมด 24 โพสต์</p>
-        </div>
+        {!isLoading && (
+          <div className="mb-6 text-center">
+            <p className="text-sm text-[#7a8b99]">แสดง {posts.length} โพสต์</p>
+          </div>
+        )}
         
         {/* Responsive Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          <PreviewPost post={{
-            id: "1",
-            title: "สรุปมิดเทอมวิชา Software Engineering",
-            author: { name: "John Doe", avatar: "/anonym.jpg" },
-            createdAt: "วันศุกร์ เวลา 13:40 น.",
-            category: "Software Engineering",
-            attachments: [{ name: "Midterm Note.pdf", size: "2.5 MB", type: "pdf" }]
-          }} />
-          <PreviewPost post={{
-            id: "2",
-            title: "เทคนิคการทำโจทย์คณิตศาสตร์",
-            author: { name: "Jane Smith", avatar: "/anonym.jpg" },
-            createdAt: "วันพฤหัสบดี เวลา 15:20 น.",
-            category: "คณิตศาสตร์",
-            attachments: [{ name: "Math Techniques.pdf", size: "1.8 MB", type: "pdf" }]
-          }} />
-          <PreviewPost post={{
-            id: "3",
-            title: "สรุปไวยากรณ์ภาษาอังกฤษ",
-            author: { name: "Mike Johnson", avatar: "/anonym.jpg" },
-            createdAt: "วันพุธ เวลา 09:15 น.",
-            category: "ภาษาอังกฤษ",
-            attachments: [{ name: "English Grammar.pdf", size: "3.2 MB", type: "pdf" }]
-          }} />
-          <PreviewPost post={{
-            id: "4",
-            title: "สรุปเคมีอนินทรีย์",
-            author: { name: "Sarah Wilson", avatar: "/anonym.jpg" },
-            createdAt: "วันจันทร์ เวลา 11:30 น.",
-            category: "เคมี",
-            attachments: [{ name: "Inorganic Chemistry.pdf", size: "4.1 MB", type: "pdf" }]
-          }} />
-        </div>
+        {!isLoading && posts.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {posts.map((post) => (
+              <PreviewPost
+                key={post.id}
+                post={{
+                  id: String(post.id),
+                  title: post.title,
+                  author: {
+                    name: post.user_info 
+                      ? `${post.user_info.firstName} ${post.user_info.lastName}`
+                      : post.author 
+                      ? `${post.author.firstName} ${post.author.lastName}`
+                      : "Anonymous",
+                  },
+                  createdAt: new Date(post.created_at || post.createdAt || new Date()).toLocaleDateString('th-TH', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  }),
+                  category: post.tag || "General",
+                  attachments: post.pdfUrl || post.filePath ? [{ name: "File", size: "", type: "pdf" }] : [],
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && posts.length === 0 && !error && (
+          <div className="w-full max-w-2xl mx-auto text-center py-16">
+            <div className="text-6xl mb-4">📚</div>
+            <h3 className="text-xl font-semibold text-[#1c2a48] mb-2">ยังไม่มีโพสต์</h3>
+            <p className="text-[#5e7593] mb-6">เป็นคนแรกที่แชร์ความรู้ในชุมชน!</p>
+          </div>
+        )}
         
         {/* Load More Button */}
-        <div className="text-center mt-8">
-          <button className="px-8 py-3 bg-white border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all shadow-sm font-medium cursor-pointer">
-            โหลดเพิ่มเติม
-          </button>
-        </div>
+        {!isLoading && posts.length > 0 && (
+          <div className="text-center mt-8">
+            <button className="px-8 py-3 bg-white border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all shadow-sm font-medium cursor-pointer">
+              โหลดเพิ่มเติม
+            </button>
+          </div>
+        )}
       </div>
-
-      {/* Empty State (you can conditionally show this when no posts) */}
-      {/* 
-      <div className="w-full max-w-2xl mx-auto text-center py-16">
-        <div className="text-6xl mb-4">📚</div>
-        <h3 className="text-xl font-semibold text-[#1c2a48] mb-2">ยังไม่มีโพสต์</h3>
-        <p className="text-[#5e7593] mb-6">เป็นคนแรกที่แชร์ความรู้ในชุมชน!</p>
-        <Link 
-          href="/post" 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors"
-        >
-          <IoMdAdd size={20} />
-          เพิ่มโพสต์แรก
-        </Link>
-      </div>
-      */}
     </div>
+  );
+}
+
+export default function CommunityPage() {
+  return (
+    <AuthGuard>
+      <CommunityPageContent />
+    </AuthGuard>
   );
 }

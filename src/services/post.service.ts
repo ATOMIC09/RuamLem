@@ -18,15 +18,22 @@ export interface Post {
   id: number;
   title: string;
   body: string;
-  tag: string;
-  author: {
+  tag?: string;
+  user_id?: string;
+  created_at?: string;
+  createdAt?: string;
+  pdfUrl?: string;
+  filePath?: string;
+  user_info?: {
+    firstName: string;
+    lastName: string;
+  };
+  author?: {
     id: number;
     firstName: string;
     lastName: string;
     email: string;
   };
-  createdAt: string;
-  pdfUrl?: string;
   comments?: Comment[];
 }
 
@@ -102,12 +109,19 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
 
 export async function getPosts(count: number = 10): Promise<{ posts?: Post[]; error?: string }> {
   try {
-    const response = await apiRequest<{ posts?: Post[]; error?: string }>('/getPost', {
+    const response = await apiRequest<{ status: number; data?: Post[]; error?: string }>('/getPost', {
       method: 'POST',
       data: { count },
     });
 
-    return response;
+    // Backend returns { status: 200, data: [...] }
+    if (response.data && Array.isArray(response.data)) {
+      return { posts: response.data };
+    }
+
+    return {
+      error: response.error || 'การดึงข้อมูลโพสต์ล้มเหลว',
+    };
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : 'การดึงข้อมูลโพสต์ล้มเหลว',
