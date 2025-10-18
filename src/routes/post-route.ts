@@ -9,24 +9,24 @@ export const postRoute = (app: Elysia) => {
 
 
         const formData = await c.request.formData();
-        const file = formData.get("file") as File;
+        const files = formData.getAll("files") as File[];
         const title = formData.get("title") as string;
         const body = formData.get("body") as string;
         const tag = formData.get("tag") as string
 
 
-        if (!file) {
-            return { status: 400, message: "No file uploaded" };
+        if (!files || files.length === 0) {
+            return { status: 400, message: "No files uploaded" };
         }
 
 
-        return post(token, title, body, tag, file);
+        return post(token, title, body, tag, files);
 
     }, {
         detail: {
             tags: ['Posts'],
             summary: 'Create Post',
-            description: 'Create a new post with file attachment (supports any file up to 50MB)',
+            description: 'Create a new post with file attachments (supports up to 10 files, any file up to 50MB)',
             security: [{ bearerAuth: [] }]
         }
     });
