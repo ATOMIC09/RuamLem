@@ -1,16 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { IoMdPricetag, IoMdAdd, IoMdClose } from "react-icons/io";
 import { GoPaperclip } from "react-icons/go";
 import AuthGuard from "../components/auth-guard";
+import * as postService from "@/services/post.service";
 
 function AddPostForm() {
+    const router = useRouter();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [tags, setTags] = useState<string[]>([]);
     const [newTag, setNewTag] = useState("");
-    const [files, setFiles] = useState<FileList | null>(null);
+    const [files, setFiles] = useState<File[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
 
     const addTag = () => {
         if (newTag.trim() && !tags.includes(newTag.trim())) {
@@ -24,13 +30,81 @@ function AddPostForm() {
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFiles(e.target.files);
+        if (e.target.files) {
+            setFiles(Array.from(e.target.files));
+        }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Handle form submission here
-        console.log("Post data:", { title, description, tags, files });
+        setIsLoading(true);
+        setError("");
+        setSuccess(false);
+
+        // Validation
+        if (!title.trim()) {
+            setError("กรุณากรอกหัวข้อโพสต์");
+            setIsLoading(false);
+            return;
+        }
+
+        if (tags.length === 0) {
+            setError("กรุณาเพิ่มอย่างน้อยหนึ่งแท็ก");
+            setIsLoading(false);
+            return;
+        }
+
+        if (files.length === 0) {
+            setError("กรุณาแนบไฟล์อย่างน้อยหนึ่งไฟล์");
+            setIsLoading(false);
+            return;
+        }
+
+        if (files.length > 1) {
+            setError("กรุณาแนบไฟล์เพียงหนึ่งไฟล์เท่านั้น");
+            setIsLoading(false);
+            return;
+        }
+
+        // Check file size (50MB max)
+        const MAX_FILE_SIZE = 50 * 1024 * 1024;
+        if (files[0].size > MAX_FILE_SIZE) {
+            setError("ขนาดไฟล์ต้องไม่เกิน 50MB");
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            // Call the backend service to create post
+            const response = await postService.createPost({
+                title: title.trim(),
+                body: description.trim(),
+                tags: tags,
+                files: files,
+            });
+
+            if (response.error) {
+                setError(response.error || "การสร้างโพสต์ล้มเหลว");
+                setIsLoading(false);
+                return;
+            }
+
+            // Success - show message and redirect
+            setSuccess(true);
+            setTitle("");
+            setDescription("");
+            setTags([]);
+            setFiles([]);
+
+            // Redirect to community page after 2 seconds
+            setTimeout(() => {
+                router.push("/community");
+            }, 2000);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -48,6 +122,20 @@ function AddPostForm() {
                 {/* Add Post Form */}
                 <div className="w-full max-w-2xl mx-auto border border-[#e0e7f1] rounded-3xl bg-white shadow-sm p-8">
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Error Message */}
+                        {error && (
+                            <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm">
+                                {error}
+                            </div>
+                        )}
+
+                        {/* Success Message */}
+                        {success && (
+                            <div className="p-4 bg-green-50 border border-green-200 rounded-2xl text-green-600 text-sm">
+                                โพสต์สำเร็จ! กำลังเปลี่ยนหน้า...
+                            </div>
+                        )}
+
                         {/* Title Input */}
                         <div>
                             <label htmlFor="title" className="block text-sm font-medium text-[#1c2a48] mb-2">
@@ -137,14 +225,14 @@ function AddPostForm() {
                                     type="file"
                                     multiple
                                     onChange={handleFileChange}
-                                    accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png"
+                                    accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.txt"
                                     className="hidden"
                                     id="file-upload"
                                 />
                                 <label htmlFor="file-upload" className="cursor-pointer">
                                     <GoPaperclip className="mx-auto mb-2 text-2xl text-[#5e7593]" />
                                     <p className="text-[#5e7593] font-medium">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวาง</p>
-                                    <p className="text-sm text-[#7a8b99] mt-1">รองรับ PDF, Word, PowerPoint, รูปภาพ</p>
+                                    <p className="text-sm text-[#7a8b99] mt-1">ขนาดสูงสุด 50MB (PDF, Word, PowerPoint, รูปภาพ, Text)</p>
                                 </label>
                             </div>
 
@@ -166,16 +254,17 @@ function AddPostForm() {
                             <button
                                 type="button"
                                 onClick={() => window.history.back()}
-                                className="flex-1 px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] transition-colors font-medium shadow-sm hover:shadow-md cursor-pointer"
+                                disabled={isLoading}
+                                className="flex-1 px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm hover:shadow-md cursor-pointer"
                             >
                                 ยกเลิก
                             </button>
                             <button
                                 type="submit"
-                                disabled={!title.trim()}
+                                disabled={!title.trim() || isLoading}
                                 className="flex-1 px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] disabled:bg-[#7a8b99] disabled:cursor-not-allowed transition-colors font-medium shadow-sm hover:shadow-md cursor-pointer"
                             >
-                                โพสต์
+                                {isLoading ? "กำลังโพสต์..." : "โพสต์"}
                             </button>
                         </div>
                     </form>

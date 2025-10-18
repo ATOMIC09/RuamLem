@@ -1,12 +1,12 @@
 // Post service
 
-import { apiRequest, getAuthHeaders } from '@/lib/api';
+import { apiRequest } from '@/lib/api';
 
 export interface CreatePostData {
   title: string;
   body: string;
-  tag: string;
-  pdf: File;
+  tags: string[];
+  files?: File[];
 }
 
 export interface CreateCommentData {
@@ -45,24 +45,57 @@ export interface Comment {
 
 export async function createPost(data: CreatePostData): Promise<{ post?: Post; error?: string }> {
   try {
+    // Validate that files are provided
+    if (!data.files || data.files.length === 0) {
+      return {
+        error: 'กรุณาแนบไฟล์อย่างน้อยหนึ่งไฟล์',
+      };
+    }
+
+    // Backend only accepts a single file
+    if (data.files.length > 1) {
+      return {
+        error: 'กรุณาแนบไฟล์เพียงหนึ่งไฟล์เท่านั้น',
+      };
+    }
+
+    const file = data.files[0];
+    
+    // Validate file size - max 50MB
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        error: 'ขนาดไฟล์ต้องไม่เกิน 50MB',
+      };
+    }
+
     const formData = new FormData();
     formData.append('title', data.title);
     formData.append('body', data.body);
-    formData.append('tag', data.tag);
-    formData.append('pdf', data.pdf);
+    formData.append('tag', data.tags.join(','));
+    // Backend expects the field to be named "file"
+    formData.append('file', file);
 
-    const response = await apiRequest<{ post?: Post; error?: string }>('/post', {
+    const response = await apiRequest<{ post?: Post; error?: string; success?: boolean; message?: string }>('/post', {
       method: 'POST',
-      headers: {
-        ...getAuthHeaders(),
-      },
-      body: formData,
+      data: formData,
+      isFormData: true,
     });
+
+    // Handle various response formats from backend
+    if (response.error) {
+      return { error: response.error };
+    }
+
+    if (!response.success && response.message) {
+      return { error: response.message };
+    }
 
     return response;
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'การสร้างโพสต์ล้มเหลว';
     return {
-      error: error instanceof Error ? error.message : 'การสร้างโพสต์ล้มเหลว',
+      error: errorMessage,
     };
   }
 }
@@ -71,10 +104,7 @@ export async function getPosts(count: number = 10): Promise<{ posts?: Post[]; er
   try {
     const response = await apiRequest<{ posts?: Post[]; error?: string }>('/getPost', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ count }),
+      data: { count },
     });
 
     return response;
@@ -89,10 +119,7 @@ export async function getPostsByTag(tags: string, count: number = 10): Promise<{
   try {
     const response = await apiRequest<{ posts?: Post[]; error?: string }>('/getPostFilter', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ tags, count }),
+      data: { tags, count },
     });
 
     return response;
@@ -107,10 +134,7 @@ export async function getPostsAfter(lastId: number, count: number = 10): Promise
   try {
     const response = await apiRequest<{ posts?: Post[]; error?: string }>('/getPostAfter', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ lastId, count }),
+      data: { lastId, count },
     });
 
     return response;
@@ -125,10 +149,7 @@ export async function getComments(postId: number): Promise<{ comments?: Comment[
   try {
     const response = await apiRequest<{ comments?: Comment[]; error?: string }>('/getComment', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ postId }),
+      data: { postId },
     });
 
     return response;
@@ -143,11 +164,7 @@ export async function createComment(data: CreateCommentData): Promise<{ comment?
   try {
     const response = await apiRequest<{ comment?: Comment; error?: string }>('/comment', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders(),
-      },
-      body: JSON.stringify(data),
+      data: data,
     });
 
     return response;

@@ -85,11 +85,19 @@ export async function apiRequest<T = unknown>(
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorData = error.response?.data as Record<string, unknown> | undefined;
-      const message = (errorData?.error as string) || 
-                     (errorData?.message as string) || 
-                     error.message ||
-                     'An error occurred';
-      throw new ApiError(message, error.response?.status || 500);
+      
+      // Extract error message from various possible response formats
+      let message = 'An error occurred';
+      if (errorData?.message) {
+        message = String(errorData.message);
+      } else if (errorData?.error) {
+        message = String(errorData.error);
+      } else if (error.message) {
+        message = error.message;
+      }
+
+      const statusCode = error.response?.status || 500;
+      throw new ApiError(message, statusCode);
     }
     throw new ApiError(error instanceof Error ? error.message : 'Network error');
   }
