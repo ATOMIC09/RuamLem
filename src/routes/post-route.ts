@@ -9,7 +9,7 @@ export const postRoute = (app: Elysia) => {
 
 
         const formData = await c.request.formData();
-        const file = formData.get("pdf") as File;
+        const file = formData.get("file") as File;
         const title = formData.get("title") as string;
         const body = formData.get("body") as string;
         const tag = formData.get("tag") as string
@@ -26,7 +26,7 @@ export const postRoute = (app: Elysia) => {
         detail: {
             tags: ['Posts'],
             summary: 'Create Post',
-            description: 'Create a new post with PDF attachment',
+            description: 'Create a new post with file attachment (supports any file up to 50MB)',
             security: [{ bearerAuth: [] }]
         }
     });

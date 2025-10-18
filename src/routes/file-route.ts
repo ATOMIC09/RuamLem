@@ -10,7 +10,7 @@ export const fileRoute = (app: Elysia) => {
         console.log("🔑 Token received:", token.substring(0, 20) + "...");
 
         const formData = await c.request.formData();
-        const file = formData.get("pdf") as File;
+        const file = formData.get("file") as File;
 
         if (!file) {
             return { status: 400, message: "No file uploaded" };
@@ -27,7 +27,7 @@ export const fileRoute = (app: Elysia) => {
         detail: {
             tags: ['Files'],
             summary: 'Upload File',
-            description: 'Upload a PDF file (requires authentication)',
+            description: 'Upload any file up to 50MB (requires authentication)',
             security: [{ bearerAuth: [] }]
         }
     });

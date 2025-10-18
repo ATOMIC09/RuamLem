@@ -4,9 +4,10 @@ import { uploadPDF, downloadPDF } from "../repositories/file-repo";
 
 export async function uploadFile(token: string, file: File) {
     try {
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
-        if (file.type !== "application/pdf") {
-            return { success: false, message: "Only PDF allowed" };
+        if (file.size > MAX_FILE_SIZE) {
+            return { success: false, message: "File size must be under 50MB" };
         }
 
         //    console.log(token, file.name, file.type, file.size)

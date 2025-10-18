@@ -7,14 +7,15 @@ import { asHookType } from "elysia/dist/utils";
 
 export async function post(token: string, title: string, body: string, tag: string, file: File) {
     try {
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
-        if (file.type !== "application/pdf") {
-            return { success: false, message: "Only PDF allowed" };
+        if (file.size > MAX_FILE_SIZE) {
+            return { success: false, message: "File size must be under 50MB" };
         }
 
         const { data: user, error } = await supabase.auth.getClaims(token);
         if (error || !user) {
-            return { sccess: false, message: "Invalid session" };
+            return { success: false, message: "Invalid session" };
         }
         const userId = user.claims.sub;
 
