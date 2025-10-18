@@ -87,6 +87,17 @@ export default function PreviewPost({ post, fileName }: PreviewPostProps) {
             <div className="mb-4">
                 <h2 className="text-xl font-bold text-[#1c2a48] line-clamp-2">{postData.title}</h2>
             </div>
+            
+            {/* Description - 2-3 lines truncated */}
+            {postData.description && (
+                <div className="mb-4">
+                    <p className="text-sm text-[#5e7593] line-clamp-3 mb-2">{postData.description}</p>
+                    <Link href={`/post/${postData.id}`} className="text-sm text-[#405168] font-medium hover:text-[#2d3a4c] transition-colors">
+                        อ่านเพิ่มเติม →
+                    </Link>
+                </div>
+            )}
+
             {/* PDF Attachments download button*/}
             {postData.attachments && postData.attachments.length > 0 && (
                 <div className="pt-2 border-t border-[#f0f4f8]">

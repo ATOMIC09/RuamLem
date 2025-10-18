@@ -25,6 +25,7 @@ export interface Post {
 export interface PostPreview {
   id: string;
   title: string;
+  description?: string;
   author: PostAuthor;
   createdAt: string;
   category: string;

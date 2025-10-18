@@ -97,6 +97,7 @@ function CommunityPageContent() {
                 post={{
                   id: String(post.id),
                   title: post.title,
+                  description: post.body,
                   author: {
                     name: post.user_info 
                       ? `${post.user_info.firstName} ${post.user_info.lastName}`
