@@ -6,8 +6,9 @@ export interface PostAuthor {
 
 export interface PostAttachment {
   name: string;
-  size: string;
+  size?: string;
   type: string;
+  file_size?: number;
 }
 
 export interface Post {

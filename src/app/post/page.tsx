@@ -83,6 +83,10 @@ function AddPostForm() {
         }
     };
 
+    const removeFile = (index: number) => {
+        setFiles(files.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -108,18 +112,20 @@ function AddPostForm() {
             return;
         }
 
-        if (files.length > 1) {
-            setError("กรุณาแนบไฟล์เพียงหนึ่งไฟล์เท่านั้น");
+        if (files.length > 10) {
+            setError("จำนวนไฟล์ต้องไม่เกิน 10 ไฟล์");
             setIsLoading(false);
             return;
         }
 
-        // Check file size (50MB max)
+        // Check file size (50MB max per file)
         const MAX_FILE_SIZE = 50 * 1024 * 1024;
-        if (files[0].size > MAX_FILE_SIZE) {
-            setError("ขนาดไฟล์ต้องไม่เกิน 50MB");
-            setIsLoading(false);
-            return;
+        for (const file of files) {
+            if (file.size > MAX_FILE_SIZE) {
+                setError(`ไฟล์ ${file.name} มีขนาดเกิน 50MB`);
+                setIsLoading(false);
+                return;
+            }
         }
 
         try {
@@ -330,7 +336,7 @@ function AddPostForm() {
                         {/* File Upload Section */}
                         <div>
                             <label className="block text-sm font-medium text-[#1c2a48] mb-2">
-                                แนบไฟล์
+                                แนบไฟล์ <span className="text-red-500">*</span> (สูงสุด 10 ไฟล์)
                             </label>
                             <div className="border-2 border-dashed border-[#e0e7f1] rounded-2xl p-6 text-center bg-[#f8f9fa] hover:bg-[#f0f4f8] transition-colors">
                                 <input
@@ -344,19 +350,39 @@ function AddPostForm() {
                                 <label htmlFor="file-upload" className="cursor-pointer">
                                     <GoPaperclip className="mx-auto mb-2 text-2xl text-[#5e7593]" />
                                     <p className="text-[#5e7593] font-medium">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวาง</p>
-                                    <p className="text-sm text-[#7a8b99] mt-1">ขนาดสูงสุด 50MB (PDF, Word, PowerPoint, รูปภาพ, Text)</p>
+                                    <p className="text-sm text-[#7a8b99] mt-1">ขนาดสูงสุด 50MB ต่อไฟล์ (PDF, Word, PowerPoint, รูปภาพ, Text)</p>
                                 </label>
                             </div>
 
-                            {/* Display selected files */}
+                            {/* Display selected files with count */}
                             {files && files.length > 0 && (
-                                <div className="mt-3 space-y-2">
-                                    {Array.from(files).map((file, index) => (
-                                        <div key={index} className="flex items-center px-4 py-2 bg-[#e0e7f1] rounded-2xl text-[#5e7593]">
-                                            <GoPaperclip className="mr-2 flex-shrink-0" />
-                                            <span className="text-sm truncate">{file.name}</span>
-                                        </div>
-                                    ))}
+                                <div className="mt-4">
+                                    <div className="mb-2 flex items-center justify-between">
+                                        <p className="text-sm font-medium text-[#1c2a48]">
+                                            ไฟล์ที่เลือก ({files.length}/10)
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {Array.from(files).map((file, index) => (
+                                            <div key={index} className="flex items-center justify-between px-4 py-3 bg-[#f8f9fa] rounded-2xl text-[#5e7593] border border-[#e0e7f1] hover:bg-[#f0f4f8] transition-colors">
+                                                <div className="flex items-center flex-1 min-w-0">
+                                                    <GoPaperclip className="mr-3 flex-shrink-0 text-lg" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium truncate text-[#1c2a48]">{file.name}</p>
+                                                        <p className="text-xs text-[#7a8b99]">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeFile(index)}
+                                                    className="ml-3 flex-shrink-0 text-[#7a8b99] hover:text-red-500 transition-colors cursor-pointer"
+                                                    title="Remove file"
+                                                >
+                                                    <IoMdClose size={18} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>

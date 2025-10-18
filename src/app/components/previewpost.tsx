@@ -117,17 +117,29 @@ export default function PreviewPost({ post, fileName }: PreviewPostProps) {
                 </div>
             )}
 
-            {/* PDF Attachments download button*/}
+            {/* All Attachments download buttons */}
             {postData.attachments && postData.attachments.length > 0 && (
-                <div className="pt-2 border-t border-[#f0f4f8]">
-                    <button
-                        onClick={handleDownload}
-                        disabled={!fileName}
-                        className="flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors w-full justify-center border border-[#e0e7f1] group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {postData.attachments[0].type ? getFileIcon(postData.attachments[0].type) : <GoPaperclip className="mr-2 group-hover:scale-110 transition-transform" />}
-                        <span className="text-sm font-medium truncate">{postData.attachments[0].name}</span>
-                    </button>
+                <div className="pt-4 border-t border-[#f0f4f8] space-y-2">
+                    {postData.attachments.map((attachment, index) => (
+                        <button
+                            key={index}
+                            onClick={handleDownload}
+                            disabled={!fileName}
+                            className="w-full flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors border border-[#e0e7f1] group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {attachment.type ? getFileIcon(attachment.type) : <GoPaperclip className="mr-2 group-hover:scale-110 transition-transform" />}
+                            <div className="flex flex-col items-start flex-1 min-w-0">
+                                <span className="text-sm font-medium truncate text-left">{attachment.name}</span>
+                                {attachment.file_size && (
+                                    <span className="text-xs text-[#7a8b99]">{(attachment.file_size / 1024 / 1024).toFixed(2)} MB</span>
+                                )}
+                                {attachment.size && (
+                                    <span className="text-xs text-[#7a8b99]">{attachment.size}</span>
+                                )}
+                            </div>
+                            <span className="text-xs text-[#405168] ml-2 flex-shrink-0">📥</span>
+                        </button>
+                    ))}
                 </div>
             )}
             {/* Comment count */}

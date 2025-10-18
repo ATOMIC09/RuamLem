@@ -89,29 +89,32 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
       };
     }
 
-    // Backend only accepts a single file
-    if (data.files.length > 1) {
+    // Maximum 10 files allowed
+    if (data.files.length > 10) {
       return {
-        error: 'กรุณาแนบไฟล์เพียงหนึ่งไฟล์เท่านั้น',
+        error: 'จำนวนไฟล์ต้องไม่เกิน 10 ไฟล์',
       };
     }
 
-    const file = data.files[0];
-    
-    // Validate file size - max 50MB
+    // Validate each file size - max 50MB per file
     const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-    if (file.size > MAX_FILE_SIZE) {
-      return {
-        error: 'ขนาดไฟล์ต้องไม่เกิน 50MB',
-      };
+    for (const file of data.files) {
+      if (file.size > MAX_FILE_SIZE) {
+        return {
+          error: `ไฟล์ ${file.name} มีขนาดเกิน 50MB`,
+        };
+      }
     }
 
     const formData = new FormData();
     formData.append('title', data.title);
     formData.append('body', data.body);
     formData.append('tag', data.tags.join(','));
-    // Backend expects the field to be named "file"
-    formData.append('file', file);
+    
+    // Backend expects the field to be named "files" and accepts multiple files
+    for (const file of data.files) {
+      formData.append('files', file);
+    }
 
     const response = await apiRequest<{ post?: Post; error?: string; success?: boolean; message?: string }>('/post', {
       method: 'POST',
