@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { IoMdPricetag } from "react-icons/io";
 import { GoPaperclip } from "react-icons/go";
+import { MdImage, MdDescription } from "react-icons/md";
 import { PostPreview } from "../../types/post";
 import { getFileDownloadUrl } from "../../services/post.service";
 
@@ -13,6 +14,24 @@ interface PreviewPostProps {
 }
 
 export default function PreviewPost({ post, fileName }: PreviewPostProps) {
+    
+    // Helper function to get the appropriate icon based on file type
+    const getFileIcon = (fileType: string) => {
+        const type = fileType.toLowerCase();
+        
+        // Check if it's an image (either by extension or MIME type)
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'].includes(type)) {
+            return <MdImage className="mr-2 group-hover:scale-110 transition-transform" />;
+        } 
+        // Check if it's a PDF
+        else if (type === 'pdf' || type === 'application/pdf') {
+            return <MdDescription className="mr-2 group-hover:scale-110 transition-transform" />;
+        } 
+        // Default to paperclip for other files
+        else {
+            return <GoPaperclip className="mr-2 group-hover:scale-110 transition-transform" />;
+        }
+    };
     
     // Default mock data if no post prop is provided
     const defaultPost: PostPreview = {
@@ -106,7 +125,7 @@ export default function PreviewPost({ post, fileName }: PreviewPostProps) {
                         disabled={!fileName}
                         className="flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors w-full justify-center border border-[#e0e7f1] group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <GoPaperclip className="mr-2 group-hover:scale-110 transition-transform" />
+                        {postData.attachments[0].type ? getFileIcon(postData.attachments[0].type) : <GoPaperclip className="mr-2 group-hover:scale-110 transition-transform" />}
                         <span className="text-sm font-medium truncate">{postData.attachments[0].name}</span>
                     </button>
                 </div>
