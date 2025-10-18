@@ -3,6 +3,11 @@
 import { apiRequest } from '@/lib/api';
 import { removeAuthToken } from '@/lib/api';
 
+export interface Tag {
+  id: number;
+  name: string;
+}
+
 // Helper function to check if error is JWT expiration
 function isJWTExpired(message: string): boolean {
   return message.toLowerCase().includes('jwt') && message.toLowerCase().includes('expired');
@@ -235,6 +240,26 @@ export async function getFileDownloadUrl(filename: string): Promise<{ url?: stri
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : 'ไม่สามารถดึงลิงค์ดาวน์โหลดได้',
+    };
+  }
+}
+
+export async function getTags(): Promise<{ tags?: Tag[]; error?: string }> {
+  try {
+    const response = await apiRequest<{ status: number; data?: Tag[] }>('/tags', {
+      method: 'GET',
+    });
+
+    if (response.data && Array.isArray(response.data)) {
+      return { tags: response.data };
+    }
+
+    return {
+      error: 'ไม่สามารถดึงข้อมูลแท็กได้',
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'ไม่สามารถดึงข้อมูลแท็กได้',
     };
   }
 }
