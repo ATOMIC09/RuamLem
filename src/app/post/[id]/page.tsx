@@ -280,8 +280,8 @@ export default function PostDetailPage() {
                     >
                       <div className="flex items-center flex-1 min-w-0">
                         {getFileIcon(fileExtension)}
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-[#1c2a48] truncate text-left">{file.file_name}</div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="font-medium text-[#1c2a48] truncate">{file.file_name}</div>
                           <div className="text-sm text-[#7a8b99]">{fileSizeMB} MB</div>
                         </div>
                       </div>
