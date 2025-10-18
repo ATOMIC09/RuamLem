@@ -1,6 +1,6 @@
 import { status } from "elysia";
 import { supabase } from "../supabase";
-import { uploadPDF, downloadPDF } from "../repositories/file-repo";
+import { uploadFiles, downloadPDF } from "../repositories/file-repo";
 
 export async function uploadFile(token: string, file: File) {
     try {
@@ -17,7 +17,7 @@ export async function uploadFile(token: string, file: File) {
         } else {
             const userId = user.claims.sub; // Get actual user ID
             console.log("👤 User ID from token:", userId);
-            return uploadPDF(file, userId, null); // null for standalone file upload
+            return uploadFiles(file, userId, null); // null for standalone file upload
         }
     }
     catch (err: any) {
