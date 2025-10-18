@@ -21,7 +21,7 @@ async function getUserInfo(userId: string) {
   }
 }
 
-// Helper function to get file info for a post
+// Helper function to get all files for a post
 async function getFileInfo(postId: number) {
   try {
     const { data, error } = await supabase
@@ -29,10 +29,10 @@ async function getFileInfo(postId: number) {
       .select("id, file_name, file_url, file_size")
       .eq("post_id", postId);
 
-    if (error || !data || data.length === 0) return null;
-    return data[0]; // Return first file
+    if (error || !data || data.length === 0) return [];
+    return data; // Return all files
   } catch (err) {
-    return null;
+    return [];
   }
 }
 
@@ -78,7 +78,7 @@ async function addPostDetails(posts: any[]) {
     posts.map(async (post) => ({
       ...post,
       user_info: await getUserInfo(post.user_id),
-      file: await getFileInfo(post.id),
+      attachments: await getFileInfo(post.id),
       tags: await getPostTags(post.id),
       comment_count: await getCommentCount(post.id)
     }))
@@ -99,7 +99,7 @@ export async function uploadPost(userId: string, title: string, body: string, ta
   try {
     const { data: postTable, error: errorPostTable } = await supabase
       .from("posts")
-      .insert([{ user_id: userId, title, body }])
+      .insert([{ user_id: userId, title, body, file_paths: JSON.stringify([]) }])
       .select("id")
       .single();
 
