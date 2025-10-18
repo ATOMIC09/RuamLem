@@ -30,6 +30,13 @@ export default function PostDetailPage() {
   const [error, setError] = useState("");
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+
+  // Show notification helper
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000); // Auto-hide after 4 seconds
+  };
 
   // Helper function to get the appropriate icon based on file type
   const getFileIcon = (fileType: string) => {
@@ -97,11 +104,11 @@ export default function PostDetailPage() {
       if (result.url) {
         window.open(result.url, "_blank");
       } else {
-        alert("ไม่สามารถดาวน์โหลดไฟล์ได้");
+        showNotification('error', 'ไม่สามารถดาวน์โหลดไฟล์ได้');
       }
     } catch (error) {
       console.error("Download failed:", error);
-      alert("ไม่สามารถดาวน์โหลดไฟล์ได้");
+      showNotification('error', 'ไม่สามารถดาวน์โหลดไฟล์ได้');
     }
   };
 
@@ -115,9 +122,18 @@ export default function PostDetailPage() {
     });
 
     if (result.error) {
-      alert("ไม่สามารถเพิ่มคอมเมนต์ได้: " + result.error);
+      // Check if it's a JWT expiration error
+      if (result.error.toLowerCase().includes('jwt') || result.error.toLowerCase().includes('expired')) {
+        showNotification('error', 'เซสชันหมดอายุแล้ว กรุณาเข้าสู่ระบบใหม่');
+        setTimeout(() => {
+          window.location.href = "/signin";
+        }, 1500);
+      } else {
+        showNotification('error', result.error);
+      }
     } else {
       setCommentText("");
+      showNotification('success', 'เพิ่มคอมเมนต์สำเร็จ');
       // Refresh comments
       await fetchPostData();
     }
@@ -133,7 +149,7 @@ export default function PostDetailPage() {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert("ลิงก์ถูกคัดลอกแล้ว!");
+      showNotification('success', 'ลิงก์ถูกคัดลอกแล้ว!');
     }
   };
 
@@ -185,6 +201,20 @@ export default function PostDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] py-8">
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-6 right-6 px-6 py-3 rounded-2xl shadow-lg text-white text-sm font-medium transition-all duration-300 z-50 ${
+          notification.type === 'success' ? 'bg-green-500' : 
+          notification.type === 'error' ? 'bg-red-500' : 
+          'bg-blue-500'
+        }`}>
+          {notification.type === 'success' && '✓ '}
+          {notification.type === 'error' && '✕ '}
+          {notification.type === 'info' && 'ℹ '}
+          {notification.message}
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto px-6">
         {/* Back Button */}
         <div className="mb-6">
@@ -305,25 +335,35 @@ export default function PostDetailPage() {
             {/* Comments List */}
             {comments.length > 0 ? (
               <div className="space-y-4">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="p-4 bg-[#f8f9fa] rounded-2xl border border-[#e0e7f1]">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="font-semibold text-[#1c2a48]">
-                        {comment.author?.firstName} {comment.author?.lastName}
+                {comments.map((comment) => {
+                  const authorName = comment.user_info 
+                    ? `${comment.user_info.firstName} ${comment.user_info.lastName}`
+                    : comment.author
+                    ? `${comment.author.firstName} ${comment.author.lastName}`
+                    : "Anonymous";
+
+                  const createdDate = new Date(comment.created_at || comment.createdAt || new Date()).toLocaleDateString('th-TH', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+
+                  return (
+                    <div key={comment.id} className="p-4 bg-[#f8f9fa] rounded-2xl border border-[#e0e7f1]">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="font-semibold text-[#1c2a48]">
+                          {authorName}
+                        </div>
+                        <div className="text-xs text-[#7a8b99]">
+                          {createdDate}
+                        </div>
                       </div>
-                      <div className="text-xs text-[#7a8b99]">
-                        {new Date(comment.createdAt).toLocaleDateString('th-TH', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </div>
+                      <p className="text-[#5e7593]">{comment.body}</p>
                     </div>
-                    <p className="text-[#5e7593]">{comment.body}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-center text-[#7a8b99] py-8">ยังไม่มีความเห็น เป็นคนแรกที่เพิ่มความเห็น!</p>

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { IoMdPricetag } from "react-icons/io";
 import { GoPaperclip } from "react-icons/go";
 import { MdImage, MdDescription } from "react-icons/md";
@@ -13,6 +14,12 @@ interface PreviewPostProps {
 }
 
 export default function PreviewPost({ post }: PreviewPostProps) {
+    const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+
+    const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+      setNotification({ type, message });
+      setTimeout(() => setNotification(null), 4000);
+    };
     
     // Helper function to get the appropriate icon based on file type
     const getFileIcon = (fileType: string) => {
@@ -65,17 +72,32 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                 window.open(url, "_blank");
             } else {
                 console.error('Download error:', error);
-                alert('ไม่สามารถดาวน์โหลดไฟล์ได้');
+                showNotification('error', 'ไม่สามารถดาวน์โหลดไฟล์ได้');
             }
         } catch (error) {
             console.error('Download failed:', error);
-            alert('ไม่สามารถดาวน์โหลดไฟล์ได้');
+            showNotification('error', 'ไม่สามารถดาวน์โหลดไฟล์ได้');
         }
     };
 
     return (
-        <Link href={`/post/${postData.id}`}>
-            <div className="w-full bg-white p-6 rounded-3xl shadow-sm border border-[#e0e7f1] text-[#5e7593] hover:shadow-md transition-shadow cursor-pointer">
+        <>
+            {/* Notification Toast */}
+            {notification && (
+                <div className={`fixed top-6 right-6 px-6 py-3 rounded-2xl shadow-lg text-white text-sm font-medium transition-all duration-300 z-50 ${
+                  notification.type === 'success' ? 'bg-green-500' : 
+                  notification.type === 'error' ? 'bg-red-500' : 
+                  'bg-blue-500'
+                }`}>
+                  {notification.type === 'success' && '✓ '}
+                  {notification.type === 'error' && '✕ '}
+                  {notification.type === 'info' && 'ℹ '}
+                  {notification.message}
+                </div>
+            )}
+
+            <Link href={`/post/${postData.id}`}>
+                <div className="w-full bg-white p-6 rounded-3xl shadow-sm border border-[#e0e7f1] text-[#5e7593] hover:shadow-md transition-shadow cursor-pointer">
             {/* Author */}
             <div className="flex items-center mb-4">
                 {postData.author.avatar && (
@@ -150,5 +172,6 @@ export default function PreviewPost({ post }: PreviewPostProps) {
             )}
         </div>
         </Link>
+        </>
     );
 }

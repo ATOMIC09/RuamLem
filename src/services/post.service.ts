@@ -75,15 +75,23 @@ export interface Post {
 
 export interface Comment {
   id: number;
-  post_id: number;
   body: string;
-  author: {
+  post_id: number;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  user_info?: {
+    firstName: string;
+    lastName: string;
+  };
+  // For backward compatibility
+  author?: {
     id: number;
     firstName: string;
     lastName: string;
     email: string;
   };
-  createdAt: string;
+  createdAt?: string;
 }
 
 export async function createPost(data: CreatePostData): Promise<{ post?: Post; error?: string }> {
@@ -204,12 +212,23 @@ export async function getPostsAfter(lastId: number, count: number = 10): Promise
 
 export async function getComments(postId: number): Promise<{ comments?: Comment[]; error?: string }> {
   try {
-    const response = await apiRequest<{ comments?: Comment[]; error?: string }>('/getComment', {
+    const response = await apiRequest<{ status?: number; data?: Comment[]; error?: string }>('/getComment', {
       method: 'POST',
       data: { postId },
     });
 
-    return response;
+    // Backend returns { status: 200, data: [...] }
+    if (response.data && Array.isArray(response.data)) {
+      return { comments: response.data };
+    }
+
+    if (response.error) {
+      return { error: response.error };
+    }
+
+    return {
+      error: 'การดึงข้อมูลคอมเมนต์ล้มเหลว',
+    };
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : 'การดึงข้อมูลคอมเมนต์ล้มเหลว',
@@ -219,12 +238,31 @@ export async function getComments(postId: number): Promise<{ comments?: Comment[
 
 export async function createComment(data: CreateCommentData): Promise<{ comment?: Comment; error?: string }> {
   try {
-    const response = await apiRequest<{ comment?: Comment; error?: string }>('/comment', {
+    const response = await apiRequest<{ status?: number; message?: Comment | string; error?: string }>('/comment', {
       method: 'POST',
       data: data,
     });
 
-    return response;
+    // Check for error status in response body (even if HTTP 200)
+    if (response.status && response.status >= 400) {
+      const errorMsg = typeof response.message === 'string' ? response.message : (response.error || 'การสร้างคอมเมนต์ล้มเหลว');
+      handleJWTExpiration(errorMsg);
+      return { error: errorMsg };
+    }
+
+    // Backend returns { status: 200, message: {...} } on success
+    if (response.message && typeof response.message === 'object' && 'id' in response.message) {
+      return { comment: response.message as Comment };
+    }
+
+    if (response.error) {
+      handleJWTExpiration(response.error);
+      return { error: response.error };
+    }
+
+    return {
+      error: 'การสร้างคอมเมนต์ล้มเหลว',
+    };
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : 'การสร้างคอมเมนต์ล้มเหลว',
