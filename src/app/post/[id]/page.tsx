@@ -1,201 +1,162 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { IoMdPricetag, IoMdArrowBack, IoMdEye, IoMdHeart, IoMdShare } from "react-icons/io";
+import { IoMdPricetag, IoMdArrowBack, IoMdShare } from "react-icons/io";
+import { MdImage, MdDescription } from "react-icons/md";
 import { GoPaperclip } from "react-icons/go";
 import { FaDownload } from "react-icons/fa";
 import { useParams } from "next/navigation";
+import * as postService from "@/services/post.service";
+import { useAuth } from "@/app/hooks/use-auth";
 
-// Mock data - in real app this would come from API
-const mockPosts = {
-  "1": {
-    id: "1",
-    title: "สรุปมิดเทอมวิชา Software Engineering",
-    content: `สวัสดีครับทุกคน! วันนี้ผมมาแชร์สรุปเนื้อหาสำหรับสอบมิดเทอมวิชา Software Engineering ครับ
-
-เนื้อหาที่ออกสอบครอบคลุม:
-
-1. **Software Development Life Cycle (SDLC)**
-   - Waterfall Model
-   - Agile Development
-   - Scrum Framework
-   
-2. **Requirements Engineering**
-   - Functional Requirements
-   - Non-functional Requirements
-   - Requirements Gathering Techniques
-   
-3. **System Design**
-   - Architecture Patterns
-   - Design Principles
-   - UML Diagrams
-   
-4. **Testing**
-   - Unit Testing
-   - Integration Testing
-   - System Testing
-
-ผมรวบรวมทั้งหมดไว้ในไฟล์ PDF แล้ว หวังว่าจะมีประโยชน์กับทุกคนนะครับ!
-
-ถ้ามีคำถามอะไรเพิ่มเติม สามารถคอมเมนต์ได้เลยครับ 😊`,
-    author: {
-      name: "John Doe",
-      avatar: "/anonym.jpg"
-    },
-    createdAt: "วันศุกร์ เวลา 13:40 น.",
-    category: "Software Engineering",
-    attachments: [
-      {
-        name: "Midterm Note.pdf",
-        size: "2.5 MB",
-        type: "pdf"
-      }
-    ],
-    views: 234,
-    likes: 18
-  },
-  "2": {
-    id: "2", 
-    title: "เทคนิคการทำโจทย์คณิตศาสตร์",
-    content: `สวัสดีทุกคนครับ! วันนี้มาแชร์เทคนิคการแก้โจทย์คณิตศาสตร์ที่ผมใช้แล้วได้ผลดี
-
-**เทคนิคสำคัญ ๆ ที่ควรรู้:**
-
-1. **อ่านโจทย์ให้เข้าใจ**
-   - อ่านช้า ๆ อย่างน้อย 2 รอบ
-   - ขีดเส้นใต้คำสำคัญ
-   - วาดรูปประกอบถ้าเป็นโจทย์เรขาคณิต
-
-2. **หาสิ่งที่โจทย์ให้และสิ่งที่ต้องหา**
-   - เขียนสิ่งที่ทราบแยกต่างหาก
-   - ระบุสิ่งที่โจทย์ถามชัดเจน
-
-3. **เลือกสูตรที่เหมาะสม**
-   - ทบทวนสูตรที่เกี่ยวข้อง
-   - เลือกวิธีที่ตรงไปตรงมาที่สุด
-
-รวมสูตรสำคัญและตัวอย่างโจทย์ไว้ในไฟล์แล้วครับ!`,
-    author: {
-      name: "Jane Smith",
-      avatar: "/anonym.jpg"
-    },
-    createdAt: "วันพฤหัสบดี เวลา 15:20 น.",
-    category: "คณิตศาสตร์",
-    attachments: [
-      {
-        name: "Math Techniques.pdf",
-        size: "1.8 MB",
-        type: "pdf"
-      }
-    ],
-    views: 156,
-    likes: 12
-  },
-  "3": {
-    id: "3",
-    title: "สรุปไวยากรณ์ภาษาอังกฤษ",
-    content: `Hello everyone! วันนี้มาสรุปกฎไวยากรณ์ภาษาอังกฤษที่สำคัญสำหรับการสอบ
-
-**หัวข้อหลักที่ต้องเรียน:**
-
-1. **Tenses (กาล)**
-   - Present Simple, Continuous, Perfect
-   - Past Simple, Continuous, Perfect
-   - Future Simple, Continuous, Perfect
-
-2. **Parts of Speech**
-   - Noun, Verb, Adjective, Adverb
-   - Preposition, Conjunction, Article
-
-3. **Sentence Structure**
-   - Subject + Verb + Object
-   - Complex and Compound Sentences
-   - Active and Passive Voice
-
-4. **Common Mistakes**
-   - Subject-Verb Agreement
-   - Pronoun Reference
-   - Dangling Modifiers
-
-มีตัวอย่างประโยคและแบบฝึกหัดในไฟล์ PDF ด้วยนะครับ!`,
-    author: {
-      name: "Mike Johnson",
-      avatar: "/anonym.jpg"
-    },
-    createdAt: "วันพุธ เวลา 09:15 น.",
-    category: "ภาษาอังกฤษ",
-    attachments: [
-      {
-        name: "English Grammar.pdf",
-        size: "3.2 MB",
-        type: "pdf"
-      }
-    ],
-    views: 89,
-    likes: 7
-  },
-  "4": {
-    id: "4",
-    title: "สรุปเคมีอนินทรีย์",
-    content: `สวัสดีค่ะทุกคน! วันนี้มาแชร์สรุปเคมีอนินทรีย์สำหรับการสอบ
-
-**เนื้อหาสำคัญที่ต้องจำ:**
-
-1. **ตารางธาตุ**
-   - กลุ่มและคาบ
-   - คุณสมบัติที่เปลี่ยนแปลงตามตารางธาตุ
-   - ธาตุแทรนซิชัน
-
-2. **พันธะเคมี**
-   - พันธะไอออนิก
-   - พันธะโควาเลนต์
-   - พันธะโลหะ
-
-3. **ปฏิกิริยาเคมี**
-   - ปฏิกิริยาออกซิเดชัน-รีดักชัน
-   - กรด-เบส
-   - ปฏิกิริยาตกตะกอน
-
-4. **สารประกอบสำคัญ**
-   - เกลือ
-   - กรดและเบส
-   - ออกไซด์
-
-รวมสูตรเคมีและตัวอย่างการคำนวณไว้ให้แล้วค่ะ!`,
-    author: {
-      name: "Sarah Wilson",
-      avatar: "/anonym.jpg"
-    },
-    createdAt: "วันจันทร์ เวลา 11:30 น.",
-    category: "เคมี",
-    attachments: [
-      {
-        name: "Inorganic Chemistry.pdf",
-        size: "4.1 MB",
-        type: "pdf"
-      }
-    ],
-    views: 67,
-    likes: 9
-  }
-};
+interface PostDetail extends postService.Post {
+  attachments?: Array<{
+    id: number;
+    file_name: string;
+    file_url: string;
+    file_size: number;
+  }>;
+}
 
 export default function PostDetailPage() {
   const params = useParams();
   const postId = params.id as string;
-  const post = mockPosts[postId as keyof typeof mockPosts];
+  const { isSignedIn } = useAuth();
+  const [post, setPost] = useState<PostDetail | null>(null);
+  const [comments, setComments] = useState<postService.Comment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [commentText, setCommentText] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
-  if (!post) {
+  // Helper function to get the appropriate icon based on file type
+  const getFileIcon = (fileType: string) => {
+    const type = fileType.toLowerCase();
+    
+    // Check if it's an image (either by extension or MIME type)
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'].includes(type)) {
+      return <MdImage className="mr-2 group-hover:scale-110 transition-transform" size={20} />;
+    } 
+    // Check if it's a PDF
+    else if (type === 'pdf' || type === 'application/pdf') {
+      return <MdDescription className="mr-2 group-hover:scale-110 transition-transform" size={20} />;
+    } 
+    // Default to paperclip for other files
+    else {
+      return <GoPaperclip className="mr-2 group-hover:scale-110 transition-transform" size={20} />;
+    }
+  };
+
+  useEffect(() => {
+    fetchPostData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId]);
+
+  const fetchPostData = async () => {
+    setIsLoading(true);
+    setError("");
+    
+    try {
+      // Fetch all posts to find the one with matching ID
+      const postsResult = await postService.getPosts(100); // Get more posts to ensure we find it
+      
+      if (postsResult.error) {
+        setError(postsResult.error);
+        setIsLoading(false);
+        return;
+      }
+
+      const foundPost = postsResult.posts?.find(p => String(p.id) === postId);
+      
+      if (!foundPost) {
+        setError("ไม่พบโพสต์");
+        setIsLoading(false);
+        return;
+      }
+
+      setPost(foundPost as PostDetail);
+
+      // Fetch comments
+      const commentsResult = await postService.getComments(Number(postId));
+      if (commentsResult.comments) {
+        setComments(commentsResult.comments);
+      }
+
+      setIsLoading(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการโหลดข้อมูล");
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownload = async (fileUrl: string) => {
+    try {
+      const result = await postService.getFileDownloadUrl(fileUrl);
+      if (result.url) {
+        window.open(result.url, "_blank");
+      } else {
+        alert("ไม่สามารถดาวน์โหลดไฟล์ได้");
+      }
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("ไม่สามารถดาวน์โหลดไฟล์ได้");
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!commentText.trim() || !post) return;
+
+    setIsSubmittingComment(true);
+    const result = await postService.createComment({
+      post_id: String(post.id),
+      post_body: commentText,
+    });
+
+    if (result.error) {
+      alert("ไม่สามารถเพิ่มคอมเมนต์ได้: " + result.error);
+    } else {
+      setCommentText("");
+      // Refresh comments
+      await fetchPostData();
+    }
+    setIsSubmittingComment(false);
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: post?.title,
+        text: post?.body,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert("ลิงก์ถูกคัดลอกแล้ว!");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-8">
+        <div className="text-center">
+          <p className="text-[#5e7593]">กำลังโหลดโพสต์...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !post) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-8">
         <div className="text-center">
           <div className="text-6xl mb-4">📄</div>
           <h1 className="text-2xl font-bold text-[#1c2a48] mb-2">ไม่พบโพสต์</h1>
-          <p className="text-[#7a8b99] mb-6">โพสต์ที่คุณกำลังค้นหาอาจถูกลบหรือไม่มีอยู่</p>
+          <p className="text-[#7a8b99] mb-6">{error || "โพสต์ที่คุณกำลังค้นหาอาจถูกลบหรือไม่มีอยู่"}</p>
           <Link
             href="/community"
-            className="px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium"
+            className="px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium cursor-pointer"
           >
             กลับไปยังชุมชน
           </Link>
@@ -204,30 +165,23 @@ export default function PostDetailPage() {
     );
   }
 
-  const handleDownload = (fileName: string) => {
-    // Mock download - in real app this would download the actual file
-    console.log(`Downloading: ${fileName}`);
-  };
+  const authorName = post.user_info 
+    ? `${post.user_info.firstName} ${post.user_info.lastName}`
+    : post.author 
+    ? `${post.author.firstName} ${post.author.lastName}`
+    : "Anonymous";
 
-  const handleLike = () => {
-    // Mock like - in real app this would update the like count
-    console.log("Liked post");
-  };
+  const createdAt = new Date(post.created_at || post.createdAt || new Date()).toLocaleDateString('th-TH', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
-  const handleShare = () => {
-    // Mock share - in real app this would open share dialog
-    if (navigator.share) {
-      navigator.share({
-        title: post.title,
-        text: post.content,
-        url: window.location.href,
-      });
-    } else {
-      // Fallback - copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
-      alert("ลิงก์ถูกคัดลอกแล้ว!");
-    }
-  };
+  const category = post.tags && post.tags.length > 0 
+    ? post.tags[0].name 
+    : post.tag || "General";
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] py-8">
@@ -236,7 +190,7 @@ export default function PostDetailPage() {
         <div className="mb-6">
           <Link
             href="/community"
-            className="flex items-center gap-2 text-[#5e7593] hover:text-[#405168] transition-colors"
+            className="flex items-center gap-2 text-[#5e7593] hover:text-[#405168] transition-colors cursor-pointer"
           >
             <IoMdArrowBack />
             <span>กลับไปยังชุมชน</span>
@@ -249,28 +203,23 @@ export default function PostDetailPage() {
           <div className="flex items-center justify-between mb-6 pb-6 border-b border-[#f0f4f8]">
             <div className="flex items-center">
               <Image
-                src={post.author.avatar}
-                alt={post.author.name}
+                src="/anonym.jpg"
+                alt={authorName}
                 width={50}
                 height={50}
                 className="w-12 h-12 rounded-full mr-4"
               />
               <div>
-                <div className="font-bold text-[#1c2a48] text-lg">{post.author.name}</div>
-                <div className="text-sm text-[#7a8b99]">{post.createdAt}</div>
+                <div className="font-bold text-[#1c2a48] text-lg">{authorName}</div>
+                <div className="text-sm text-[#7a8b99]">{createdAt}</div>
               </div>
             </div>
             
             <div className="flex items-center gap-4">
               <span className="px-4 py-2 text-sm bg-[#f0f4f8] text-[#5e7593] rounded-full border border-[#e0e7f1]">
                 <IoMdPricetag className="inline-block mr-2" />
-                {post.category}
+                {category}
               </span>
-              
-              <div className="flex items-center gap-1 text-sm text-[#7a8b99]">
-                <IoMdEye />
-                <span>{post.views}</span>
-              </div>
             </div>
           </div>
 
@@ -280,59 +229,116 @@ export default function PostDetailPage() {
           {/* Post Content */}
           <div className="prose max-w-none mb-8">
             <div className="text-[#1c2a48] leading-relaxed whitespace-pre-line text-base">
-              {post.content}
+              {post.body}
             </div>
           </div>
 
           {/* Attachments */}
           {post.attachments && post.attachments.length > 0 && (
             <div className="mb-8 pt-6 border-t border-[#f0f4f8]">
-              <h3 className="text-lg font-semibold text-[#1c2a48] mb-4">ไฟล์แนบ</h3>
+              <h3 className="text-lg font-semibold text-[#1c2a48] mb-4">ไฟล์แนบ ({post.attachments.length})</h3>
               <div className="space-y-3">
-                {post.attachments.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 bg-[#f8f9fa] rounded-2xl border border-[#e0e7f1]"
-                  >
-                    <div className="flex items-center">
-                      <GoPaperclip className="text-[#5e7593] mr-3" size={20} />
-                      <div>
-                        <div className="font-medium text-[#1c2a48]">{file.name}</div>
-                        <div className="text-sm text-[#7a8b99]">{file.size}</div>
-                      </div>
-                    </div>
+                {post.attachments.map((file) => {
+                  const fileExtension = (file.file_name || '').split('.').pop()?.toLowerCase() || '';
+                  const fileSizeMB = (file.file_size / 1024 / 1024).toFixed(2);
+                  
+                  return (
                     <button
-                      onClick={() => handleDownload(file.name)}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#405168] text-white rounded-2xl hover:bg-[#2d3a4c] transition-colors cursor-pointer"
+                      key={file.id}
+                      onClick={() => handleDownload(file.file_url)}
+                      className="w-full flex items-center justify-between p-4 bg-[#f8f9fa] rounded-2xl border border-[#e0e7f1] hover:bg-[#e0e7f1] transition-colors cursor-pointer group"
                     >
-                      <FaDownload size={14} />
-                      <span className="text-sm font-medium">ดาวน์โหลด</span>
+                      <div className="flex items-center flex-1 min-w-0">
+                        {getFileIcon(fileExtension)}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-[#1c2a48] truncate text-left">{file.file_name}</div>
+                          <div className="text-sm text-[#7a8b99]">{fileSizeMB} MB</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+                        <FaDownload size={14} className="text-[#5e7593]" />
+                        <span className="text-sm font-medium text-[#5e7593]">ดาวน์โหลด</span>
+                      </div>
                     </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
+          {/* Comments Section */}
+          <div className="pt-6 border-t border-[#f0f4f8]">
+            <h3 className="text-lg font-semibold text-[#1c2a48] mb-4">ความเห็น ({comments.length})</h3>
+            
+            {/* Add Comment Form or Login Prompt */}
+            {isSignedIn ? (
+              <div className="mb-6 p-4 bg-[#f8f9fa] rounded-2xl border border-[#e0e7f1]">
+                <textarea
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="เพิ่มความเห็นของคุณ..."
+                  className="w-full p-3 bg-white border border-[#e0e7f1] rounded-2xl text-[#1c2a48] placeholder-[#7a8b99] focus:outline-none focus:ring-2 focus:ring-[#5e7593] resize-none"
+                  rows={3}
+                />
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={handleAddComment}
+                    disabled={!commentText.trim() || isSubmittingComment}
+                    className="px-6 py-2 bg-[#405168] text-white rounded-2xl hover:bg-[#2d3a4c] transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmittingComment ? "กำลังส่ง..." : "ส่งความเห็น"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-6 p-4 bg-[#f0f4f8] rounded-2xl border border-[#e0e7f1] text-center">
+                <p className="text-[#5e7593] mb-4">กรุณาเข้าสู่ระบบเพื่อแสดงความเห็น</p>
+                <Link
+                  href="/signin"
+                  className="inline-block px-6 py-2 bg-[#405168] text-white rounded-2xl hover:bg-[#2d3a4c] transition-colors font-medium cursor-pointer"
+                >
+                  เข้าสู่ระบบ
+                </Link>
+              </div>
+            )}
+
+            {/* Comments List */}
+            {comments.length > 0 ? (
+              <div className="space-y-4">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="p-4 bg-[#f8f9fa] rounded-2xl border border-[#e0e7f1]">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="font-semibold text-[#1c2a48]">
+                        {comment.author?.firstName} {comment.author?.lastName}
+                      </div>
+                      <div className="text-xs text-[#7a8b99]">
+                        {new Date(comment.createdAt).toLocaleDateString('th-TH', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
+                    </div>
+                    <p className="text-[#5e7593]">{comment.body}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-[#7a8b99] py-8">ยังไม่มีความเห็น เป็นคนแรกที่เพิ่มความเห็น!</p>
+            )}
+          </div>
+
           {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-6 border-t border-[#f0f4f8]">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleLike}
-                className="flex items-center gap-2 px-4 py-2 bg-[#f0f4f8] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors cursor-pointer"
-              >
-                <IoMdHeart />
-                <span className="text-sm font-medium">{post.likes} ถูกใจ</span>
-              </button>
-              
-              <button
-                onClick={handleShare}
-                className="flex items-center gap-2 px-4 py-2 bg-[#f0f4f8] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors cursor-pointer"
-              >
-                <IoMdShare />
-                <span className="text-sm font-medium">แชร์</span>
-              </button>
-            </div>
+          <div className="flex items-center justify-between pt-6 border-t border-[#f0f4f8] mt-6">
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-2 px-4 py-2 bg-[#f0f4f8] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors cursor-pointer"
+            >
+              <IoMdShare />
+              <span className="text-sm font-medium">แชร์</span>
+            </button>
             
             <div className="text-sm text-[#7a8b99]">
               โพสต์ #{post.id}
