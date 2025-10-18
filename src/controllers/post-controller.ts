@@ -1,7 +1,7 @@
 import { status } from "elysia";
 import { supabase } from "../supabase";
 import { uploadPDF } from "../repositories/file-repo";
-import { uploadPost, uploadComment, getComment, getPost, getPostAfter, getPostFilter } from "../repositories/post-repo";
+import { uploadPost, uploadComment, getComment, getPost, getPostAfter, getPostFilter, getAllTags } from "../repositories/post-repo";
 import { asHookType } from "elysia/dist/utils";
 
 
@@ -97,6 +97,15 @@ export async function getPostFilterController(tags: string, count: number = 10) 
 export async function getCommentController(post_id: number) {
     try {
         return getComment(post_id);
+    }
+    catch (err: any) {
+        return { status: 500, message: err.message };
+    }
+}
+
+export async function getTagsController() {
+    try {
+        return getAllTags();
     }
     catch (err: any) {
         return { status: 500, message: err.message };

@@ -277,3 +277,23 @@ export async function getComment(post_id: number) {
     return { status: 500, message: err.message };
   }
 }
+
+export async function getAllTags() {
+  try {
+    const { data, error } = await supabase
+      .from("tags")
+      .select("id, subject_name")
+      .order("subject_name", { ascending: true });
+
+    if (error) throw error;
+
+    const formattedTags = data?.map((tag: any) => ({
+      id: tag.id,
+      name: tag.subject_name
+    })) || [];
+
+    return { status: 200, data: formattedTags };
+  } catch (err: any) {
+    return { status: 500, message: err.message };
+  }
+}

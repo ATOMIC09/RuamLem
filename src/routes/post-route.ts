@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { post, comment, getPostController, getPostAfterController, getCommentController, getPostFilterController } from "../controllers/post-controller";
+import { post, comment, getPostController, getPostAfterController, getCommentController, getPostFilterController, getTagsController } from "../controllers/post-controller";
 
 export const postRoute = (app: Elysia) => {
     app.post("/post", async (c) => {
@@ -150,6 +150,20 @@ export const postRoute = (app: Elysia) => {
         }
     });
 
+    app.get("/tags", async () => {
+        try {
+            return getTagsController();
+        } catch (error: any) {
+            console.log("Error in getTags:", error);
+            return { status: 500, message: "Internal server error", error: error.message };
+        }
+    }, {
+        detail: {
+            tags: ['Posts'],
+            summary: 'Get All Tags',
+            description: 'Retrieve all available tags'
+        }
+    });
 
     return app;
 }
