@@ -21,7 +21,71 @@ async function getUserInfo(userId: string) {
   }
 }
 
-// Helper function to add user info to posts
+// Helper function to get file info for a post
+async function getFileInfo(postId: number) {
+  try {
+    const { data, error } = await supabase
+      .from("files")
+      .select("id, file_name, file_url, file_size")
+      .eq("post_id", postId);
+
+    if (error || !data || data.length === 0) return null;
+    return data[0]; // Return first file
+  } catch (err) {
+    return null;
+  }
+}
+
+// Helper function to get tags for a post
+async function getPostTags(postId: number) {
+  try {
+    const { data: postTags, error } = await supabase
+      .from("post_tags")
+      .select("tags(id, subject_name)")
+      .eq("post_id", postId);
+
+    if (error || !postTags) return [];
+    return postTags
+      .map((pt: any) => pt.tags)
+      .filter((tag: any) => tag !== null)
+      .map((tag: any) => ({
+        id: tag.id,
+        name: tag.subject_name
+      }));
+  } catch (err) {
+    return [];
+  }
+}
+
+// Helper function to get comment count for a post
+async function getCommentCount(postId: number) {
+  try {
+    const { count, error } = await supabase
+      .from("comments")
+      .select("id", { count: "exact", head: true })
+      .eq("post_id", postId);
+
+    if (error) return 0;
+    return count || 0;
+  } catch (err) {
+    return 0;
+  }
+}
+
+// Helper function to add file, tags, and comment count to posts
+async function addPostDetails(posts: any[]) {
+  return Promise.all(
+    posts.map(async (post) => ({
+      ...post,
+      user_info: await getUserInfo(post.user_id),
+      file: await getFileInfo(post.id),
+      tags: await getPostTags(post.id),
+      comment_count: await getCommentCount(post.id)
+    }))
+  );
+}
+
+// Helper function to add user info to posts (for comments)
 async function addUserInfoToPosts(posts: any[]) {
   return Promise.all(
     posts.map(async (post) => ({
@@ -128,8 +192,8 @@ export async function getPost(count: number = 10) {
 
     if (error) throw error;
 
-    const postsWithUserInfo = await addUserInfoToPosts(data || []);
-    return { status: 200, data: postsWithUserInfo };
+    const postsWithDetails = await addPostDetails(data || []);
+    return { status: 200, data: postsWithDetails };
   } catch (err: any) {
     return { status: 500, message: err.message };
   }
@@ -147,8 +211,8 @@ export async function getPostAfter(lastId: number, count: number = 10) {
 
     if (error) throw error;
 
-    const postsWithUserInfo = await addUserInfoToPosts(data || []);
-    return { status: 200, data: postsWithUserInfo };
+    const postsWithDetails = await addPostDetails(data || []);
+    return { status: 200, data: postsWithDetails };
   } catch (err: any) {
     return { status: 500, message: err.message };
   }
@@ -190,8 +254,8 @@ export async function getPostFilter(tags: string, count: number = 10) {
 
     if (errorPosts) throw errorPosts;
 
-    const postsWithUserInfo = await addUserInfoToPosts(dataPost || []);
-    return { status: 200, data: postsWithUserInfo };
+    const postsWithDetails = await addPostDetails(dataPost || []);
+    return { status: 200, data: postsWithDetails };
   } catch (err: any) {
     return { status: 500, message: err.message };
   }
