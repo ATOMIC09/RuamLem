@@ -10,24 +10,44 @@ import AuthGuard from "../components/auth-guard";
 
 function CommunityPageContent() {
   const [posts, setPosts] = useState<postService.Post[]>([]);
+  const [allPosts, setAllPosts] = useState<postService.Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [itemsPerPage] = useState(12);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Update displayed posts when page changes or allPosts changes
+  useEffect(() => {
+    const startIndex = 0;
+    const endIndex = currentPage * itemsPerPage;
+    setPosts(allPosts.slice(startIndex, endIndex));
+  }, [currentPage, allPosts, itemsPerPage]);
 
   const fetchPosts = async () => {
     setIsLoading(true);
     setError("");
-    const result = await postService.getPosts(10);
+    // Fetch more posts to support pagination
+    const result = await postService.getPosts(100);
     if (result.error) {
       setError(result.error);
     } else if (result.posts) {
-      setPosts(result.posts);
+      setAllPosts(result.posts);
+      setPosts(result.posts.slice(0, itemsPerPage));
+      setCurrentPage(1);
     }
     setIsLoading(false);
   };
+
+  const handleLoadMore = () => {
+    setCurrentPage(prev => prev + 1);
+  };
+
+  const hasMorePosts = posts.length < allPosts.length;
 
   return (
     <div className="flex flex-col min-h-screen items-center p-8 sm:p-20">
@@ -84,7 +104,7 @@ function CommunityPageContent() {
         {/* Stats Bar */}
         {!isLoading && (
           <div className="mb-6 text-center">
-            <p className="text-sm text-[#7a8b99]">แสดง {posts.length} โพสต์</p>
+            <p className="text-sm text-[#7a8b99]">แสดง {posts.length} จาก {allPosts.length} โพสต์</p>
           </div>
         )}
         
@@ -133,9 +153,12 @@ function CommunityPageContent() {
         )}
         
         {/* Load More Button */}
-        {!isLoading && posts.length > 0 && (
+        {!isLoading && posts.length > 0 && hasMorePosts && (
           <div className="text-center mt-8">
-            <button className="px-8 py-3 bg-white border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all shadow-sm font-medium cursor-pointer">
+            <button 
+              onClick={handleLoadMore}
+              className="px-8 py-3 bg-white border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all shadow-sm font-medium cursor-pointer"
+            >
               โหลดเพิ่มเติม
             </button>
           </div>
