@@ -4,13 +4,15 @@ import { openapi } from "@elysiajs/openapi";
 import { authRoute } from "./routes/auth-route";
 import { fileRoute } from "./routes/file-route";
 import { postRoute } from "./routes/post-route";
- 
 
 const app = new Elysia()
   .use(cors({
     origin: 'http://localhost:3000',
     credentials: true
   }))
+  .onRequest(({ request }) => {
+    console.log(`📨 ${request.method} ${new URL(request.url).pathname}`);
+  })
   .use(openapi({
     documentation: {
       info: {
@@ -45,8 +47,8 @@ authRoute(app);
 fileRoute(app);
 postRoute(app);
 
-app.listen(3030, () =>{
-  console.log("server running on http://localhost:3030");
-  console.log("📖 API Documentation available at: http://localhost:3030/openapi");
+app.listen(3030, () => {
+  console.log("Server running on http://localhost:3030");
+  console.log("📖 API Documentation: http://localhost:3030/openapi");
 });
 
