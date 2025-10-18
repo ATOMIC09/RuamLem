@@ -151,7 +151,7 @@ function CommunityPageContent() {
 
 export default function CommunityPage() {
   return (
-    <AuthGuard>
+    <AuthGuard required={false}>
       <CommunityPageContent />
     </AuthGuard>
   );
