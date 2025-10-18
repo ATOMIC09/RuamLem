@@ -115,7 +115,7 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                     </Link>
                 </div>
             )}
-            
+
             {/* All Attachments download buttons */}
             {postData.attachments && postData.attachments.length > 0 && (
                 <div className="pt-4 border-t border-[#f0f4f8] space-y-2">
@@ -127,7 +127,7 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                             <button
                                 key={index}
                                 onClick={(e) => handleDownload(e, attachment.file_url)}
-                                className="w-full flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors border border-[#e0e7f1] group cursor-pointer"
+                                className="w-full flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors border border-[#e0e7f1] group cursor-pointer truncate"
                             >
                                 {getFileIcon(fileExtension)}
                                 <div className="flex flex-col items-start flex-1 min-w-0">
