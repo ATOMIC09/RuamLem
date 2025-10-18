@@ -55,7 +55,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                         <p className="text-sm text-[#7a8b99] mb-4">สำหรับการทดสอบ:</p>
                         <button
                             onClick={() => {
-                                signIn({ id: 1, name: 'John Doe', email: 'john@example.com' });
+                                signIn({
+                                    id: 'demo-uuid-1234-5678-abcd-efgh',
+                                    name: 'Demo User',
+                                    email: 'demo@example.com',
+                                    firstName: 'Demo',
+                                    lastName: 'User'
+                                }, 'demo-token-12345');
                             }}
                             className="px-4 py-2 text-sm bg-[#e0e7f1] text-[#5e7593] rounded-full hover:bg-[#d1d9e4] transition-colors cursor-pointer"
                         >

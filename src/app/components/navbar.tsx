@@ -23,7 +23,15 @@ export default function Navbar() {
 
     // Handle demo sign in
     const handleDemoSignIn = () => {
-        signIn({ id: 'demo-user-id', name: 'John Doe', email: 'john@example.com' });
+        signIn(
+            {
+                id: 'demo-uuid-1234-5678-abcd-efgh',
+                name: 'Demo User',
+                email: 'demo@example.com',
+                firstName: 'Demo',
+                lastName: 'User'
+            }, 'demo-token-12345'
+        );
         setShowSignInModal(false);
     };
 
@@ -44,17 +52,15 @@ export default function Navbar() {
 
                 {/* Desktop Menu */}
                 <div className="hidden md:flex items-center space-x-6">
-                    <Link href="/" className={`hover:text-[#5e7593] transition-colors text-base ${
-                        pathname === '/' ? 'font-bold text-[#1c2a48]' : 'font-medium'
-                    }`}>
+                    <Link href="/" className={`hover:text-[#5e7593] transition-colors text-base ${pathname === '/' ? 'font-bold text-[#1c2a48]' : 'font-medium'
+                        }`}>
                         หน้าหลัก
                     </Link>
-                    <Link href="/community" className={`hover:text-[#5e7593] transition-colors text-base ${
-                        pathname === '/community' ? 'font-bold text-[#1c2a48]' : 'font-medium'
-                    }`}>
+                    <Link href="/community" className={`hover:text-[#5e7593] transition-colors text-base ${pathname === '/community' ? 'font-bold text-[#1c2a48]' : 'font-medium'
+                        }`}>
                         ชุมชน
                     </Link>
-                    
+
                     {/* Authentication Section */}
                     {isSignedIn === null ? (
                         // Loading state
@@ -68,8 +74,8 @@ export default function Navbar() {
                             <span className="text-sm text-[#7a8b99]">
                                 สวัสดี, <span className="font-medium text-[#405168]">{user?.name}</span>
                             </span>
-                            <button 
-                                onClick={handleSignOut} 
+                            <button
+                                onClick={handleSignOut}
                                 className="px-4 py-2 border border-[#e0e7f1] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all text-base font-medium cursor-pointer shadow-sm bg-white text-[#405168]"
                             >
                                 ออกจากระบบ
@@ -77,7 +83,7 @@ export default function Navbar() {
                         </div>
                     ) : (
                         // Not signed in state
-                        <button 
+                        <button
                             onClick={() => setShowSignInModal(true)}
                             className="px-4 py-2 border border-[#e0e7f1] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all text-base font-medium cursor-pointer shadow-sm bg-white text-[#405168]"
                         >
@@ -101,25 +107,23 @@ export default function Navbar() {
                     <div className="fixed inset-0 bg-black opacity-50" onClick={() => setIsMobileMenuOpen(false)}></div>
                     <div className="fixed top-16 left-0 right-0 bg-white border-b-2 border-[#dee5ed] shadow-lg">
                         <div className="px-6 py-4 space-y-4">
-                            <Link 
-                                href="/" 
-                                className={`block py-2 text-[#405168] hover:text-[#5e7593] transition-colors text-base ${
-                                    pathname === '/' ? 'font-bold' : 'font-medium'
-                                }`}
+                            <Link
+                                href="/"
+                                className={`block py-2 text-[#405168] hover:text-[#5e7593] transition-colors text-base ${pathname === '/' ? 'font-bold' : 'font-medium'
+                                    }`}
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
                                 หน้าหลัก
                             </Link>
-                            <Link 
-                                href="/community" 
-                                className={`block py-2 text-[#405168] hover:text-[#5e7593] transition-colors text-base ${
-                                    pathname === '/community' ? 'font-bold' : 'font-medium'
-                                }`}
+                            <Link
+                                href="/community"
+                                className={`block py-2 text-[#405168] hover:text-[#5e7593] transition-colors text-base ${pathname === '/community' ? 'font-bold' : 'font-medium'
+                                    }`}
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
                                 ชุมชน
                             </Link>
-                            
+
                             <div className="pt-4 border-t border-[#dee5ed]">
                                 {isSignedIn === null ? (
                                     <div className="flex items-center space-x-2 py-2">
@@ -133,7 +137,7 @@ export default function Navbar() {
                                                 สวัสดี, <span className="font-medium text-[#405168]">{user?.name}</span>
                                             </span>
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={handleSignOut}
                                             className="w-full px-4 py-2 border border-[#e0e7f1] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all text-base font-medium shadow-sm bg-white text-[#405168]"
                                         >
@@ -141,7 +145,7 @@ export default function Navbar() {
                                         </button>
                                     </div>
                                 ) : (
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             setShowSignInModal(true);
                                             setIsMobileMenuOpen(false);
@@ -162,35 +166,35 @@ export default function Navbar() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowSignInModal(false)}></div>
                     <div className="relative bg-white rounded-3xl border border-[#e0e7f1] shadow-xl max-w-md w-full p-8">
-                        <button 
+                        <button
                             onClick={() => setShowSignInModal(false)}
                             className="absolute top-4 right-4 p-2 text-[#7a8b99] hover:text-[#405168] transition-colors cursor-pointer"
                         >
                             <IoMdClose size={20} />
                         </button>
-                        
+
                         <div className="text-center">
                             <div className="text-4xl mb-4">🔐</div>
                             <h2 className="text-2xl font-bold text-[#1c2a48] mb-4">เข้าสู่ระบบ</h2>
                             <p className="text-[#7a8b99] mb-6">เข้าสู่ระบบเพื่อเริ่มแชร์ความรู้</p>
-                            
+
                             <div className="space-y-4">
-                                <Link 
+                                <Link
                                     href="/signin"
                                     className="block w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium"
                                     onClick={() => setShowSignInModal(false)}
                                 >
                                     เข้าสู่ระบบ
                                 </Link>
-                                
-                                <Link 
+
+                                <Link
                                     href="/signup"
                                     className="block w-full px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all font-medium shadow-sm bg-white"
                                     onClick={() => setShowSignInModal(false)}
                                 >
                                     สร้างบัญชีใหม่
                                 </Link>
-                                
+
                                 {/* Demo Sign In */}
                                 <div className="pt-4 border-t border-[#e0e7f1]">
                                     <p className="text-sm text-[#7a8b99] mb-3">สำหรับการทดสอบ:</p>
