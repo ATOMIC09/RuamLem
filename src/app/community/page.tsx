@@ -11,22 +11,124 @@ import AuthGuard from "../components/auth-guard";
 function CommunityPageContent() {
   const [posts, setPosts] = useState<postService.Post[]>([]);
   const [allPosts, setAllPosts] = useState<postService.Post[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<postService.Post[]>([]);
+  const [sortedAndFilteredPosts, setSortedAndFilteredPosts] = useState<postService.Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [itemsPerPage] = useState(12);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchFilters, setSearchFilters] = useState({
+    query: "",
+    tags: [] as string[],
+    dateRange: "",
+  });
+  const [sortBy, setSortBy] = useState("ล่าสุด");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     fetchPosts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update displayed posts when page changes or allPosts changes
+  // Filter posts when search filters or allPosts changes
+  useEffect(() => {
+    let result = allPosts;
+
+    // Filter by search query (title, body, tags)
+    if (searchFilters.query) {
+      const query = searchFilters.query.toLowerCase();
+      result = result.filter(post =>
+        post.title.toLowerCase().includes(query) ||
+        post.body.toLowerCase().includes(query) ||
+        (post.tags && post.tags.some(tag => tag.name.toLowerCase().includes(query)))
+      );
+    }
+
+    // Filter by tags
+    if (searchFilters.tags.length > 0) {
+      result = result.filter(post =>
+        post.tags && post.tags.some(tag => searchFilters.tags.includes(tag.name))
+      );
+    }
+
+    // Filter by date range
+    if (searchFilters.dateRange) {
+      const now = new Date();
+      result = result.filter(post => {
+        const postDate = new Date(post.created_at || post.createdAt || new Date());
+        
+        // Get dates in YYYY-MM-DD format for comparison
+        const todayString = now.toISOString().split('T')[0];
+        const postDateString = postDate.toISOString().split('T')[0];
+        
+        // Calculate difference in days more accurately
+        const diffTime = now.getTime() - postDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        switch (searchFilters.dateRange) {
+          case "วันนี้":
+            return postDateString === todayString;
+          case "สัปดาห์นี้":
+            return diffDays >= 0 && diffDays < 7;
+          case "เดือนนี้":
+            return diffDays >= 0 && diffDays < 30;
+          case "ปีนี้":
+            return diffDays >= 0 && diffDays < 365;
+          case "ล่าสุด":
+          default:
+            return true;
+        }
+      });
+    }
+
+    setFilteredPosts(result);
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [searchFilters, allPosts]);
+
+  // Sort posts when sortBy or sortOrder changes
+  useEffect(() => {
+    const sortedPosts = [...filteredPosts];
+
+    switch (sortBy) {
+      case "ล่าสุด":
+        sortedPosts.sort((a, b) => {
+          const dateA = new Date(a.created_at || a.createdAt || 0).getTime();
+          const dateB = new Date(b.created_at || b.createdAt || 0).getTime();
+          return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+        });
+        break;
+      case "เก่าสุด":
+        sortedPosts.sort((a, b) => {
+          const dateA = new Date(a.created_at || a.createdAt || 0).getTime();
+          const dateB = new Date(b.created_at || b.createdAt || 0).getTime();
+          return sortOrder === "desc" ? dateA - dateB : dateB - dateA;
+        });
+        break;
+      case "ยอดนิยม":
+        sortedPosts.sort((a, b) => {
+          const commentsA = a.comment_count || 0;
+          const commentsB = b.comment_count || 0;
+          return sortOrder === "desc" ? commentsB - commentsA : commentsA - commentsB;
+        });
+        break;
+      case "ตามชื่อ":
+        sortedPosts.sort((a, b) => {
+          const titleA = a.title.toLowerCase();
+          const titleB = b.title.toLowerCase();
+          return sortOrder === "desc" ? titleB.localeCompare(titleA) : titleA.localeCompare(titleB);
+        });
+        break;
+    }
+
+    setSortedAndFilteredPosts(sortedPosts);
+  }, [sortBy, sortOrder, filteredPosts]);
+
+  // Update displayed posts when page changes
   useEffect(() => {
     const startIndex = 0;
     const endIndex = currentPage * itemsPerPage;
-    setPosts(allPosts.slice(startIndex, endIndex));
-  }, [currentPage, allPosts, itemsPerPage]);
+    setPosts(sortedAndFilteredPosts.slice(startIndex, endIndex));
+  }, [currentPage, sortedAndFilteredPosts, itemsPerPage]);
 
   const fetchPosts = async () => {
     setIsLoading(true);
@@ -37,6 +139,8 @@ function CommunityPageContent() {
       setError(result.error);
     } else if (result.posts) {
       setAllPosts(result.posts);
+      setFilteredPosts(result.posts);
+      setSortedAndFilteredPosts(result.posts);
       setPosts(result.posts.slice(0, itemsPerPage));
       setCurrentPage(1);
     }
@@ -47,7 +151,7 @@ function CommunityPageContent() {
     setCurrentPage(prev => prev + 1);
   };
 
-  const hasMorePosts = posts.length < allPosts.length;
+  const hasMorePosts = posts.length < sortedAndFilteredPosts.length;
 
   return (
     <div className="flex flex-col min-h-screen items-center p-8 sm:p-20">
@@ -58,23 +162,34 @@ function CommunityPageContent() {
           <p className="text-lg text-[#5e7593]">แชร์ความรู้ ช่วยเหลือกัน เรียนรู้ไปด้วยกัน</p>
         </div>
         
-        <SearchBox />
+        <SearchBox onSearch={setSearchFilters} />
         
         {/* Action Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-6 gap-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <span className="text-sm text-[#5e7593] text-center sm:text-left">จัดเรียงโดย:</span>
             <div className="flex gap-2">
-              <select className="flex-1 sm:flex-none px-3 py-2 bg-white border border-[#e0e7f1] rounded-3xl text-[#405168] focus:outline-none focus:ring-2 focus:ring-[#5e7593] text-sm cursor-pointer shadow-sm hover:shadow-md transition-shadow">
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="flex-1 sm:flex-none px-3 py-2 bg-white border border-[#e0e7f1] rounded-3xl text-[#405168] focus:outline-none focus:ring-2 focus:ring-[#5e7593] text-sm cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+              >
                 <option>ล่าสุด</option>
                 <option>ยอดนิยม</option>
                 <option>เก่าสุด</option>
                 <option>ตามชื่อ</option>
               </select>
-              <button className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 text-sm text-[#5e7593] hover:text-[#405168] transition-colors bg-white border border-[#e0e7f1] rounded-3xl hover:shadow-md shadow-sm cursor-pointer">
-                <HiSortDescending />
-                <span className="hidden sm:inline">กลับด้าน</span>
-                <span className="sm:hidden">↕</span>
+              <button 
+                onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 text-sm font-medium transition-all rounded-3xl shadow-sm hover:shadow-md cursor-pointer border ${
+                  sortOrder === "desc" 
+                    ? "bg-white text-[#5e7593] border-[#e0e7f1] hover:text-[#405168]" 
+                    : "bg-[#405168] text-white border-[#405168] hover:bg-[#2d3a4c]"
+                }`}
+              >
+                <HiSortDescending className={`transition-transform ${sortOrder === "asc" ? "rotate-180" : ""}`} />
+                <span className="hidden sm:inline">{sortOrder === "desc" ? "ลดลง" : "เพิ่มขึ้น"}</span>
+                <span className="sm:hidden">{sortOrder === "desc" ? "↓" : "↑"}</span>
               </button>
             </div>
           </div>
@@ -104,7 +219,7 @@ function CommunityPageContent() {
         {/* Stats Bar */}
         {!isLoading && (
           <div className="mb-6 text-center">
-            <p className="text-sm text-[#7a8b99]">แสดง {posts.length} จาก {allPosts.length} โพสต์</p>
+            <p className="text-sm text-[#7a8b99]">แสดง {posts.length} จาก {sortedAndFilteredPosts.length} โพสต์</p>
           </div>
         )}
         
