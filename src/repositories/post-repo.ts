@@ -99,11 +99,12 @@ export async function uploadPost(userId: string, title: string, body: string, ta
   try {
     const { data: postTable, error: errorPostTable } = await supabase
       .from("posts")
-      .insert([{ user_id: userId, title, body, file_paths: JSON.stringify([]) }])
+      .insert([{ user_id: userId, title, body }])
       .select("id")
       .single();
 
     if (errorPostTable || !postTable) {
+      console.error("Post insert error:", errorPostTable);
       throw new Error("Failed to insert post");
     }
 
@@ -152,6 +153,7 @@ export async function uploadPost(userId: string, title: string, body: string, ta
     return { status: 200, postId: postTable.id, tagId };
 
   } catch (err: any) {
+    console.error("uploadPost error:", err);
     return { status: 500, message: err.message };
   }
 }
