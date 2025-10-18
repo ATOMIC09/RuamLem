@@ -79,7 +79,21 @@ function AddPostForm() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            setFiles(Array.from(e.target.files));
+            const newFiles = Array.from(e.target.files);
+            const totalFiles = files.length + newFiles.length;
+            
+            // Check if total files exceed limit
+            if (totalFiles > 10) {
+                setError(`จำนวนไฟล์ทั้งหมดต้องไม่เกิน 10 ไฟล์ (ปัจจุบัน: ${files.length} + ${newFiles.length})`);
+                return;
+            }
+            
+            // Add new files to existing files
+            setFiles([...files, ...newFiles]);
+            setError(""); // Clear any previous errors
+            
+            // Reset the input so you can select the same file again if needed
+            e.target.value = '';
         }
     };
 
