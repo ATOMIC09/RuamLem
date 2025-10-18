@@ -1,16 +1,27 @@
 import { status } from "elysia";
 import { supabase } from "../supabase";
-import { uploadPDF } from "../repositories/file-repo";
+import { uploadFiles } from "../repositories/file-repo";
 import { uploadPost, uploadComment, getComment, getPost, getPostAfter, getPostFilter, getAllTags } from "../repositories/post-repo";
 import { asHookType } from "elysia/dist/utils";
 
 
-export async function post(token: string, title: string, body: string, tag: string, file: File) {
+export async function post(token: string, title: string, body: string, tag: string, files: File[]) {
     try {
         const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
-        if (file.size > MAX_FILE_SIZE) {
-            return { success: false, message: "File size must be under 50MB" };
+        if (!files || files.length === 0) {
+            return { success: false, message: "No files uploaded" };
+        }
+
+        if (files.length > 10) {
+            return { success: false, message: "Maximum 10 files allowed" };
+        }
+
+        // Validate each file size
+        for (const file of files) {
+            if (file.size > MAX_FILE_SIZE) {
+                return { success: false, message: "File size must be under 50MB" };
+            }
         }
 
         const { data: user, error } = await supabase.auth.getClaims(token);
@@ -19,26 +30,25 @@ export async function post(token: string, title: string, body: string, tag: stri
         }
         const userId = user.claims.sub;
 
-
         const postResult = await uploadPost(userId, title, body, tag);
         if (postResult.status !== 200) {
             throw new Error(postResult.message || "Upload post failed");
         }
 
-        const fileResult = await uploadPDF(file, userId, postResult.postId);
+        const fileResult = await uploadFiles(files, userId, postResult.postId);
         if (!fileResult.success) {
             console.log(fileResult.success)
             await supabase.from("post_tags").delete().eq("post_id", postResult.postId);
             await supabase.from("posts").delete().eq("id", postResult.postId);
-            throw new Error("Upload PDF failed, rolled back post");
+            throw new Error("Upload files failed, rolled back post");
         }
+
         return {
             success: true,
-            message: "Post and PDF uploaded successfully",
+            message: "Post and files uploaded successfully",
             postId: postResult.postId,
-            filePath: fileResult.path
+            filePaths: fileResult.paths
         };
-        // console.log(userId);
     }
     catch (err: any) {
         return { status: 500, message: err.message };
