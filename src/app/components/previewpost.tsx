@@ -132,9 +132,9 @@ export default function PreviewPost({ post }: PreviewPostProps) {
             {postData.description && (
                 <div className="mb-4">
                     <p className="text-sm text-[#5e7593] line-clamp-3 mb-2">{postData.description}</p>
-                    <Link href={`/post/${postData.id}`} className="text-sm text-[#405168] font-medium hover:text-[#2d3a4c] transition-colors">
+                    <span className="text-sm text-[#405168] font-medium group-hover:text-[#2d3a4c] transition-colors">
                         อ่านเพิ่มเติม →
-                    </Link>
+                    </span>
                 </div>
             )}
 
