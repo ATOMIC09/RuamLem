@@ -1,14 +1,19 @@
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
 import { IoMdPricetag } from "react-icons/io";
 import { GoPaperclip } from "react-icons/go";
 import { PostPreview } from "../../types/post";
+import { getFileDownloadUrl } from "../../services/post.service";
 
 interface PreviewPostProps {
   post?: PostPreview;
+  fileName?: string;
 }
 
-export default function PreviewPost({ post }: PreviewPostProps) {
+export default function PreviewPost({ post, fileName }: PreviewPostProps) {
+    
     // Default mock data if no post prop is provided
     const defaultPost: PostPreview = {
         id: "1",
@@ -29,6 +34,26 @@ export default function PreviewPost({ post }: PreviewPostProps) {
     };
 
     const postData = post || defaultPost;
+
+    const handleDownload = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!fileName) return;
+        
+        try {
+            const { url, error } = await getFileDownloadUrl(fileName);
+            if (url) {
+                window.open(url, "_blank");
+            } else {
+                console.error('Download error:', error);
+                alert('ไม่สามารถดาวน์โหลดไฟล์ได้');
+            }
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert('ไม่สามารถดาวน์โหลดไฟล์ได้');
+        }
+    };
 
     return (
         <Link href={`/post/${postData.id}`}>
@@ -65,10 +90,20 @@ export default function PreviewPost({ post }: PreviewPostProps) {
             {/* PDF Attachments download button*/}
             {postData.attachments && postData.attachments.length > 0 && (
                 <div className="pt-2 border-t border-[#f0f4f8]">
-                    <div className="flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors w-full justify-center border border-[#e0e7f1] group cursor-pointer">
+                    <button
+                        onClick={handleDownload}
+                        disabled={!fileName}
+                        className="flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors w-full justify-center border border-[#e0e7f1] group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                         <GoPaperclip className="mr-2 group-hover:scale-110 transition-transform" />
                         <span className="text-sm font-medium truncate">{postData.attachments[0].name}</span>
-                    </div>
+                    </button>
+                </div>
+            )}
+            {/* Comment count */}
+            {postData.commentCount !== undefined && (
+                <div className="mt-3 text-xs text-[#7a8b99]">
+                    💬 {postData.commentCount} ความเห็น
                 </div>
             )}
         </div>

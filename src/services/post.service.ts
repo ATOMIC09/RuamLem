@@ -28,6 +28,17 @@ export interface Post {
     firstName: string;
     lastName: string;
   };
+  file?: {
+    id: number;
+    file_name: string;
+    file_url: string;
+    file_size: number;
+  };
+  tags?: Array<{
+    id: number;
+    name: string;
+  }>;
+  comment_count?: number;
   author?: {
     id: number;
     firstName: string;
@@ -185,6 +196,27 @@ export async function createComment(data: CreateCommentData): Promise<{ comment?
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : 'การสร้างคอมเมนต์ล้มเหลว',
+    };
+  }
+}
+
+export async function getFileDownloadUrl(filename: string): Promise<{ url?: string; error?: string }> {
+  try {
+    const response = await apiRequest<{ success?: boolean; url?: string; error?: string }>('/download/file', {
+      method: 'GET',
+      params: { filename },
+    });
+
+    if (response.success && response.url) {
+      return { url: response.url };
+    }
+
+    return {
+      error: response.error || 'ไม่สามารถดึงลิงค์ดาวน์โหลดได้',
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'ไม่สามารถดึงลิงค์ดาวน์โหลดได้',
     };
   }
 }

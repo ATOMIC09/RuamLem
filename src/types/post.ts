@@ -29,4 +29,5 @@ export interface PostPreview {
   createdAt: string;
   category: string;
   attachments?: PostAttachment[];
+  commentCount?: number;
 }

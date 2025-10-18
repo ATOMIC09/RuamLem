@@ -111,9 +111,17 @@ function CommunityPageContent() {
                     hour: '2-digit',
                     minute: '2-digit',
                   }),
-                  category: post.tag || "General",
-                  attachments: post.pdfUrl || post.filePath ? [{ name: "File", size: "", type: "pdf" }] : [],
+                  category: post.tags && post.tags.length > 0 
+                    ? post.tags[0].name 
+                    : post.tag || "General",
+                  attachments: post.file ? [{ 
+                    name: post.file.file_name, 
+                    size: `${(post.file.file_size / 1024 / 1024).toFixed(2)} MB`, 
+                    type: post.file.file_name.split('.').pop() || "file" 
+                  }] : (post.pdfUrl || post.filePath ? [{ name: "File", size: "", type: "pdf" }] : []),
+                  commentCount: post.comment_count,
                 }}
+                fileName={post.file?.file_url}
               />
             ))}
           </div>
