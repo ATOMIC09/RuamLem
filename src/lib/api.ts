@@ -42,10 +42,20 @@ axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
+    const errorData = error.response?.data as Record<string, unknown> | undefined;
+    const status = error.response?.status;
+    const message = String(errorData?.message || '');
+
+    // Check for JWT expiration (status 500 with "JWT has expired" message)
+    if ((status === 401 || (status === 500 && message.includes('JWT'))) && typeof window !== 'undefined') {
+      // Clear auth data from localStorage
+      removeAuthToken();
+      localStorage.removeItem('user');
+    } else if (status === 401) {
+      // Regular 401 error - just remove token
       removeAuthToken();
     }
+    
     throw error;
   }
 );
