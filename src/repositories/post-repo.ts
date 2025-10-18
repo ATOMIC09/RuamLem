@@ -2,6 +2,35 @@ import { status } from "elysia";
 import { supabase } from "../supabase";
 import { post } from "../controllers/post-controller";
 
+// Helper function to get user info
+async function getUserInfo(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("uuid", userId)
+      .single();
+
+    if (error) return null;
+    return {
+      firstName: data?.first_name || "Unknown",
+      lastName: data?.last_name || "User"
+    };
+  } catch (err) {
+    return null;
+  }
+}
+
+// Helper function to add user info to posts
+async function addUserInfoToPosts(posts: any[]) {
+  return Promise.all(
+    posts.map(async (post) => ({
+      ...post,
+      user_info: await getUserInfo(post.user_id)
+    }))
+  );
+}
+
 export async function uploadPost(userId: string, title: string, body: string, tag: string) {
   try {
     const { data: postTable, error: errorPostTable } = await supabase
@@ -99,7 +128,8 @@ export async function getPost(count: number = 10) {
 
     if (error) throw error;
 
-    return { status: 200, data };
+    const postsWithUserInfo = await addUserInfoToPosts(data || []);
+    return { status: 200, data: postsWithUserInfo };
   } catch (err: any) {
     return { status: 500, message: err.message };
   }
@@ -117,7 +147,8 @@ export async function getPostAfter(lastId: number, count: number = 10) {
 
     if (error) throw error;
 
-    return { status: 200, data };
+    const postsWithUserInfo = await addUserInfoToPosts(data || []);
+    return { status: 200, data: postsWithUserInfo };
   } catch (err: any) {
     return { status: 500, message: err.message };
   }
@@ -159,7 +190,8 @@ export async function getPostFilter(tags: string, count: number = 10) {
 
     if (errorPosts) throw errorPosts;
 
-    return { status: 200, data: dataPost };
+    const postsWithUserInfo = await addUserInfoToPosts(dataPost || []);
+    return { status: 200, data: postsWithUserInfo };
   } catch (err: any) {
     return { status: 500, message: err.message };
   }
@@ -171,11 +203,12 @@ export async function getComment(post_id: number) {
       .from("comments")
       .select("*")
       .eq("post_id", post_id)
-      .order("created_at", { ascending: false });;
+      .order("created_at", { ascending: false });
 
     if (errorComment) throw errorComment;
 
-    return { status: 200, data: dataComment };
+    const commentsWithUserInfo = await addUserInfoToPosts(dataComment || []);
+    return { status: 200, data: commentsWithUserInfo };
   } catch (err: any) {
     return { status: 500, message: err.message };
   }
