@@ -1,4 +1,5 @@
 // API configuration and utilities
+import axios, { AxiosInstance, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3030';
 
@@ -19,49 +20,76 @@ export class ApiError extends Error {
   }
 }
 
+// Create axios instance
+const axiosInstance: AxiosInstance = axios.create({
+  baseURL: API_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add auth token
+axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Response interceptor for error handling
+axiosInstance.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      removeAuthToken();
+    }
+    throw error;
+  }
+);
+
 export async function apiRequest<T = unknown>(
   endpoint: string,
-  options: RequestInit = {}
+  options: {
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+    data?: unknown;
+    headers?: Record<string, string>;
+    params?: Record<string, unknown>;
+    isFormData?: boolean;
+  } = {}
 ): Promise<T> {
-  const url = `${API_URL}${endpoint}`;
-  
   try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...options.headers,
-      },
-    });
+    const config: Record<string, unknown> = {
+      method: options.method || 'GET',
+      url: endpoint,
+      headers: options.headers || {},
+    };
 
-    // Try to parse as JSON
-    let data;
-    const contentType = response.headers.get('content-type');
-    
-    if (contentType && contentType.includes('application/json')) {
-      try {
-        data = await response.json();
-      } catch {
-        // If JSON parsing fails, try to get text for debugging
-        const text = await response.text();
-        console.error('Failed to parse JSON response:', text);
-        throw new ApiError(`Server returned invalid JSON: ${text.substring(0, 100)}`, response.status);
-      }
-    } else {
-      // Not JSON, get as text
-      const text = await response.text();
-      console.error('Server returned non-JSON response:', text);
-      throw new ApiError(`Server error: ${text.substring(0, 100)}`, response.status);
+    if (options.data) {
+      config.data = options.data;
     }
-    
-    // Check if response contains error
-    if (data.error || response.status >= 400) {
-      throw new ApiError(data.error || data.message || 'An error occurred', response.status);
+
+    if (options.params) {
+      config.params = options.params;
     }
-    
-    return data;
+
+    // Handle FormData specifically
+    if (options.isFormData && options.data instanceof FormData) {
+      (config.headers as Record<string, string>)['Content-Type'] = 'multipart/form-data';
+    }
+
+    const response: AxiosResponse<T> = await axiosInstance(config);
+    return response.data;
   } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
+    if (axios.isAxiosError(error)) {
+      const errorData = error.response?.data as Record<string, unknown> | undefined;
+      const message = (errorData?.error as string) || 
+                     (errorData?.message as string) || 
+                     error.message ||
+                     'An error occurred';
+      throw new ApiError(message, error.response?.status || 500);
     }
     throw new ApiError(error instanceof Error ? error.message : 'Network error');
   }

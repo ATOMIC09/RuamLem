@@ -1,6 +1,6 @@
 // Authentication service
 
-import { apiRequest, setAuthToken, removeAuthToken, getAuthHeaders } from '@/lib/api';
+import { apiRequest, setAuthToken, removeAuthToken } from '@/lib/api';
 import { encryptRSA } from '@/lib/crypto';
 
 export interface SignUpData {
@@ -103,10 +103,7 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
     // Send to backend
     const signUpResponse = await apiRequest<{ message?: string; error?: string }>('/auth/signUp', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ data: encryptedData }),
+      data: { data: encryptedData },
     });
 
     // Check for signup errors
@@ -169,10 +166,7 @@ export async function signIn(data: SignInData): Promise<AuthResponse> {
     // Send to backend
     const backendResponse = await apiRequest<BackendAuthResponse>('/auth/signIn', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ data: encryptedData }),
+      data: { data: encryptedData },
     });
 
     // Transform response to frontend format
@@ -195,9 +189,6 @@ export async function signOut(): Promise<void> {
   try {
     await apiRequest('/auth/signOut', {
       method: 'POST',
-      headers: {
-        ...getAuthHeaders(),
-      },
     });
   } catch (error) {
     console.error('Sign out error:', error);
@@ -210,10 +201,7 @@ export async function forgotPassword(email: string): Promise<{ message?: string;
   try {
     const response = await apiRequest<{ message?: string; error?: string }>('/auth/forget', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
+      data: { email },
     });
 
     return response;
@@ -228,10 +216,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
   try {
     const response = await apiRequest<{ message?: string; error?: string }>('/auth/reset-password', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token, newPassword }),
+      data: { token, newPassword },
     });
 
     return response;
@@ -246,10 +231,7 @@ export async function verifyResetToken(token: string): Promise<{ valid?: boolean
   try {
     const response = await apiRequest<{ valid?: boolean; error?: string }>('/auth/verify-reset-token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token }),
+      data: { token },
     });
 
     return response;
