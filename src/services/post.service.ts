@@ -53,6 +53,12 @@ export interface Post {
     file_url: string;
     file_size: number;
   };
+  attachments?: Array<{
+    id: number;
+    file_name: string;
+    file_url: string;
+    file_size: number;
+  }>;
   tags?: Array<{
     id: number;
     name: string;

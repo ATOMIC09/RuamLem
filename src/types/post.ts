@@ -5,10 +5,14 @@ export interface PostAuthor {
 }
 
 export interface PostAttachment {
-  name: string;
-  size?: string;
-  type: string;
+  // Backend response format
+  file_name?: string;
+  file_url?: string;
   file_size?: number;
+  // Legacy format (for backward compatibility)
+  name?: string;
+  size?: string;
+  type?: string;
 }
 
 export interface Post {

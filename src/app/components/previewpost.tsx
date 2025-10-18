@@ -10,10 +10,9 @@ import { getFileDownloadUrl } from "../../services/post.service";
 
 interface PreviewPostProps {
   post?: PostPreview;
-  fileName?: string;
 }
 
-export default function PreviewPost({ post, fileName }: PreviewPostProps) {
+export default function PreviewPost({ post }: PreviewPostProps) {
     
     // Helper function to get the appropriate icon based on file type
     const getFileIcon = (fileType: string) => {
@@ -54,14 +53,14 @@ export default function PreviewPost({ post, fileName }: PreviewPostProps) {
 
     const postData = post || defaultPost;
 
-    const handleDownload = async (e: React.MouseEvent) => {
+    const handleDownload = async (e: React.MouseEvent, fileUrl: string | undefined) => {
         e.preventDefault();
         e.stopPropagation();
         
-        if (!fileName) return;
+        if (!fileUrl) return;
         
         try {
-            const { url, error } = await getFileDownloadUrl(fileName);
+            const { url, error } = await getFileDownloadUrl(fileUrl);
             if (url) {
                 window.open(url, "_blank");
             } else {
@@ -116,30 +115,31 @@ export default function PreviewPost({ post, fileName }: PreviewPostProps) {
                     </Link>
                 </div>
             )}
-
+            
             {/* All Attachments download buttons */}
             {postData.attachments && postData.attachments.length > 0 && (
                 <div className="pt-4 border-t border-[#f0f4f8] space-y-2">
-                    {postData.attachments.map((attachment, index) => (
-                        <button
-                            key={index}
-                            onClick={handleDownload}
-                            disabled={!fileName}
-                            className="w-full flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors border border-[#e0e7f1] group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {attachment.type ? getFileIcon(attachment.type) : <GoPaperclip className="mr-2 group-hover:scale-110 transition-transform" />}
-                            <div className="flex flex-col items-start flex-1 min-w-0">
-                                <span className="text-sm font-medium truncate text-left">{attachment.name}</span>
-                                {attachment.file_size && (
-                                    <span className="text-xs text-[#7a8b99]">{(attachment.file_size / 1024 / 1024).toFixed(2)} MB</span>
-                                )}
-                                {attachment.size && (
-                                    <span className="text-xs text-[#7a8b99]">{attachment.size}</span>
-                                )}
-                            </div>
-                            <span className="text-xs text-[#405168] ml-2 flex-shrink-0">📥</span>
-                        </button>
-                    ))}
+                    {postData.attachments.map((attachment, index) => {
+                        // Extract file type from file_name extension
+                        const fileExtension = (attachment.file_name || '').split('.').pop()?.toLowerCase() || '';
+                        
+                        return (
+                            <button
+                                key={index}
+                                onClick={(e) => handleDownload(e, attachment.file_url)}
+                                className="w-full flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors border border-[#e0e7f1] group cursor-pointer"
+                            >
+                                {getFileIcon(fileExtension)}
+                                <div className="flex flex-col items-start flex-1 min-w-0">
+                                    <span className="text-sm font-medium truncate text-left">{attachment.file_name}</span>
+                                    {attachment.file_size && (
+                                        <span className="text-xs text-[#7a8b99]">{(attachment.file_size / 1024 / 1024).toFixed(2)} MB</span>
+                                    )}
+                                </div>
+                                <span className="text-xs text-[#405168] ml-2 flex-shrink-0">📥</span>
+                            </button>
+                        );
+                    })}
                 </div>
             )}
             {/* Comment count */}
