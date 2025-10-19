@@ -22,7 +22,7 @@ const app = new Elysia()
       info: {
         title: 'RuamLem API',
         description: 'A social platform backend API with authentication, posts, and file management',
-        version: '1.2.0'
+        version: '1.2.1'
       },
       servers: [
         {
