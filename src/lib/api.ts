@@ -91,6 +91,14 @@ export async function apiRequest<T = unknown>(
     }
 
     const response: AxiosResponse<T> = await axiosInstance(config);
+    
+    // Check if response contains an error status in the body (even if HTTP 200)
+    const responseData = response.data as Record<string, unknown> | undefined;
+    if (responseData?.status === 500 || responseData?.status === 401) {
+      const message = String(responseData?.message || 'An error occurred');
+      throw new ApiError(message, responseData.status as number);
+    }
+    
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {

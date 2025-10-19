@@ -64,9 +64,10 @@ export default function ProfilePage() {
           bio: result.profile.bio || '',
         });
       }
-    } catch {
-      setErrorMessage('ไม่สามารถโหลดข้อมูลโปรไฟล์ได้');
-    } finally {
+      setIsLoading(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'ไม่สามารถโหลดข้อมูลโปรไฟล์ได้';
+      setErrorMessage(errorMessage);
       setIsLoading(false);
     }
   };

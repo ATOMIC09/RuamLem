@@ -43,8 +43,9 @@ export async function getProfile(): Promise<{ profile?: UserProfileData; error?:
       error: 'ไม่สามารถดึงข้อมูลโปรไฟล์ได้',
     };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'ไม่สามารถดึงข้อมูลโปรไฟล์ได้';
     return {
-      error: error instanceof Error ? error.message : 'ไม่สามารถดึงข้อมูลโปรไฟล์ได้',
+      error: errorMessage,
     };
   }
 }
@@ -79,8 +80,9 @@ export async function updateProfile(
       error: 'ไม่สามารถอัปเดตโปรไฟล์ได้',
     };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'ไม่สามารถอัปเดตโปรไฟล์ได้';
     return {
-      error: error instanceof Error ? error.message : 'ไม่สามารถอัปเดตโปรไฟล์ได้',
+      error: errorMessage,
     };
   }
 }
@@ -135,8 +137,9 @@ export async function uploadAvatar(
       error: 'ไม่สามารถอัปโหลดรูปโปรไฟล์ได้',
     };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'ไม่สามารถอัปโหลดรูปโปรไฟล์ได้';
     return {
-      error: error instanceof Error ? error.message : 'ไม่สามารถอัปโหลดรูปโปรไฟล์ได้',
+      error: errorMessage,
     };
   }
 }
