@@ -51,6 +51,15 @@ export async function getStatistics() {
       console.error("Error fetching files count:", filesError);
     }
 
+    // Get total likes count
+    const { count: totalLikes, error: likesError } = await supabase
+      .from("post_likes")
+      .select("id", { count: "exact", head: true });
+
+    if (likesError) {
+      console.error("Error fetching likes count:", likesError);
+    }
+
     return {
       status: 200,
       data: {
@@ -59,6 +68,7 @@ export async function getStatistics() {
         postsThisMonth: postsThisMonth || 0,
         totalComments: totalComments || 0,
         totalFiles: totalFiles || 0,
+        totalLikes: totalLikes || 0,
       }
     };
   } catch (err: any) {
