@@ -5,6 +5,7 @@ import { authRoute } from "./routes/auth-route";
 import { fileRoute } from "./routes/file-route";
 import { postRoute } from "./routes/post-route";
 import { profileRoute } from "./routes/profile-route";
+import { statsRoute } from "./routes/stats-route";
 
 const app = new Elysia()
   .use(cors({
@@ -31,7 +32,8 @@ const app = new Elysia()
         { name: 'Auth', description: 'Authentication endpoints' },
         { name: 'Posts', description: 'Post management endpoints' },
         { name: 'Files', description: 'File upload and download endpoints' },
-        { name: 'Profile', description: 'User profile and avatar settings endpoints' }
+        { name: 'Profile', description: 'User profile and avatar settings endpoints' },
+        { name: 'Stats', description: 'Platform statistics endpoints' }
       ],
       components: {
         securitySchemes: {
@@ -47,10 +49,10 @@ const app = new Elysia()
   .use(authRoute)
   .use(fileRoute)
   .use(postRoute)
-  .use(profileRoute);
+  .use(profileRoute)
+  .use(statsRoute);
 
 app.listen(3030, () => {
   console.log("Server running on http://localhost:3030");
   console.log("📖 API Documentation: http://localhost:3030/openapi");
 });
-
