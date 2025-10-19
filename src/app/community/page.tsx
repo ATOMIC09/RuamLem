@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { HiSortDescending } from "react-icons/hi";
 import SearchBox from "../components/searchbox";
 import PreviewPost from "../components/previewpost";
@@ -9,6 +10,16 @@ import * as postService from "@/services/post.service";
 import AuthGuard from "../components/auth-guard";
 
 function CommunityPageContent() {
+  const params = useSearchParams();
+  
+  // Read filters from URL
+  const queryParam = params?.get?.("q") || "";
+  const tagsParam = useMemo(() => 
+    params?.get?.("tags") ? params.get("tags")!.split(",").filter(t => t) : [],
+    [params]
+  );
+  const dateRangeParam = params?.get?.("dateRange") || "";
+  
   const [posts, setPosts] = useState<postService.Post[]>([]);
   const [allPosts, setAllPosts] = useState<postService.Post[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<postService.Post[]>([]);
@@ -17,11 +28,6 @@ function CommunityPageContent() {
   const [error, setError] = useState("");
   const [itemsPerPage] = useState(12);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchFilters, setSearchFilters] = useState({
-    query: "",
-    tags: [] as string[],
-    dateRange: "",
-  });
   const [sortBy, setSortBy] = useState("ล่าสุด");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -30,13 +36,13 @@ function CommunityPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Filter posts when search filters or allPosts changes
+  // Filter posts when URL params or allPosts changes
   useEffect(() => {
     let result = allPosts;
 
     // Filter by search query (title, body, tags)
-    if (searchFilters.query) {
-      const query = searchFilters.query.toLowerCase();
+    if (queryParam) {
+      const query = queryParam.toLowerCase();
       result = result.filter(post =>
         post.title.toLowerCase().includes(query) ||
         post.body.toLowerCase().includes(query) ||
@@ -45,14 +51,14 @@ function CommunityPageContent() {
     }
 
     // Filter by tags
-    if (searchFilters.tags.length > 0) {
+    if (tagsParam.length > 0) {
       result = result.filter(post =>
-        post.tags && post.tags.some(tag => searchFilters.tags.includes(tag.name))
+        post.tags && post.tags.some(tag => tagsParam.includes(tag.name))
       );
     }
 
     // Filter by date range
-    if (searchFilters.dateRange) {
+    if (dateRangeParam) {
       const now = new Date();
       result = result.filter(post => {
         const postDate = new Date(post.created_at || post.createdAt || new Date());
@@ -65,7 +71,7 @@ function CommunityPageContent() {
         const diffTime = now.getTime() - postDate.getTime();
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-        switch (searchFilters.dateRange) {
+        switch (dateRangeParam) {
           case "วันนี้":
             return postDateString === todayString;
           case "สัปดาห์นี้":
@@ -83,7 +89,7 @@ function CommunityPageContent() {
 
     setFilteredPosts(result);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [searchFilters, allPosts]);
+  }, [queryParam, tagsParam, dateRangeParam, allPosts]);
 
   // Sort posts when sortBy or sortOrder changes
   useEffect(() => {
@@ -162,7 +168,7 @@ function CommunityPageContent() {
           <p className="text-lg text-[#5e7593]">แชร์ความรู้ ช่วยเหลือกัน เรียนรู้ไปด้วยกัน</p>
         </div>
         
-        <SearchBox onSearch={setSearchFilters} />
+        <SearchBox />
         
         {/* Action Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-6 gap-4">

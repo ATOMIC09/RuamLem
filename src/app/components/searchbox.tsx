@@ -1,5 +1,6 @@
 import { SlMagnifier } from "react-icons/sl";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import * as postService from "@/services/post.service";
 
 interface SearchBoxProps {
@@ -11,15 +12,33 @@ interface SearchBoxProps {
 }
 
 export default function SearchBox({ onSearch }: SearchBoxProps) {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedTags, setSelectedTags] = useState<string[]>([]);
-    const [selectedDateRange, setSelectedDateRange] = useState("");
+    const router = useRouter();
+    const params = useSearchParams();
+    
+    // Read from URL params
+    const urlQuery = params?.get?.("q") || "";
+    const urlTags = useMemo(() => 
+        params?.get?.("tags") ? params.get("tags")!.split(",").filter(t => t) : [],
+        [params]
+    );
+    const urlDateRange = params?.get?.("dateRange") || "";
+    
+    const [searchQuery, setSearchQuery] = useState(urlQuery);
+    const [selectedTags, setSelectedTags] = useState<string[]>(urlTags);
+    const [selectedDateRange, setSelectedDateRange] = useState(urlDateRange);
     const [availableTags, setAvailableTags] = useState<Array<{ id: number; name: string }>>([]);
     const [isLoadingTags, setIsLoadingTags] = useState(true);
 
     useEffect(() => {
         fetchTags();
     }, []);
+
+    // Update from URL when params change
+    useEffect(() => {
+        setSearchQuery(urlQuery);
+        setSelectedTags(urlTags);
+        setSelectedDateRange(urlDateRange);
+    }, [urlQuery, urlTags, urlDateRange]);
 
     const fetchTags = async () => {
         setIsLoadingTags(true);
@@ -37,14 +56,7 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
 
     const handleQueryChange = (value: string) => {
         setSearchQuery(value);
-        // Trigger search on every query change
-        if (onSearch) {
-            onSearch({
-                query: value,
-                tags: selectedTags,
-                dateRange: selectedDateRange,
-            });
-        }
+        updateURL(value, selectedTags, selectedDateRange);
     };
 
     const toggleTag = (tag: string) => {
@@ -52,24 +64,30 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
             ? selectedTags.filter(t => t !== tag)
             : [...selectedTags, tag];
         setSelectedTags(newTags);
-        if (onSearch) {
-            onSearch({
-                query: searchQuery,
-                tags: newTags,
-                dateRange: selectedDateRange,
-            });
-        }
+        updateURL(searchQuery, newTags, selectedDateRange);
     };
 
     const toggleDateRange = (date: string) => {
         const newDate = selectedDateRange === date ? "" : date;
         setSelectedDateRange(newDate);
+        updateURL(searchQuery, selectedTags, newDate);
+    };
+
+    const updateURL = (query: string, tags: string[], dateRange: string) => {
+        const newParams = new URLSearchParams();
+        if (query) newParams.set("q", query);
+        if (tags.length > 0) newParams.set("tags", tags.join(","));
+        if (dateRange) newParams.set("dateRange", dateRange);
+        
+        const newURL = newParams.toString() 
+            ? `/community?${newParams.toString()}`
+            : "/community";
+        
+        router.push(newURL);
+        
+        // Also call onSearch for backward compatibility if needed
         if (onSearch) {
-            onSearch({
-                query: searchQuery,
-                tags: selectedTags,
-                dateRange: newDate,
-            });
+            onSearch({ query, tags, dateRange });
         }
     };
 
