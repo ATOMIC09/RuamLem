@@ -8,6 +8,7 @@ import LoadingSpinner from "./components/loading-spinner";
 import PreviewPost from "./components/previewpost";
 import PostButton from "./components/post-button";
 import * as postService from "@/services/post.service";
+import * as statisticsService from "@/services/statistics.service";
 
 interface TagWithCount {
   name: string;
@@ -20,7 +21,7 @@ export default function Home() {
   const [tags, setTags] = useState<TagWithCount[]>([]);
   const [stats, setStats] = useState({
     totalPosts: 0,
-    totalMembers: 850, // This would need a backend endpoint
+    totalMembers: 0,
     postsThisMonth: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -32,25 +33,22 @@ export default function Home() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
+      // Fetch statistics from backend
+      const statsResult = await statisticsService.getStatistics();
+      if (statsResult.stats) {
+        setStats({
+          totalPosts: statsResult.stats.totalPosts,
+          totalMembers: statsResult.stats.totalMembers,
+          postsThisMonth: statsResult.stats.postsThisMonth,
+        });
+      }
+
       // Fetch posts
       const postsResult = await postService.getPosts(100);
       if (postsResult.posts && Array.isArray(postsResult.posts)) {
         // Get recent 3 posts
         const recent = postsResult.posts.slice(0, 3);
         setRecentPosts(recent);
-
-        // Calculate stats
-        const now = new Date();
-        const thisMonth = postsResult.posts.filter(post => {
-          const postDate = new Date(post.created_at || post.createdAt || new Date());
-          return postDate.getMonth() === now.getMonth() && postDate.getFullYear() === now.getFullYear();
-        }).length;
-
-        setStats(prev => ({
-          ...prev,
-          totalPosts: postsResult.posts!.length,
-          postsThisMonth: thisMonth,
-        }));
 
         // Count posts by tag
         const tagMap = new Map<string, number>();
