@@ -341,7 +341,7 @@ export default function ProfilePage() {
                   <button
                     onClick={handleSaveProfile}
                     disabled={isSaving}
-                    className="flex-1 px-6 py-3 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-3xl transition-colors font-medium shadow-sm"
+                    className="flex-1 px-6 py-3 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-3xl transition-colors font-medium shadow-sm cursor-pointer"
                   >
                     {isSaving ? 'กำลังบันทึก...' : 'บันทึก'}
                   </button>
@@ -354,7 +354,7 @@ export default function ProfilePage() {
                         bio: profileData?.bio || '',
                       });
                     }}
-                    className="flex-1 px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] transition-all font-medium shadow-sm bg-white"
+                    className="flex-1 px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] transition-all font-medium shadow-sm bg-white cursor-pointer"
                   >
                     ยกเลิก
                   </button>
