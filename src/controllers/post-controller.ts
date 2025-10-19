@@ -1,7 +1,7 @@
 import { status } from "elysia";
 import { supabase } from "../supabase";
 import { uploadFiles } from "../repositories/file-repo";
-import { uploadPost, uploadComment, getComment, getPost, getPostAfter, getPostFilter, getAllTags } from "../repositories/post-repo";
+import { uploadPost, uploadComment, getComment, getPost, getPostAfter, getPostFilter, getAllTags, editPost } from "../repositories/post-repo";
 import { asHookType } from "elysia/dist/utils";
 
 
@@ -116,6 +116,21 @@ export async function getCommentController(post_id: number) {
 export async function getTagsController() {
     try {
         return getAllTags();
+    }
+    catch (err: any) {
+        return { status: 500, message: err.message };
+    }
+}
+
+export async function editPostController(token: string, postId: number, title: string, body: string, tag: string) {
+    try {
+        const { data: user, error } = await supabase.auth.getClaims(token);
+        if (error || !user) {
+            return { success: false, message: "Invalid session" };
+        }
+        const userId = user.claims.sub;
+
+        return editPost(userId, postId, title, body, tag);
     }
     catch (err: any) {
         return { status: 500, message: err.message };

@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { post, comment, getPostController, getPostAfterController, getCommentController, getPostFilterController, getTagsController } from "../controllers/post-controller";
+import { post, comment, getPostController, getPostAfterController, getCommentController, getPostFilterController, getTagsController, editPostController } from "../controllers/post-controller";
 
 export const postRoute = (app: Elysia) => {
     app.post("/post", async (c) => {
@@ -162,6 +162,34 @@ export const postRoute = (app: Elysia) => {
             tags: ['Posts'],
             summary: 'Get All Tags',
             description: 'Retrieve all available tags'
+        }
+    });
+
+    app.put("/post/:postId", async (c) => {
+        const authHeader = c.request.headers.get("authorization");
+        if (!authHeader) return { status: 401, message: "No token provided" };
+        const token = authHeader.split(" ")[1];
+
+        const postId = parseInt(c.params.postId);
+        const body = c.body as any;
+
+        if (!body.title || !body.body || !body.tag) {
+            return { status: 400, message: "Title, body, and tag are required" };
+        }
+
+        return editPostController(token, postId, body.title, body.body, body.tag);
+
+    }, {
+        body: t.Object({
+            title: t.String({ description: "Post title" }),
+            body: t.String({ description: "Post content" }),
+            tag: t.String({ description: "Post tag" })
+        }),
+        detail: {
+            tags: ['Posts'],
+            summary: 'Edit Post',
+            description: 'Edit an existing post (title, body, and tag). You can only edit your own posts.',
+            security: [{ bearerAuth: [] }]
         }
     });
 

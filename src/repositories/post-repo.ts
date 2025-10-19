@@ -299,3 +299,108 @@ export async function getAllTags() {
     return { status: 500, message: err.message };
   }
 }
+
+export async function editPost(userId: string, postId: number, title: string, body: string, tag: string) {
+  try {
+    // Verify that the user owns this post
+    const { data: postData, error: getPostError } = await supabase
+      .from("posts")
+      .select("user_id")
+      .eq("id", postId)
+      .single();
+
+    if (getPostError || !postData) {
+      throw new Error("Post not found");
+    }
+
+    if (postData.user_id !== userId) {
+      throw new Error("Unauthorized: You can only edit your own posts");
+    }
+
+    // Update post title and body
+    const { data: updatedPost, error: updateError } = await supabase
+      .from("posts")
+      .update({ title, body, updated_at: new Date().toISOString() })
+      .eq("id", postId)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw new Error("Failed to update post");
+    }
+
+    // Handle tag update
+    if (tag) {
+      // Get existing tag for this post
+      const { data: existingPostTag, error: getTagError } = await supabase
+        .from("post_tags")
+        .select("tag_id")
+        .eq("post_id", postId)
+        .single();
+
+      if (getTagError && getTagError.code !== "PGRST116") { // PGRST116 = no rows
+        throw getTagError;
+      }
+
+      // Check if new tag exists
+      const { data: newTag, error: checkTagError } = await supabase
+        .from("tags")
+        .select("id")
+        .eq("subject_name", tag)
+        .maybeSingle();
+
+      if (checkTagError) {
+        throw checkTagError;
+      }
+
+      let tagId: number;
+
+      if (!newTag) {
+        // Create new tag
+        const { data: createdTag, error: createTagError } = await supabase
+          .from("tags")
+          .insert([{ subject_name: tag }])
+          .select("id")
+          .single();
+
+        if (createTagError || !createdTag) {
+          throw new Error("Failed to create new tag");
+        }
+
+        tagId = createdTag.id;
+      } else {
+        tagId = newTag.id;
+      }
+
+      // Update post_tags relationship
+      if (existingPostTag) {
+        const { error: updateTagError } = await supabase
+          .from("post_tags")
+          .update({ tag_id: tagId })
+          .eq("post_id", postId);
+
+        if (updateTagError) {
+          throw updateTagError;
+        }
+      } else {
+        const { error: insertTagError } = await supabase
+          .from("post_tags")
+          .insert([{ post_id: postId, tag_id: tagId }]);
+
+        if (insertTagError) {
+          throw insertTagError;
+        }
+      }
+    }
+
+    return { 
+      status: 200, 
+      message: "Post updated successfully",
+      postId
+    };
+
+  } catch (err: any) {
+    console.error("editPost error:", err);
+    return { status: 500, message: err.message };
+  }
+}
