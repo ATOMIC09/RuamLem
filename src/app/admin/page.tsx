@@ -7,6 +7,8 @@ import LoadingSpinner from "../components/loading-spinner";
 import * as statisticsService from "@/services/statistics.service";
 import * as profileService from "@/services/profile.service";
 import * as postService from "@/services/post.service";
+import * as analyticsService from "@/services/analytics.service";
+import * as likeService from "@/services/like.service";
 import { 
     IoMdPeople, 
     IoMdDocument, 
@@ -19,7 +21,8 @@ import {
     IoMdTime,
     IoMdPerson,
     IoMdTrash,
-    IoMdCreate
+    IoMdCreate,
+    IoMdCloudDownload
 } from "react-icons/io";
 
 interface Statistics {
@@ -42,6 +45,8 @@ interface RecentPost {
     createdAt: string;
     views: number;
     likes: number;
+    downloads: number;
+    comments: number;
 }
 
 export default function AdminDashboard() {
@@ -49,6 +54,8 @@ export default function AdminDashboard() {
     const router = useRouter();
     const [stats, setStats] = useState<Statistics | null>(null);
     const [recentPosts, setRecentPosts] = useState<RecentPost[]>([]);
+    const [topPosts, setTopPosts] = useState<RecentPost[]>([]);
+    const [topTab, setTopTab] = useState<'views' | 'likes' | 'downloads'>('views');
     const [userRole, setUserRole] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -100,16 +107,118 @@ export default function AdminDashboard() {
             // Fetch recent posts
             const postsResult = await postService.getPosts(5);
             if (postsResult.posts) {
-                setRecentPosts(postsResult.posts.map((post: postService.Post) => ({
-                    id: post.id.toString(),
-                    title: post.title,
-                    author: {
-                        name: post.user_info ? `${post.user_info.firstName} ${post.user_info.lastName}` : 'Unknown'
-                    },
-                    createdAt: post.created_at || post.createdAt || new Date().toISOString(),
-                    views: 0, // Not available in current API
-                    likes: 0  // Not available in current API
-                })));
+                // Fetch analytics data for each post
+                const postsWithAnalytics = await Promise.all(
+                    postsResult.posts.map(async (post: postService.Post) => {
+                        const postId = post.id.toString();
+                        
+                        // Fetch view count
+                        let views = 0;
+                        try {
+                            const viewResult = await analyticsService.getPostViewCount(postId);
+                            views = viewResult.viewCount || 0;
+                        } catch (err) {
+                            console.error(`Error fetching views for post ${postId}:`, err);
+                        }
+
+                        // Fetch like count
+                        let likes = 0;
+                        try {
+                            const likeResult = await likeService.getPostLikeStatus(Number(postId));
+                            likes = likeResult.data?.likeCount || 0;
+                        } catch (err) {
+                            console.error(`Error fetching likes for post ${postId}:`, err);
+                        }
+
+                        // Get download count from all attachments
+                        let downloads = 0;
+                        if (post.attachments && post.attachments.length > 0) {
+                            try {
+                                const fileIds = post.attachments.map(att => att.id);
+                                const downloadResult = await analyticsService.getMultipleFileDownloads(fileIds);
+                                if (downloadResult.data) {
+                                    downloads = downloadResult.data.reduce((sum, file) => sum + file.downloadCount, 0);
+                                }
+                            } catch (err) {
+                                console.error(`Error fetching downloads for post ${postId}:`, err);
+                            }
+                        }
+
+                        // Get comment count
+                        const comments = post.comment_count || 0;
+
+                        return {
+                            id: postId,
+                            title: post.title,
+                            author: {
+                                name: post.user_info ? `${post.user_info.firstName} ${post.user_info.lastName}` : 'Unknown'
+                            },
+                            createdAt: post.created_at || post.createdAt || new Date().toISOString(),
+                            views,
+                            likes,
+                            downloads,
+                            comments
+                        };
+                    })
+                );
+                
+                setRecentPosts(postsWithAnalytics);
+            }
+
+            // Fetch top posts (more posts for better analytics)
+            const topPostsResult = await postService.getPosts(20);
+            if (topPostsResult.posts) {
+                const topPostsWithAnalytics = await Promise.all(
+                    topPostsResult.posts.map(async (post: postService.Post) => {
+                        const postId = post.id.toString();
+                        
+                        let views = 0;
+                        try {
+                            const viewResult = await analyticsService.getPostViewCount(postId);
+                            views = viewResult.viewCount || 0;
+                        } catch (err) {
+                            console.error(`Error fetching views for post ${postId}:`, err);
+                        }
+
+                        let likes = 0;
+                        try {
+                            const likeResult = await likeService.getPostLikeStatus(Number(postId));
+                            likes = likeResult.data?.likeCount || 0;
+                        } catch (err) {
+                            console.error(`Error fetching likes for post ${postId}:`, err);
+                        }
+
+                        let downloads = 0;
+                        if (post.attachments && post.attachments.length > 0) {
+                            try {
+                                const fileIds = post.attachments.map(att => att.id);
+                                const downloadResult = await analyticsService.getMultipleFileDownloads(fileIds);
+                                if (downloadResult.data) {
+                                    downloads = downloadResult.data.reduce((sum, file) => sum + file.downloadCount, 0);
+                                }
+                            } catch (err) {
+                                console.error(`Error fetching downloads for post ${postId}:`, err);
+                            }
+                        }
+
+                        const comments = post.comment_count || 0;
+
+                        return {
+                            id: postId,
+                            title: post.title,
+                            author: {
+                                name: post.user_info ? `${post.user_info.firstName} ${post.user_info.lastName}` : 'Unknown'
+                            },
+                            createdAt: post.created_at || post.createdAt || new Date().toISOString(),
+                            views,
+                            likes,
+                            downloads,
+                            comments
+                        };
+                    })
+                );
+                
+                setTopPosts(topPostsWithAnalytics);
             }
         } catch (err) {
             console.error('Error fetching dashboard data:', err);
@@ -359,22 +468,40 @@ export default function AdminDashboard() {
                         <table className="w-full">
                             <thead className="bg-[#f8f9fa]">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-[#7a8b99] uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[250px] max-w-[400px]">
                                         ชื่อโพสต์
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-[#7a8b99] uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[150px]">
                                         ผู้เขียน
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-[#7a8b99] uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[180px]">
                                         วันที่สร้าง
                                     </th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-[#7a8b99] uppercase tracking-wider">
-                                        <IoMdEye className="inline" size={16} />
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[80px]">
+                                        <div className="flex items-center justify-center gap-1">
+                                            <IoMdEye size={16} />
+                                            <span>ดู</span>
+                                        </div>
                                     </th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-[#7a8b99] uppercase tracking-wider">
-                                        <IoMdHeart className="inline" size={16} />
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[80px]">
+                                        <div className="flex items-center justify-center gap-1">
+                                            <IoMdHeart size={16} />
+                                            <span>ไลค์</span>
+                                        </div>
                                     </th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-[#7a8b99] uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[100px]">
+                                        <div className="flex items-center justify-center gap-1">
+                                            <IoMdCloudDownload size={16} />
+                                            <span>ดาวน์โหลด</span>
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[100px]">
+                                        <div className="flex items-center justify-center gap-1">
+                                            <IoMdChatbubbles size={16} />
+                                            <span>ความคิดเห็น</span>
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[120px]">
                                         การดำเนินการ
                                     </th>
                                 </tr>
@@ -387,19 +514,19 @@ export default function AdminDashboard() {
                                             className="hover:bg-[#f8f9fa] transition-colors"
                                         >
                                             <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-gradient-to-br from-[#405168] to-[#5e7593] rounded-lg flex items-center justify-center text-white text-sm font-bold">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-8 h-8 bg-gradient-to-br from-[#405168] to-[#5e7593] rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                                                         {index + 1}
                                                     </div>
-                                                    <span className="font-medium text-[#1c2a48] line-clamp-1">
+                                                    <span className="font-medium text-[#1c2a48] line-clamp-1 overflow-hidden text-ellipsis">
                                                         {post.title}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <IoMdPerson size={18} className="text-[#7a8b99]" />
-                                                    <span className="text-[#405168]">{post.author.name}</span>
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <IoMdPerson size={18} className="text-[#7a8b99] flex-shrink-0" />
+                                                    <span className="text-[#405168] truncate">{post.author.name}</span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-[#7a8b99] text-sm">
@@ -413,6 +540,16 @@ export default function AdminDashboard() {
                                             <td className="px-6 py-4 text-center">
                                                 <span className="inline-flex items-center gap-1 text-[#7a8b99]">
                                                     {post.likes.toLocaleString()}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="inline-flex items-center gap-1 text-[#7a8b99]">
+                                                    {post.downloads.toLocaleString()}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="inline-flex items-center gap-1 text-[#7a8b99]">
+                                                    {post.comments.toLocaleString()}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
@@ -442,7 +579,7 @@ export default function AdminDashboard() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center text-[#7a8b99]">
+                                        <td colSpan={8} className="px-6 py-12 text-center text-[#7a8b99]">
                                             <div className="flex flex-col items-center gap-3">
                                                 <IoMdDocument size={48} className="opacity-30" />
                                                 <p>ไม่มีโพสต์ในขณะนี้</p>
@@ -452,6 +589,139 @@ export default function AdminDashboard() {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                {/* Top Performing Posts */}
+                <div className="bg-white rounded-2xl shadow-lg border border-[#dee5ed] overflow-hidden mt-8">
+                    <div className="p-6 border-b border-[#dee5ed]">
+                        <h2 className="text-xl font-bold text-[#1c2a48] flex items-center gap-2 mb-4">
+                            <IoMdTrendingUp size={24} />
+                            โพสต์ยอดนิยม
+                        </h2>
+                        
+                        {/* Tabs */}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setTopTab('views')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    topTab === 'views'
+                                        ? 'bg-blue-500 text-white'
+                                        : 'bg-[#f8f9fa] text-[#7a8b99] hover:bg-[#dee5ed]'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <IoMdEye size={18} />
+                                    <span>ดูมากที่สุด</span>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setTopTab('likes')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    topTab === 'likes'
+                                        ? 'bg-pink-500 text-white'
+                                        : 'bg-[#f8f9fa] text-[#7a8b99] hover:bg-[#dee5ed]'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <IoMdHeart size={18} />
+                                    <span>ไลค์มากที่สุด</span>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setTopTab('downloads')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    topTab === 'downloads'
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-[#f8f9fa] text-[#7a8b99] hover:bg-[#dee5ed]'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <IoMdCloudDownload size={18} />
+                                    <span>ดาวน์โหลดมากที่สุด</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="p-6">
+                        <div className="space-y-4">
+                            {topPosts
+                                .sort((a, b) => {
+                                    if (topTab === 'views') return b.views - a.views;
+                                    if (topTab === 'likes') return b.likes - a.likes;
+                                    return b.downloads - a.downloads;
+                                })
+                                .slice(0, 10)
+                                .map((post, index) => {
+                                    const value = topTab === 'views' ? post.views : topTab === 'likes' ? post.likes : post.downloads;
+                                    const icon = topTab === 'views' ? <IoMdEye size={20} /> : topTab === 'likes' ? <IoMdHeart size={20} /> : <IoMdCloudDownload size={20} />;
+                                    const colorClass = topTab === 'views' ? 'text-blue-600' : topTab === 'likes' ? 'text-pink-600' : 'text-green-600';
+                                    const bgClass = topTab === 'views' ? 'bg-blue-50' : topTab === 'likes' ? 'bg-pink-50' : 'bg-green-50';
+                                    
+                                    return (
+                                        <div
+                                            key={post.id}
+                                            className="flex items-center gap-4 p-4 rounded-xl border border-[#dee5ed] hover:shadow-md transition-all group cursor-pointer"
+                                            onClick={() => router.push(`/post/${post.id}`)}
+                                        >
+                                            {/* Rank Badge */}
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white ${
+                                                index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
+                                                index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
+                                                index === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-600' :
+                                                'bg-gradient-to-br from-[#405168] to-[#5e7593]'
+                                            }`}>
+                                                {index + 1}
+                                            </div>
+                                            
+                                            {/* Post Info */}
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-semibold text-[#1c2a48] line-clamp-1 group-hover:text-[#405168] transition-colors">
+                                                    {post.title}
+                                                </h3>
+                                                <div className="flex items-center gap-4 mt-1 text-sm text-[#7a8b99]">
+                                                    <div className="flex items-center gap-1">
+                                                        <IoMdPerson size={16} />
+                                                        <span>{post.author.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="flex items-center gap-1">
+                                                            <IoMdEye size={16} />
+                                                            {post.views.toLocaleString()}
+                                                        </span>
+                                                        <span className="flex items-center gap-1">
+                                                            <IoMdHeart size={16} />
+                                                            {post.likes.toLocaleString()}
+                                                        </span>
+                                                        <span className="flex items-center gap-1">
+                                                            <IoMdCloudDownload size={16} />
+                                                            {post.downloads.toLocaleString()}
+                                                        </span>
+                                                        <span className="flex items-center gap-1">
+                                                            <IoMdChatbubbles size={16} />
+                                                            {post.comments.toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Highlighted Metric */}
+                                            <div className={`px-6 py-3 rounded-xl ${bgClass} flex items-center gap-2 ${colorClass} font-bold`}>
+                                                {icon}
+                                                <span className="text-2xl">{value.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            
+                            {topPosts.length === 0 && (
+                                <div className="text-center py-12 text-[#7a8b99]">
+                                    <IoMdDocument size={48} className="mx-auto opacity-30 mb-3" />
+                                    <p>ไม่มีข้อมูลในขณะนี้</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
