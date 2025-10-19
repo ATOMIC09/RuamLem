@@ -255,9 +255,15 @@ export async function getComments(postId: number): Promise<{ comments?: Comment[
 
 export async function createComment(data: CreateCommentData): Promise<{ comment?: Comment; error?: string }> {
   try {
+    // Transform the data to match backend API expectations
+    const requestData = {
+      postId: data.post_id,
+      body: data.post_body,
+    };
+    
     const response = await apiRequest<{ status?: number; message?: Comment | string; error?: string }>('/post/comment', {
       method: 'POST',
-      data: data,
+      data: requestData,
     });
 
     // Check for error status in response body (even if HTTP 200)
