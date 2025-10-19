@@ -77,9 +77,12 @@ export const getMultipleViews = async ({ body }: any) => {
  */
 export const recordDownload = async ({ body, request }: any) => {
   try {
-    const { fileId } = body;
+    const { fileId, postId } = body;
     if (!fileId) {
       throw new Error("fileId is required");
+    }
+    if (!postId) {
+      throw new Error("postId is required");
     }
 
     // Try to get userId from token (optional - for guest users)
@@ -95,7 +98,7 @@ export const recordDownload = async ({ body, request }: any) => {
                      request.headers.get("x-real-ip") || 
                      null;
 
-    const result = await recordFileDownload(fileId, userId, ipAddress);
+    const result = await recordFileDownload(fileId, postId, userId, ipAddress);
     return result;
   } catch (err: any) {
     return { status: 400, error: err.message };
