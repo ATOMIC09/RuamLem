@@ -32,6 +32,17 @@ export default function Navbar() {
         setIsLoadingAvatar(true);
         try {
             const result = await profileService.getProfile();
+            if (result.error) {
+                // Check for JWT expiration
+                if (result.error.includes('JWT') || result.error.includes('expired')) {
+                    // JWT expired - clear auth data from localStorage
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    // Trigger auth state change to update UI
+                    window.dispatchEvent(new Event('auth-state-changed'));
+                }
+                return;
+            }
             if (result.profile?.avatarUrl) {
                 setAvatarUrl(result.profile.avatarUrl);
             }
