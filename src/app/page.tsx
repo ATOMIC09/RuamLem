@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { IoMdTrendingUp, IoMdPeople } from "react-icons/io";
 import { FaBookOpen, FaUsers, FaFileAlt } from "react-icons/fa";
+import LoadingSpinner from "./components/loading-spinner";
 import PreviewPost from "./components/previewpost";
 import PostButton from "./components/post-button";
 import * as postService from "@/services/post.service";
@@ -164,7 +165,9 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-[#1c2a48] text-center mb-8">หมวดหมู่ยอดนิยม</h2>
           {isLoading ? (
-            <div className="text-center text-[#7a8b99]">กำลังโหลดหมวดหมู่...</div>
+            <div className="flex justify-center py-8">
+              <LoadingSpinner size="md" text="กำลังโหลดหมวดหมู่..." />
+            </div>
           ) : tags.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {tags.map((category, index) => (
@@ -201,11 +204,12 @@ export default function Home() {
               ดูทั้งหมด
             </Link>
           </div>
-
           {/* Posts Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {isLoading ? (
-              <div className="col-span-3 text-center text-[#7a8b99]">กำลังโหลดโพสต์...</div>
+              <div className="col-span-3 flex justify-center py-8">
+                <LoadingSpinner size="lg" text="กำลังโหลดโพสต์..." />
+              </div>
             ) : recentPosts.length > 0 ? (
               recentPosts.map((post) => (
                 <PreviewPost

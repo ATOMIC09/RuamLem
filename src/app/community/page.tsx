@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { HiSortDescending } from "react-icons/hi";
+import LoadingSpinner from "../components/loading-spinner";
 import SearchBox from "../components/searchbox";
 import PreviewPost from "../components/previewpost";
 import PostButton from "../components/post-button";
@@ -214,11 +215,10 @@ function CommunityPageContent() {
             {error}
           </div>
         )}
-
         {/* Loading State */}
         {isLoading && (
-          <div className="text-center py-16">
-            <p className="text-[#5e7593]">กำลังโหลดโพสต์...</p>
+          <div className="flex justify-center py-16">
+            <LoadingSpinner size="lg" text="กำลังโหลดโพสต์..." />
           </div>
         )}
 
