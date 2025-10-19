@@ -7,6 +7,7 @@ import { postRoute } from "./routes/post-route";
 import { profileRoute } from "./routes/profile-route";
 import { statsRoute } from "./routes/stats-route";
 import { likeRoute } from "./routes/like-route";
+import { analyticsRoute } from "./routes/analytics-route";
 
 const app = new Elysia()
   .use(cors({
@@ -21,7 +22,7 @@ const app = new Elysia()
       info: {
         title: 'RuamLem API',
         description: 'A social platform backend API with authentication, posts, and file management',
-        version: '1.1.0'
+        version: '1.2.0'
       },
       servers: [
         {
@@ -35,7 +36,8 @@ const app = new Elysia()
         { name: 'Files', description: 'File upload and download endpoints' },
         { name: 'Profile', description: 'User profile and avatar settings endpoints' },
         { name: 'Stats', description: 'Platform statistics endpoints' },
-        { name: 'Likes', description: 'Post like/engagement endpoints' }
+        { name: 'Likes', description: 'Post like/engagement endpoints' },
+        { name: 'Analytics', description: 'View and download tracking endpoints' }
       ],
       components: {
         securitySchemes: {
@@ -53,7 +55,8 @@ const app = new Elysia()
   .use(postRoute)
   .use(profileRoute)
   .use(statsRoute)
-  .use(likeRoute);
+  .use(likeRoute)
+  .use(analyticsRoute);
 
 app.listen(3030, () => {
   console.log("Server running on http://localhost:3030");
