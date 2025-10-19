@@ -398,7 +398,15 @@ export default function AdminDashboard() {
     };
 
     if (isLoading || loading) {
-        return <LoadingSpinner />;
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-[#f8f9fa] to-[#e9ecef] flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-lg p-8 text-center max-w-md">
+                    <LoadingSpinner />
+                    <h2 className="text-2xl font-bold text-[#1c2a48] mt-6 mb-2">กำลังโหลดข้อมูล</h2>
+                    <p className="text-[#7a8b99]">กรุณารอสักครู่...</p>
+                </div>
+            </div>
+        );
     }
 
     if (error) {
@@ -666,15 +674,15 @@ export default function AdminDashboard() {
                             </thead>
                             <tbody className="divide-y divide-[#dee5ed]">
                                 {recentPosts.length > 0 ? (
-                                    recentPosts.map((post, index) => (
+                                    recentPosts.map((post) => (
                                         <tr 
                                             key={post.id}
                                             className="hover:bg-[#f8f9fa] transition-colors"
                                         >
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3 min-w-0">
-                                                    <div className="w-8 h-8 bg-gradient-to-br from-[#405168] to-[#5e7593] rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                                                        {index + 1}
+                                                    <div className="w-7 h-7 bg-gradient-to-br from-[#405168] to-[#5e7593] rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                                        #{post.id}
                                                     </div>
                                                     <span className="font-medium text-[#1c2a48] line-clamp-1 overflow-hidden text-ellipsis">
                                                         {post.title}
@@ -888,8 +896,8 @@ export default function AdminDashboard() {
                             <IoMdDocument size={32} className="text-[#405168] group-hover:scale-110 transition-transform" />
                             <span className="text-[#7a8b99] text-sm">→</span>
                         </div>
-                        <h3 className="font-bold text-[#1c2a48] mb-1">จัดการโพสต์</h3>
-                        <p className="text-[#7a8b99] text-sm">ดูและจัดการโพสต์ทั้งหมด</p>
+                        <h3 className="font-bold text-[#1c2a48] mb-1">หน้าชุมชน</h3>
+                        <p className="text-[#7a8b99] text-sm">ดูโพสต์ทั้งหมด</p>
                     </button>
 
                     <button
