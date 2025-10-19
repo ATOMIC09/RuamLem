@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "../hooks/use-auth";
 import LoadingSpinner from "../components/loading-spinner";
 import Link from "next/link";
@@ -173,10 +174,11 @@ export default function ProfilePage() {
             <div className="absolute bottom-0 left-0 right-0 flex justify-center">
               <div className="w-28 h-28 bg-white rounded-full border-4 border-[#f5f7fb] flex items-center justify-center shadow-lg transform translate-y-1/2 relative group">
                 {profileData?.avatarUrl ? (
-                  <img
+                  <Image
                     src={profileData.avatarUrl}
                     alt="User avatar"
-                    className="w-full h-full rounded-full object-cover"
+                    fill
+                    className="rounded-full object-cover"
                   />
                 ) : (
                   <IoMdPerson className="text-5xl text-[#405168]" />
