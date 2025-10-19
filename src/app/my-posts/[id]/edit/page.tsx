@@ -45,8 +45,6 @@ export default function EditPostPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
   // Form state
   const [title, setTitle] = useState("");
@@ -226,10 +224,8 @@ export default function EditPostPage() {
         return;
       }
 
-      // Success - show success message and redirect
-      setSuccessMessage(result.message || "แก้ไขโพสต์สำเร็จ");
-      setShowSuccessModal(true);
-      setIsSaving(false);
+      // Success - redirect to my posts
+      router.push("/my-posts");
     } catch {
       setError("ไม่สามารถบันทึกการเปลี่ยนแปลงได้");
       setIsSaving(false);
@@ -577,34 +573,6 @@ export default function EditPostPage() {
                   ปิด
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Success Modal */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="fixed inset-0 bg-black opacity-50"
-            onClick={() => setShowSuccessModal(false)}
-          ></div>
-          <div className="relative bg-white rounded-3xl border border-[#e0e7f1] shadow-xl max-w-md w-full p-8">
-            <div className="text-center">
-              <div className="text-4xl mb-4">✅</div>
-              <h2 className="text-2xl font-bold text-[#1c2a48] mb-4">
-                สำเร็จ!
-              </h2>
-              <p className="text-[#7a8b99] mb-6">
-                {successMessage}
-              </p>
-
-              <button
-                onClick={() => router.push("/my-posts")}
-                className="w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium"
-              >
-                กลับไปยังโพสต์ของฉัน
-              </button>
             </div>
           </div>
         </div>
