@@ -605,6 +605,9 @@ export default function AdminDashboard() {
                         <table className="w-full">
                             <thead className="bg-[#f8f9fa]">
                                 <tr>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[120px]">
+                                        การดำเนินการ
+                                    </th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[250px] max-w-[400px]">
                                         ชื่อโพสต์
                                     </th>
@@ -638,9 +641,6 @@ export default function AdminDashboard() {
                                             <span>ความคิดเห็น</span>
                                         </div>
                                     </th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[120px]">
-                                        การดำเนินการ
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#dee5ed]">
@@ -650,6 +650,24 @@ export default function AdminDashboard() {
                                             key={post.id}
                                             className="hover:bg-[#f8f9fa] transition-colors"
                                         >
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={() => window.open(`/post/${post.id}`, '_blank')}
+                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                                        title="ดูโพสต์"
+                                                    >
+                                                        <IoMdEye size={20} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeletePost(post.id)}
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                                        title="ลบโพสต์"
+                                                    >
+                                                        <IoMdTrash size={20} />
+                                                    </button>
+                                                </div>
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3 min-w-0">
                                                     <div className="w-7 h-7 bg-gradient-to-br from-[#405168] to-[#5e7593] rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -688,24 +706,6 @@ export default function AdminDashboard() {
                                                 <span className="inline-flex items-center gap-1 text-[#7a8b99]">
                                                     {post.comments.toLocaleString()}
                                                 </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <button
-                                                        onClick={() => window.open(`/post/${post.id}`, '_blank')}
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                                                        title="ดูโพสต์"
-                                                    >
-                                                        <IoMdEye size={20} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeletePost(post.id)}
-                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                                        title="ลบโพสต์"
-                                                    >
-                                                        <IoMdTrash size={20} />
-                                                    </button>
-                                                </div>
                                             </td>
                                         </tr>
                                     ))
