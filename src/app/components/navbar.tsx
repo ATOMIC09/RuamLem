@@ -71,9 +71,12 @@ export default function Navbar() {
                     ) : isSignedIn ? (
                         // Signed in state
                         <div className="flex items-center space-x-4">
-                            <span className="text-sm text-[#7a8b99]">
-                                สวัสดี, <span className="font-medium text-[#405168]">{user?.name}</span>
-                            </span>
+                            <Link
+                                href="/profile"
+                                className="px-4 py-2 border border-[#e0e7f1] rounded-3xl hover:bg-[#e8f0f7] hover:shadow-md transition-all text-base font-medium cursor-pointer shadow-sm bg-white text-[#405168]"
+                            >
+                                สวัสดี, {user?.name}
+                            </Link>
                             <button
                                 onClick={handleSignOut}
                                 className="px-4 py-2 border border-[#e0e7f1] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all text-base font-medium cursor-pointer shadow-sm bg-white text-[#405168]"
@@ -133,10 +136,14 @@ export default function Navbar() {
                                 ) : isSignedIn ? (
                                     <div className="space-y-3">
                                         <div className="py-2">
-                                            <span className="text-sm text-[#7a8b99]">
-                                                สวัสดี, <span className="font-medium text-[#405168]">{user?.name}</span>
-                                            </span>
                                         </div>
+                                        <Link
+                                            href="/profile"
+                                            className="block w-full px-4 py-2 border border-[#e0e7f1] text-center rounded-3xl hover:bg-[#e8f0f7] hover:shadow-md transition-all text-base font-medium shadow-sm bg-white text-[#405168]"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                        >
+                                            สวัสดี, {user?.name}
+                                        </Link>
                                         <button
                                             onClick={handleSignOut}
                                             className="w-full px-4 py-2 border border-[#e0e7f1] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all text-base font-medium shadow-sm bg-white text-[#405168]"
