@@ -12,7 +12,7 @@ import {
   getPostByIdController,
 } from "../controllers/post-controller";
 
-const postRoute = new Elysia({ prefix: "/post" })
+export const postRoute = new Elysia({ prefix: "/post" })
   .post(
     "/",
     ({ body, request }) => post({ body, request }),

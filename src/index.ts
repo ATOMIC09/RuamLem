@@ -43,12 +43,11 @@ const app = new Elysia()
         }
       }
     }
-  }));
-
-authRoute(app);
-fileRoute(app);
-postRoute(app);
-profileRoute(app);
+  }))
+  .use(authRoute)
+  .use(fileRoute)
+  .use(postRoute)
+  .use(profileRoute);
 
 app.listen(3030, () => {
   console.log("Server running on http://localhost:3030");
