@@ -222,7 +222,26 @@ export default function EditPostPage() {
     try {
       const { url, error } = await postService.getFileDownloadUrl(fileUrl);
       if (url) {
-        window.open(url, "_blank");
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        // Convert response to blob
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Extract filename from fileUrl or use a default
+        const fileName = fileUrl.split('/').pop() || 'download';
+
+        // Create hidden anchor and trigger download
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        // Clean up
+        window.URL.revokeObjectURL(blobUrl);
         showNotification('success', 'กำลังดาวน์โหลดไฟล์...');
       } else {
         console.error('Download error:', error);

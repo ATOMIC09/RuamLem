@@ -208,19 +208,55 @@ export default function PostDetailPage() {
     }
   };
 
-  const handleDownload = async (fileUrl: string, fileId: string) => {
+  const handlePreview = async (fileUrl: string) => {
     try {
-      // Record download before opening file (include postId)
-      analyticsService.recordFileDownload(fileId, postId).then(() => {
-        // Refresh download count for this file
-        fetchFileDownloadCounts(post?.attachments || []);
-      }).catch(err => {
-        console.error('Failed to record download:', err);
-      });
-      
       const result = await postService.getFileDownloadUrl(fileUrl);
       if (result.url) {
         window.open(result.url, "_blank");
+      } else {
+        showNotification('error', 'ไม่สามารถเปิดไฟล์ได้');
+      }
+    } catch (error) {
+      console.error("Preview failed:", error);
+      showNotification('error', 'ไม่สามารถเปิดไฟล์ได้');
+    }
+  };
+
+  const handleDownload = async (fileUrl: string, fileId: string, fileName: string) => {
+    try {
+      // Record download analytics before downloading (include postId)
+      if (fileId && postId) {
+        try {
+          await analyticsService.recordFileDownload(fileId, postId);
+          // Refresh download count for all files
+          if (post?.attachments) {
+            fetchFileDownloadCounts(post.attachments);
+          }
+        } catch (err) {
+          console.error('Failed to record download:', err);
+        }
+      }
+
+      const result = await postService.getFileDownloadUrl(fileUrl);
+      if (result.url) {
+        const response = await fetch(result.url);
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        // Convert response to blob
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Create hidden anchor and trigger download
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        // Clean up
+        window.URL.revokeObjectURL(blobUrl);
+        showNotification('success', 'กำลังดาวน์โหลดไฟล์...');
       } else {
         showNotification('error', 'ไม่สามารถดาวน์โหลดไฟล์ได้');
       }
@@ -439,12 +475,14 @@ export default function PostDetailPage() {
                   const downloadCount = fileDownloadCounts[file.id] || 0;
                   
                   return (
-                    <button
+                    <div
                       key={file.id}
-                      onClick={() => handleDownload(file.file_url, String(file.id))}
-                      className="w-full flex items-center justify-between p-4 bg-[#f8f9fa] rounded-2xl border border-[#e0e7f1] hover:bg-[#e0e7f1] transition-colors cursor-pointer group"
+                      className="w-full flex items-center justify-between p-4 bg-[#f8f9fa] rounded-2xl border border-[#e0e7f1] hover:bg-[#e0e7f1] transition-colors group"
                     >
-                      <div className="flex items-center flex-1 min-w-0">
+                      <button
+                        onClick={() => handlePreview(file.file_url)}
+                        className="flex items-center flex-1 min-w-0 cursor-pointer"
+                      >
                         {getFileIcon(fileExtension)}
                         <div className="flex-1 min-w-0 text-left">
                           <div className="font-medium text-[#1c2a48] truncate">{file.file_name}</div>
@@ -454,12 +492,15 @@ export default function PostDetailPage() {
                             <span>{downloadCount} ดาวน์โหลด</span>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+                      </button>
+                      <button
+                        onClick={() => handleDownload(file.file_url, String(file.id), file.file_name)}
+                        className="ml-4 p-2 hover:bg-[#d0dae7] rounded-lg transition-colors cursor-pointer flex-shrink-0"
+                        title="ดาวน์โหลดไฟล์"
+                      >
                         <FaDownload size={14} className="text-[#5e7593]" />
-                        <span className="text-sm font-medium text-[#5e7593]">ดาวน์โหลด</span>
-                      </div>
-                    </button>
+                      </button>
+                    </div>
                   );
                 })}
               </div>

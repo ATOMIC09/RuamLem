@@ -123,15 +123,15 @@ export default function MyPostsPage() {
     try {
       const { url, error } = await postService.getFileDownloadUrl(fileUrl);
       if (url) {
+        // Open in new tab for preview (no analytics tracking)
         window.open(url, "_blank");
-        showNotification('success', 'กำลังดาวน์โหลดไฟล์...');
       } else {
-        console.error('Download error:', error);
-        showNotification('error', 'ไม่สามารถดาวน์โหลดไฟล์ได้');
+        console.error('Preview error:', error);
+        showNotification('error', 'ไม่สามารถเปิดไฟล์ได้');
       }
     } catch (error) {
-      console.error('ไม่สามารถดาวน์โหลดไฟล์ได้:', error);
-      showNotification('error', 'ไม่สามารถดาวน์โหลดไฟล์ได้');
+      console.error('ไม่สามารถเปิดไฟล์ได้:', error);
+      showNotification('error', 'ไม่สามารถเปิดไฟล์ได้');
     }
   };
 
