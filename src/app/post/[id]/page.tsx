@@ -40,6 +40,7 @@ export default function PostDetailPage() {
   const [likeCount, setLikeCount] = useState(0);
   const [viewCount, setViewCount] = useState(0);
   const [isTogglingLike, setIsTogglingLike] = useState(false);
+  const [fileDownloadCounts, setFileDownloadCounts] = useState<Record<number, number>>({});
 
   // Show notification helper
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
@@ -127,6 +128,11 @@ export default function PostDetailPage() {
         setComments(commentsResult.comments);
       }
 
+      // Fetch download counts for all files
+      if ((foundPost as PostDetail).attachments && (foundPost as PostDetail).attachments!.length > 0) {
+        fetchFileDownloadCounts((foundPost as PostDetail).attachments!);
+      }
+
       setIsLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการโหลดข้อมูล");
@@ -161,6 +167,22 @@ export default function PostDetailPage() {
     }
   };
 
+  const fetchFileDownloadCounts = async (files: Array<{ id: number }>) => {
+    try {
+      const fileIds = files.map(f => f.id);
+      const result = await analyticsService.getMultipleFileDownloads(fileIds);
+      if (result.data) {
+        const counts: Record<number, number> = {};
+        result.data.forEach(item => {
+          counts[item.fileId] = item.downloadCount;
+        });
+        setFileDownloadCounts(counts);
+      }
+    } catch (err) {
+      console.error('Failed to fetch file download counts:', err);
+    }
+  };
+
   const handleToggleLike = async () => {
     if (!isSignedIn) {
       showNotification('info', 'กรุณาเข้าสู่ระบบเพื่อกดไลค์');
@@ -189,7 +211,10 @@ export default function PostDetailPage() {
   const handleDownload = async (fileUrl: string, fileId: string) => {
     try {
       // Record download before opening file (include postId)
-      analyticsService.recordFileDownload(fileId, postId).catch(err => {
+      analyticsService.recordFileDownload(fileId, postId).then(() => {
+        // Refresh download count for this file
+        fetchFileDownloadCounts(post?.attachments || []);
+      }).catch(err => {
         console.error('Failed to record download:', err);
       });
       
@@ -411,6 +436,7 @@ export default function PostDetailPage() {
                 {post.attachments.map((file) => {
                   const fileExtension = (file.file_name || '').split('.').pop()?.toLowerCase() || '';
                   const fileSizeMB = (file.file_size / 1024 / 1024).toFixed(2);
+                  const downloadCount = fileDownloadCounts[file.id] || 0;
                   
                   return (
                     <button
@@ -422,7 +448,11 @@ export default function PostDetailPage() {
                         {getFileIcon(fileExtension)}
                         <div className="flex-1 min-w-0 text-left">
                           <div className="font-medium text-[#1c2a48] truncate">{file.file_name}</div>
-                          <div className="text-sm text-[#7a8b99]">{fileSizeMB} MB</div>
+                          <div className="flex items-center gap-3 text-sm text-[#7a8b99]">
+                            <span>{fileSizeMB} MB</span>
+                            <span>•</span>
+                            <span>{downloadCount} ดาวน์โหลด</span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 ml-4 flex-shrink-0">
