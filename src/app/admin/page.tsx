@@ -692,7 +692,7 @@ export default function AdminDashboard() {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        onClick={() => router.push(`/post/${post.id}`)}
+                                                        onClick={() => window.open(`/post/${post.id}`, '_blank')}
                                                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                                                         title="ดูโพสต์"
                                                     >
@@ -795,7 +795,7 @@ export default function AdminDashboard() {
                                         <div
                                             key={post.id}
                                             className="flex items-center gap-4 p-4 rounded-xl border border-[#dee5ed] hover:shadow-md transition-all group cursor-pointer"
-                                            onClick={() => router.push(`/post/${post.id}`)}
+                                            onClick={() => window.open(`/post/${post.id}`, '_blank')}
                                         >
                                             {/* Rank Badge */}
                                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white ${
