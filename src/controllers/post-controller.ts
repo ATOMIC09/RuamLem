@@ -1,147 +1,189 @@
-import { status } from "elysia";
+import Elysia, { t } from "elysia";
+import {
+  uploadPost,
+  uploadComment,
+  getPost,
+  getPostAfter,
+  getPostFilter,
+  getComment,
+  getPostById,
+  getAllTags,
+  editPost,
+  deletePost
+} from "../repositories/post-repo";
 import { supabase } from "../supabase";
-import { uploadFiles } from "../repositories/file-repo";
-import { uploadPost, uploadComment, getComment, getPost, getPostAfter, getPostFilter, getAllTags, editPost, getPostById } from "../repositories/post-repo";
-import { asHookType } from "elysia/dist/utils";
 
-
-export async function post(token: string, title: string, body: string, tag: string, files: File[]) {
-    try {
-        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-
-        if (!files || files.length === 0) {
-            return { success: false, message: "No files uploaded" };
-        }
-
-        if (files.length > 10) {
-            return { success: false, message: "Maximum 10 files allowed" };
-        }
-
-        // Validate each file size
-        for (const file of files) {
-            if (file.size > MAX_FILE_SIZE) {
-                return { success: false, message: "File size must be under 50MB" };
-            }
-        }
-
-        const { data: user, error } = await supabase.auth.getClaims(token);
-        if (error || !user) {
-            return { success: false, message: "Invalid session" };
-        }
-        const userId = user.claims.sub;
-
-        const postResult = await uploadPost(userId, title, body, tag);
-        if (postResult.status !== 200) {
-            throw new Error(postResult.message || "Upload post failed");
-        }
-
-        const fileResult = await uploadFiles(files, userId, postResult.postId);
-        if (!fileResult.success) {
-            console.log(fileResult.success)
-            await supabase.from("post_tags").delete().eq("post_id", postResult.postId);
-            await supabase.from("posts").delete().eq("id", postResult.postId);
-            throw new Error("Upload files failed, rolled back post");
-        }
-
-        return {
-            success: true,
-            message: "Post and files uploaded successfully",
-            postId: postResult.postId,
-            filePaths: fileResult.paths
-        };
-    }
-    catch (err: any) {
-        return { status: 500, message: err.message };
-    }
-}
-
-export async function comment(token: string, postId: string, body: string) {
-    try {
-
-        const { data: user, error } = await supabase.auth.getClaims(token);
-        if (error || !user) {
-            return { sccess: false, message: "Invalid session" };
-        }
-        const userId = user.claims.sub;
-
-        return uploadComment(userId, postId, body);
-
-
-    } catch (err: any) {
-        return { status: 500, message: err.message };
+export const post = async ({ body, request }: any) => {
+  try {
+    const token = request.headers.get("Authorization")?.replace("Bearer ", "");
+    if (!token) {
+      throw new Error("No authorization token provided");
     }
 
-}
+    const { data: claims } = await supabase.auth.getClaims(token);
+    const userId = claims?.sub;
 
-// no filter
-export async function getPostController(count: number) {
-    try {
-        return getPost(count);
-    }
-    catch (err: any) {
-        return { status: 500, message: err.message };
+    if (!userId) {
+      throw new Error("Invalid user ID from token");
     }
 
-}
+    const { title, body: postBody, tag } = body;
 
-export async function getPostAfterController(lastId: number, count: number = 10) {
-    try {
-        return getPostAfter(lastId, count);
-    }
-    catch (err: any) {
-        return { status: 500, message: err.message };
-    }
-}
+    const result = await uploadPost(userId, title, postBody, tag);
+    return result;
+  } catch (err: any) {
+    return { status: 401, message: err.message };
+  }
+};
 
+export const comment = async ({ body, request }: any) => {
+  try {
+    const token = request.headers.get("Authorization")?.replace("Bearer ", "");
+    if (!token) {
+      throw new Error("No authorization token provided");
+    }
 
-export async function getPostFilterController(tags: string, count: number = 10) {
-    try {
-        return getPostFilter(tags, count);
-    }
-    catch (err: any) {
-        return { status: 500, message: err.message };
-    }
-}
+    const { data: claims } = await supabase.auth.getClaims(token);
+    const userId = claims?.sub;
 
+    if (!userId) {
+      throw new Error("Invalid user ID from token");
+    }
 
-export async function getCommentController(post_id: number) {
-    try {
-        return getComment(post_id);
-    }
-    catch (err: any) {
-        return { status: 500, message: err.message };
-    }
-}
+    const { postId, body: commentBody } = body;
 
-export async function getTagsController() {
-    try {
-        return getAllTags();
-    }
-    catch (err: any) {
-        return { status: 500, message: err.message };
-    }
-}
+    const result = await uploadComment(userId, postId, commentBody);
+    return result;
+  } catch (err: any) {
+    return { status: 401, message: err.message };
+  }
+};
 
-export async function editPostController(token: string, postId: number, title: string, body: string, tag: string) {
-    try {
-        const { data: user, error } = await supabase.auth.getClaims(token);
-        if (error || !user) {
-            return { success: false, message: "Invalid session" };
-        }
-        const userId = user.claims.sub;
+export const getPostController = async ({ body }: any) => {
+  try {
+    const { count = 10 } = body;
+    const result = await getPost(count);
+    return result;
+  } catch (err: any) {
+    return { status: 500, message: err.message };
+  }
+};
 
-        return editPost(userId, postId, title, body, tag);
+export const getPostAfterController = async ({ body }: any) => {
+  try {
+    const { lastId, count = 10 } = body;
+    if (!lastId) {
+      throw new Error("lastId is required");
     }
-    catch (err: any) {
-        return { status: 500, message: err.message };
-    }
-}
 
-export async function getPostByIdController(postId: number) {
-    try {
-        return getPostById(postId);
+    const result = await getPostAfter(lastId, count);
+    return result;
+  } catch (err: any) {
+    return { status: 400, message: err.message };
+  }
+};
+
+export const getPostFilterController = async ({ body }: any) => {
+  try {
+    const { tags, count = 10 } = body;
+    if (!tags) {
+      throw new Error("tags parameter is required");
     }
-    catch (err: any) {
-        return { status: 500, message: err.message };
+
+    const result = await getPostFilter(tags, count);
+    return result;
+  } catch (err: any) {
+    return { status: 400, message: err.message };
+  }
+};
+
+export const getCommentController = async ({ body }: any) => {
+  try {
+    const { postId } = body;
+    if (!postId) {
+      throw new Error("postId is required");
     }
-}
+
+    const result = await getComment(postId);
+    return result;
+  } catch (err: any) {
+    return { status: 400, message: err.message };
+  }
+};
+
+export const getTagsController = async () => {
+  try {
+    const result = await getAllTags();
+    return result;
+  } catch (err: any) {
+    return { status: 500, message: err.message };
+  }
+};
+
+export const editPostController = async ({ body, request, params }: any) => {
+  try {
+    const token = request.headers.get("Authorization")?.replace("Bearer ", "");
+    if (!token) {
+      throw new Error("No authorization token provided");
+    }
+
+    const { data: claims } = await supabase.auth.getClaims(token);
+    const userId = claims?.sub;
+
+    if (!userId) {
+      throw new Error("Invalid user ID from token");
+    }
+
+    const postId = parseInt(params.postId);
+    if (isNaN(postId)) {
+      throw new Error("Invalid post ID");
+    }
+
+    const { title, body: postBody, tag } = body;
+
+    const result = await editPost(userId, postId, title, postBody, tag);
+    return result;
+  } catch (err: any) {
+    return { status: 401, message: err.message };
+  }
+};
+
+export const deletePostController = async ({ request, params }: any) => {
+  try {
+    const token = request.headers.get("Authorization")?.replace("Bearer ", "");
+    if (!token) {
+      throw new Error("No authorization token provided");
+    }
+
+    const { data: claims } = await supabase.auth.getClaims(token);
+    const userId = claims?.sub;
+
+    if (!userId) {
+      throw new Error("Invalid user ID from token");
+    }
+
+    const postId = parseInt(params.postId);
+    if (isNaN(postId)) {
+      throw new Error("Invalid post ID");
+    }
+
+    const result = await deletePost(userId, postId);
+    return result;
+  } catch (err: any) {
+    return { status: 401, message: err.message };
+  }
+};
+
+export const getPostByIdController = async ({ body }: any) => {
+  try {
+    const { postId } = body;
+    if (!postId) {
+      throw new Error("postId is required");
+    }
+
+    const result = await getPostById(postId);
+    return result;
+  } catch (err: any) {
+    return { status: 400, message: err.message };
+  }
+};
