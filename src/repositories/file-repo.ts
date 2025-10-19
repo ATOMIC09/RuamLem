@@ -55,6 +55,100 @@ export async function uploadFiles(files: File[], user_id: string, post_id: strin
     }
 }
 
+export async function uploadFileToPost(file: File, user_id: string, post_id: number) {
+    try {
+        // Verify that the user owns this post
+        const { data: postData, error: getPostError } = await supabase
+            .from("posts")
+            .select("user_id")
+            .eq("id", post_id)
+            .single();
+
+        if (getPostError || !postData) {
+            throw new Error("Post not found");
+        }
+
+        if (postData.user_id !== user_id) {
+            throw new Error("Unauthorized: You can only add files to your own posts");
+        }
+
+        // Check how many files this post already has
+        const { count, error: countError } = await supabase
+            .from("files")
+            .select("id", { count: "exact", head: true })
+            .eq("post_id", post_id);
+
+        if (countError) {
+            throw new Error("Failed to check existing files count");
+        }
+
+        if (count && count >= 10) {
+            throw new Error("Post already has maximum of 10 files");
+        }
+
+        // Upload file to storage
+        const timestamp = Date.now();
+        const uniqueId = Math.random().toString(36).substr(2, 9);
+        const fileName = `${timestamp}_${uniqueId}`;
+        const filePath = fileName;
+
+        console.log("📤 Uploading to storage:", filePath);
+
+        const { data, error: uploadError } = await supabase.storage
+            .from("exams")
+            .upload(filePath, file);
+
+        if (uploadError) {
+            console.log("❌ Storage upload error:", uploadError);
+            throw new Error(uploadError.message);
+        }
+
+        console.log("✅ File uploaded to storage:", filePath);
+
+        // Insert file record with post_id
+        const insertData = {
+            file_name: file.name,
+            file_url: filePath,
+            file_size: file.size,
+            post_id: post_id,
+            user_id: user_id
+        };
+
+        console.log("💾 Inserting file record:", insertData);
+
+        const { data: fileTable, error: errorFileTable } = await supabase
+            .from("files")
+            .insert([insertData])
+            .select("id, file_name, file_url, file_size")
+            .single();
+
+        if (errorFileTable) {
+            console.log("❌ Database insert error:", errorFileTable);
+            // Try to cleanup uploaded file
+            await supabase.storage.from("exams").remove([filePath]);
+            throw new Error(errorFileTable.message);
+        }
+
+        console.log("✅ File record inserted:", fileTable);
+
+        return {
+            success: true,
+            status: 200,
+            message: "File uploaded successfully",
+            file: {
+                id: fileTable.id,
+                file_name: fileTable.file_name,
+                file_url: fileTable.file_url,
+                file_size: fileTable.file_size
+            }
+        };
+    }
+    catch (err: any) {
+        console.log("❌ Upload to post error:", err);
+        return { success: false, status: 500, message: err.message };
+    }
+}
+
 export async function downloadPDF(filename: string, expiresInSeconds = 60) {
 
     const filePath = `${filename}`;
