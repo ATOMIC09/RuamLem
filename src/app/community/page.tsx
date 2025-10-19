@@ -20,6 +20,10 @@ function CommunityPageContent() {
     [params]
   );
   const dateRangeParam = params?.get?.("dateRange") || "";
+  const fileTypesParam = useMemo(() => 
+    params?.get?.("fileTypes") ? params.get("fileTypes")!.split(",").filter(t => t) : [],
+    [params]
+  );
   
   const [posts, setPosts] = useState<postService.Post[]>([]);
   const [allPosts, setAllPosts] = useState<postService.Post[]>([]);
@@ -88,9 +92,48 @@ function CommunityPageContent() {
       });
     }
 
+    // Filter by file types (multi-select)
+    if (fileTypesParam.length > 0) {
+      result = result.filter(post => {
+        const attachments = post.attachments || (post.file ? [post.file] : []);
+        
+        // Check each selected file type filter
+        return fileTypesParam.some(fileType => {
+          if (fileType === "มีไฟล์แนบ") {
+            return attachments.length > 0;
+          }
+          
+          if (fileType === "ไม่มีไฟล์แนบ") {
+            return attachments.length === 0;
+          }
+          
+          // Check for specific file types
+          return attachments.some(attachment => {
+            const fileName = attachment.file_name || "";
+            const lowerFileName = fileName.toLowerCase();
+            
+            switch (fileType) {
+              case "PDF":
+                return lowerFileName.endsWith(".pdf");
+              case "รูปภาพ":
+                return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(lowerFileName);
+              case "เอกสาร":
+                return /\.(doc|docx|txt|rtf|odt)$/i.test(lowerFileName);
+              case "สเปรดชีต":
+                return /\.(xls|xlsx|csv|ods)$/i.test(lowerFileName);
+              case "งานนำเสนอ":
+                return /\.(ppt|pptx|odp)$/i.test(lowerFileName);
+              default:
+                return true;
+            }
+          });
+        });
+      });
+    }
+
     setFilteredPosts(result);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [queryParam, tagsParam, dateRangeParam, allPosts]);
+  }, [queryParam, tagsParam, dateRangeParam, allPosts, fileTypesParam]);
 
   // Sort posts when sortBy or sortOrder changes
   useEffect(() => {

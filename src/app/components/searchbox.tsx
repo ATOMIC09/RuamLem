@@ -8,6 +8,7 @@ interface SearchBoxProps {
     query: string;
     tags: string[];
     dateRange: string;
+    fileTypes: string[];
   }) => void;
 }
 
@@ -22,12 +23,25 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
         [params]
     );
     const urlDateRange = params?.get?.("dateRange") || "";
+    const urlFileTypes = useMemo(() => 
+        params?.get?.("fileTypes") ? params.get("fileTypes")!.split(",").filter(t => t) : [],
+        [params]
+    );
     
     const [searchQuery, setSearchQuery] = useState(urlQuery);
     const [selectedTags, setSelectedTags] = useState<string[]>(urlTags);
     const [selectedDateRange, setSelectedDateRange] = useState(urlDateRange);
+    const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>(urlFileTypes);
     const [availableTags, setAvailableTags] = useState<Array<{ id: number; name: string }>>([]);
     const [isLoadingTags, setIsLoadingTags] = useState(true);
+
+    const availableFileTypes = [
+        { id: 1, name: "PDF", display: "PDF (.pdf)" },
+        { id: 2, name: "รูปภาพ", display: "รูปภาพ (.jpg, .png, .gif)" },
+        { id: 3, name: "เอกสาร", display: "เอกสาร (.doc, .docx, .txt)" },
+        { id: 4, name: "สเปรดชีต", display: "สเปรดชีต (.xls, .xlsx, .csv)" },
+        { id: 5, name: "งานนำเสนอ", display: "งานนำเสนอ (.ppt, .pptx)" },
+    ];
 
     useEffect(() => {
         fetchTags();
@@ -38,7 +52,8 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
         setSearchQuery(urlQuery);
         setSelectedTags(urlTags);
         setSelectedDateRange(urlDateRange);
-    }, [urlQuery, urlTags, urlDateRange]);
+        setSelectedFileTypes(urlFileTypes);
+    }, [urlQuery, urlTags, urlDateRange, urlFileTypes]);
 
     const fetchTags = async () => {
         setIsLoadingTags(true);
@@ -56,7 +71,7 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
 
     const handleQueryChange = (value: string) => {
         setSearchQuery(value);
-        updateURL(value, selectedTags, selectedDateRange);
+        updateURL(value, selectedTags, selectedDateRange, selectedFileTypes);
     };
 
     const toggleTag = (tag: string) => {
@@ -64,20 +79,29 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
             ? selectedTags.filter(t => t !== tag)
             : [...selectedTags, tag];
         setSelectedTags(newTags);
-        updateURL(searchQuery, newTags, selectedDateRange);
+        updateURL(searchQuery, newTags, selectedDateRange, selectedFileTypes);
     };
 
     const toggleDateRange = (date: string) => {
         const newDate = selectedDateRange === date ? "" : date;
         setSelectedDateRange(newDate);
-        updateURL(searchQuery, selectedTags, newDate);
+        updateURL(searchQuery, selectedTags, newDate, selectedFileTypes);
     };
 
-    const updateURL = (query: string, tags: string[], dateRange: string) => {
+    const toggleFileType = (fileType: string) => {
+        const newFileTypes = selectedFileTypes.includes(fileType)
+            ? selectedFileTypes.filter(t => t !== fileType)
+            : [...selectedFileTypes, fileType];
+        setSelectedFileTypes(newFileTypes);
+        updateURL(searchQuery, selectedTags, selectedDateRange, newFileTypes);
+    };
+
+    const updateURL = (query: string, tags: string[], dateRange: string, fileTypes: string[]) => {
         const newParams = new URLSearchParams();
         if (query) newParams.set("q", query);
         if (tags.length > 0) newParams.set("tags", tags.join(","));
         if (dateRange) newParams.set("dateRange", dateRange);
+        if (fileTypes.length > 0) newParams.set("fileTypes", fileTypes.join(","));
         
         const newURL = newParams.toString() 
             ? `/community?${newParams.toString()}`
@@ -87,7 +111,7 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
         
         // Also call onSearch for backward compatibility if needed
         if (onSearch) {
-            onSearch({ query, tags, dateRange });
+            onSearch({ query, tags, dateRange, fileTypes });
         }
     };
 
@@ -129,6 +153,24 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
                     ) : (
                         <span className="text-sm text-[#7a8b99]">ไม่มีวิชาให้เลือก</span>
                     )}
+                </div>
+                <div className="px-6 py-3 border-b border-t border-[#f0f4f8]">
+                    <span className="text-sm font-semibold text-[#1c2a48]">ประเภทไฟล์</span>
+                </div>
+                <div className="overflow-x-auto whitespace-nowrap px-6 py-3 scrollbar-hide">
+                    {availableFileTypes.map((fileType) => (
+                        <button 
+                            key={fileType.id} 
+                            onClick={() => toggleFileType(fileType.name)}
+                            className={`inline-block px-4 py-2 mr-3 mb-2 rounded-full border font-medium cursor-pointer transition-all ${
+                                selectedFileTypes.includes(fileType.name)
+                                    ? "bg-[#405168] text-white border-[#405168]"
+                                    : "bg-[#f0f4f8] text-[#5e7593] border-[#e0e7f1] hover:bg-[#e0e7f1] hover:shadow-sm"
+                            }`}
+                        >
+                            {fileType.display || fileType.name}
+                        </button>
+                    ))}
                 </div>
                 <div className="px-6 py-3 border-b border-t border-[#f0f4f8]">
                     <span className="text-sm font-semibold text-[#1c2a48]">วันที่</span>
