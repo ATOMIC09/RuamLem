@@ -69,6 +69,30 @@ export default function AdminDashboard() {
     const [members, setMembers] = useState<adminService.User[]>([]);
     const [membersLoading, setMembersLoading] = useState(false);
     const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+    
+    // Notification modal states
+    const [showNotification, setShowNotification] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState('');
+    const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('info');
+    
+    // Confirmation modal states
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [confirmationMessage, setConfirmationMessage] = useState('');
+    const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
+
+    // Helper function to show notification
+    const showNotificationModal = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+        setNotificationMessage(message);
+        setNotificationType(type);
+        setShowNotification(true);
+    };
+
+    // Helper function to show confirmation
+    const showConfirmationModal = (message: string, onConfirm: () => void) => {
+        setConfirmationMessage(message);
+        setConfirmationAction(() => onConfirm);
+        setShowConfirmation(true);
+    };
 
     // Check authentication and authorization
     useEffect(() => {
@@ -257,29 +281,30 @@ export default function AdminDashboard() {
 
     // Delete post function
     const handleDeletePost = async (postId: string) => {
-        if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบโพสต์นี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้')) {
-            return;
-        }
-
-        try {
-            const result = await adminService.deletePostAsAdmin(Number(postId));
-            
-            if (result.success) {
-                alert('ลบโพสต์สำเร็จ');
-                // Refresh dashboard data
-                await fetchDashboardData();
-            } else {
-                // Check for JWT expiration
-                if (isJWTExpired(result.error)) {
-                    setShowSignInPrompt(true);
-                } else {
-                    alert(result.error || 'ไม่สามารถลบโพสต์ได้');
+        showConfirmationModal(
+            'คุณแน่ใจหรือไม่ว่าต้องการลบโพสต์นี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้',
+            async () => {
+                try {
+                    const result = await adminService.deletePostAsAdmin(Number(postId));
+                    
+                    if (result.success) {
+                        showNotificationModal('ลบโพสต์สำเร็จ', 'success');
+                        // Refresh dashboard data
+                        await fetchDashboardData();
+                    } else {
+                        // Check for JWT expiration
+                        if (isJWTExpired(result.error)) {
+                            setShowSignInPrompt(true);
+                        } else {
+                            showNotificationModal(result.error || 'ไม่สามารถลบโพสต์ได้', 'error');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error deleting post:', err);
+                    showNotificationModal('เกิดข้อผิดพลาดในการลบโพสต์', 'error');
                 }
             }
-        } catch (err) {
-            console.error('Error deleting post:', err);
-            alert('เกิดข้อผิดพลาดในการลบโพสต์');
-        }
+        );
     };
 
     // Fetch all members
@@ -294,12 +319,12 @@ export default function AdminDashboard() {
                 if (isJWTExpired(result.error)) {
                     setShowSignInPrompt(true);
                 } else {
-                    alert(result.error || 'ไม่สามารถดึงข้อมูลสมาชิกได้');
+                    showNotificationModal(result.error || 'ไม่สามารถดึงข้อมูลสมาชิกได้', 'error');
                 }
             }
         } catch (err) {
             console.error('Error fetching members:', err);
-            alert('เกิดข้อผิดพลาดในการดึงข้อมูลสมาชิก');
+            showNotificationModal('เกิดข้อผิดพลาดในการดึงข้อมูลสมาชิก', 'error');
         } finally {
             setMembersLoading(false);
         }
@@ -307,31 +332,32 @@ export default function AdminDashboard() {
 
     // Delete member
     const handleDeleteMember = async (userId: string, userName: string) => {
-        if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบสมาชิก "${userName}"? การดำเนินการนี้ไม่สามารถย้อนกลับได้`)) {
-            return;
-        }
-
-        try {
-            const result = await adminService.deleteUser(userId);
-            
-            if (result.success) {
-                alert('ลบสมาชิกสำเร็จ');
-                // Refresh members list
-                await fetchMembers();
-                // Refresh dashboard stats
-                await fetchDashboardData();
-            } else {
-                // Check for JWT expiration
-                if (isJWTExpired(result.error)) {
-                    setShowSignInPrompt(true);
-                } else {
-                    alert(result.error || 'ไม่สามารถลบสมาชิกได้');
+        showConfirmationModal(
+            `คุณแน่ใจหรือไม่ว่าต้องการลบสมาชิก "${userName}"? การดำเนินการนี้ไม่สามารถย้อนกลับได้`,
+            async () => {
+                try {
+                    const result = await adminService.deleteUser(userId);
+                    
+                    if (result.success) {
+                        showNotificationModal('ลบสมาชิกสำเร็จ', 'success');
+                        // Refresh members list
+                        await fetchMembers();
+                        // Refresh dashboard stats
+                        await fetchDashboardData();
+                    } else {
+                        // Check for JWT expiration
+                        if (isJWTExpired(result.error)) {
+                            setShowSignInPrompt(true);
+                        } else {
+                            showNotificationModal(result.error || 'ไม่สามารถลบสมาชิกได้', 'error');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error deleting member:', err);
+                    showNotificationModal('เกิดข้อผิดพลาดในการลบสมาชิก', 'error');
                 }
             }
-        } catch (err) {
-            console.error('Error deleting member:', err);
-            alert('เกิดข้อผิดพลาดในการลบสมาชิก');
-        }
+        );
     };
 
     // Update member role
@@ -339,29 +365,30 @@ export default function AdminDashboard() {
         const newRole = currentRole === 'admin' ? 'user' : 'admin';
         const roleText = newRole === 'admin' ? 'แอดมิน' : 'ผู้ใช้ทั่วไป';
         
-        if (!confirm(`คุณต้องการเปลี่ยนสิทธิ์ของ "${userName}" เป็น "${roleText}" หรือไม่?`)) {
-            return;
-        }
-
-        try {
-            const result = await adminService.updateUserRole(userId, newRole);
-            
-            if (result.success) {
-                alert('อัปเดตสิทธิ์สำเร็จ');
-                // Refresh members list
-                await fetchMembers();
-            } else {
-                // Check for JWT expiration
-                if (isJWTExpired(result.error)) {
-                    setShowSignInPrompt(true);
-                } else {
-                    alert(result.error || 'ไม่สามารถอัปเดตสิทธิ์ได้');
+        showConfirmationModal(
+            `คุณต้องการเปลี่ยนสิทธิ์ของ "${userName}" เป็น "${roleText}" หรือไม่?`,
+            async () => {
+                try {
+                    const result = await adminService.updateUserRole(userId, newRole);
+                    
+                    if (result.success) {
+                        showNotificationModal('อัปเดตสิทธิ์สำเร็จ', 'success');
+                        // Refresh members list
+                        await fetchMembers();
+                    } else {
+                        // Check for JWT expiration
+                        if (isJWTExpired(result.error)) {
+                            setShowSignInPrompt(true);
+                        } else {
+                            showNotificationModal(result.error || 'ไม่สามารถอัปเดตสิทธิ์ได้', 'error');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error updating role:', err);
+                    showNotificationModal('เกิดข้อผิดพลาดในการอัปเดตสิทธิ์', 'error');
                 }
             }
-        } catch (err) {
-            console.error('Error updating role:', err);
-            alert('เกิดข้อผิดพลาดในการอัปเดตสิทธิ์');
-        }
+        );
     };
 
     // Open member management modal
@@ -1076,6 +1103,69 @@ export default function AdminDashboard() {
                                     className="w-full px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all font-medium shadow-sm bg-white cursor-pointer"
                                 >
                                     ปิด
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Notification Modal */}
+            {showNotification && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowNotification(false)}></div>
+                    <div className="relative bg-white rounded-3xl border border-[#e0e7f1] shadow-xl max-w-md w-full p-8">
+                        <div className="text-center">
+                            <div className="text-5xl mb-4">
+                                {notificationType === 'success' && '✅'}
+                                {notificationType === 'error' && '❌'}
+                                {notificationType === 'info' && 'ℹ️'}
+                            </div>
+                            <h2 className="text-xl font-bold text-[#1c2a48] mb-4">
+                                {notificationType === 'success' && 'สำเร็จ'}
+                                {notificationType === 'error' && 'เกิดข้อผิดพลาด'}
+                                {notificationType === 'info' && 'แจ้งเตือน'}
+                            </h2>
+                            <p className="text-[#7a8b99] mb-6">{notificationMessage}</p>
+
+                            <button
+                                onClick={() => setShowNotification(false)}
+                                className="w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium cursor-pointer"
+                            >
+                                ตกลง
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirmation Modal */}
+            {showConfirmation && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowConfirmation(false)}></div>
+                    <div className="relative bg-white rounded-3xl border border-[#e0e7f1] shadow-xl max-w-md w-full p-8">
+                        <div className="text-center">
+                            <div className="text-5xl mb-4">⚠️</div>
+                            <h2 className="text-xl font-bold text-[#1c2a48] mb-4">ยืนยันการดำเนินการ</h2>
+                            <p className="text-[#7a8b99] mb-6">{confirmationMessage}</p>
+
+                            <div className="space-y-3">
+                                <button
+                                    onClick={() => {
+                                        setShowConfirmation(false);
+                                        if (confirmationAction) {
+                                            confirmationAction();
+                                        }
+                                    }}
+                                    className="w-full px-6 py-3 bg-red-500 text-white rounded-3xl hover:bg-red-600 transition-colors font-medium cursor-pointer"
+                                >
+                                    ยืนยัน
+                                </button>
+                                <button
+                                    onClick={() => setShowConfirmation(false)}
+                                    className="w-full px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all font-medium shadow-sm bg-white cursor-pointer"
+                                >
+                                    ยกเลิก
                                 </button>
                             </div>
                         </div>
