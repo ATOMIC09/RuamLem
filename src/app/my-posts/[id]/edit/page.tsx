@@ -518,7 +518,7 @@ export default function EditPostPage() {
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex-1 px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] disabled:opacity-50 transition-colors font-medium"
+                className="flex-1 px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] disabled:opacity-50 transition-colors font-medium cursor-pointer"
               >
                 {isSaving ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
               </button>
