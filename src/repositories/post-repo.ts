@@ -424,3 +424,94 @@ export async function editPost(userId: string, postId: number, title: string, bo
     return { status: 500, message: err.message };
   }
 }
+
+export async function deletePost(userId: string, postId: number) {
+  try {
+    // Verify that the user owns this post
+    const { data: postData, error: getPostError } = await supabase
+      .from("posts")
+      .select("user_id")
+      .eq("id", postId)
+      .single();
+
+    if (getPostError || !postData) {
+      throw new Error("Post not found");
+    }
+
+    if (postData.user_id !== userId) {
+      throw new Error("Unauthorized: You can only delete your own posts");
+    }
+
+    // Get all files associated with this post
+    const { data: files, error: filesError } = await supabase
+      .from("files")
+      .select("file_url")
+      .eq("post_id", postId);
+
+    if (filesError) {
+      console.error("Error fetching files:", filesError);
+    }
+
+    // Delete files from storage
+    if (files && files.length > 0) {
+      const fileUrls = files.map((f: any) => f.file_url);
+      const { error: storageError } = await supabase.storage
+        .from("exams")
+        .remove(fileUrls);
+
+      if (storageError) {
+        console.error("Storage deletion error:", storageError);
+        // Continue with deletion even if storage fails
+      }
+    }
+
+    // Delete file records from database
+    const { error: deleteFilesError } = await supabase
+      .from("files")
+      .delete()
+      .eq("post_id", postId);
+
+    if (deleteFilesError) {
+      console.error("Error deleting file records:", deleteFilesError);
+    }
+
+    // Delete comments
+    const { error: deleteCommentsError } = await supabase
+      .from("comments")
+      .delete()
+      .eq("post_id", postId);
+
+    if (deleteCommentsError) {
+      console.error("Error deleting comments:", deleteCommentsError);
+    }
+
+    // Delete post_tags relationship
+    const { error: deletePostTagsError } = await supabase
+      .from("post_tags")
+      .delete()
+      .eq("post_id", postId);
+
+    if (deletePostTagsError) {
+      throw new Error("Failed to delete post tags");
+    }
+
+    // Finally, delete the post itself
+    const { error: deletePostError } = await supabase
+      .from("posts")
+      .delete()
+      .eq("id", postId);
+
+    if (deletePostError) {
+      throw new Error("Failed to delete post");
+    }
+
+    return {
+      status: 200,
+      message: "Post deleted successfully"
+    };
+
+  } catch (err: any) {
+    console.error("deletePost error:", err);
+    return { status: 500, message: err.message };
+  }
+}
