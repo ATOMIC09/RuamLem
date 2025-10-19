@@ -233,13 +233,21 @@ export default function PostDetailPage() {
           {/* Post Header */}
           <div className="flex items-center justify-between mb-6 pb-6 border-b border-[#f0f4f8]">
             <div className="flex items-center">
-              <Image
-                src="/anonym.jpg"
-                alt={authorName}
-                width={50}
-                height={50}
-                className="w-12 h-12 rounded-full mr-4"
-              />
+              <div className="w-12 h-12 rounded-full mr-4 overflow-hidden bg-gradient-to-br from-[#5e7593] to-[#405168] flex-shrink-0">
+                {post.user_info?.avatarUrl ? (
+                  <Image
+                    src={post.user_info.avatarUrl}
+                    alt={authorName}
+                    width={50}
+                    height={50}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white font-bold text-lg">
+                    {authorName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
               <div>
                 <div className="font-bold text-[#1c2a48] text-lg">{authorName}</div>
                 <div className="text-sm text-[#7a8b99]">{createdAt}</div>
@@ -353,15 +361,34 @@ export default function PostDetailPage() {
 
                   return (
                     <div key={comment.id} className="p-4 bg-[#f8f9fa] rounded-2xl border border-[#e0e7f1]">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="font-semibold text-[#1c2a48]">
-                          {authorName}
+                      <div className="flex items-start gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[#5e7593] to-[#405168] flex-shrink-0">
+                          {comment.user_info?.avatarUrl ? (
+                            <Image
+                              src={comment.user_info.avatarUrl}
+                              alt={authorName}
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white font-bold text-xs">
+                              {authorName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                         </div>
-                        <div className="text-xs text-[#7a8b99]">
-                          {createdDate}
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <div className="font-semibold text-[#1c2a48]">
+                              {authorName}
+                            </div>
+                            <div className="text-xs text-[#7a8b99]">
+                              {createdDate}
+                            </div>
+                          </div>
+                          <p className="text-[#5e7593] mt-1">{comment.body}</p>
                         </div>
                       </div>
-                      <p className="text-[#5e7593]">{comment.body}</p>
                     </div>
                   );
                 })}

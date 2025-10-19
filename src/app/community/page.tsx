@@ -245,6 +245,7 @@ function CommunityPageContent() {
                       : post.author 
                       ? `${post.author.firstName} ${post.author.lastName}`
                       : "Anonymous",
+                    avatar: post.user_info?.avatarUrl || undefined,
                   },
                   createdAt: new Date(post.created_at || post.createdAt || new Date()).toLocaleDateString('th-TH', {
                     year: 'numeric',

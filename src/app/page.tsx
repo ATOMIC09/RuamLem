@@ -224,7 +224,7 @@ export default function Home() {
                         : post.author
                         ? `${post.author.firstName} ${post.author.lastName}`
                         : "Anonymous",
-                      avatar: "/anonym.jpg"
+                      avatar: post.user_info?.avatarUrl || undefined,
                     },
                     createdAt: new Date(post.created_at || post.createdAt || new Date()).toLocaleDateString('th-TH', {
                       year: 'numeric',

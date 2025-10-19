@@ -32,6 +32,7 @@ export interface Post {
   user_info?: {
     firstName: string;
     lastName: string;
+    avatarUrl?: string | null;
   };
   file?: {
     id: number;
@@ -69,6 +70,7 @@ export interface Comment {
   user_info?: {
     firstName: string;
     lastName: string;
+    avatarUrl?: string | null;
   };
   // For backward compatibility
   author?: {
@@ -142,7 +144,7 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
 
 export async function getPosts(count: number = 10): Promise<{ posts?: Post[]; error?: string }> {
   try {
-    const response = await apiRequest<{ status: number; data?: Post[]; error?: string }>('/getPost', {
+    const response = await apiRequest<{ status: number; data?: Post[]; error?: string }>('/post/getPost', {
       method: 'POST',
       data: { count },
     });
@@ -165,7 +167,7 @@ export async function getPosts(count: number = 10): Promise<{ posts?: Post[]; er
 
 export async function getPostsByTag(tags: string, count: number = 10): Promise<{ posts?: Post[]; error?: string }> {
   try {
-    const response = await apiRequest<{ posts?: Post[]; error?: string }>('/getPostFilter', {
+    const response = await apiRequest<{ posts?: Post[]; error?: string }>('/post/getPostFilter', {
       method: 'POST',
       data: { tags, count },
     });
@@ -180,7 +182,7 @@ export async function getPostsByTag(tags: string, count: number = 10): Promise<{
 
 export async function getPostsAfter(lastId: number, count: number = 10): Promise<{ posts?: Post[]; error?: string }> {
   try {
-    const response = await apiRequest<{ posts?: Post[]; error?: string }>('/getPostAfter', {
+    const response = await apiRequest<{ posts?: Post[]; error?: string }>('/post/getPostAfter', {
       method: 'POST',
       data: { lastId, count },
     });
@@ -227,7 +229,7 @@ export async function getPost(postId: number): Promise<{ post?: Post; error?: st
 
 export async function getComments(postId: number): Promise<{ comments?: Comment[]; error?: string }> {
   try {
-    const response = await apiRequest<{ status?: number; data?: Comment[]; error?: string }>('/getComment', {
+    const response = await apiRequest<{ status?: number; data?: Comment[]; error?: string }>('/post/getComment', {
       method: 'POST',
       data: { postId },
     });
@@ -253,7 +255,7 @@ export async function getComments(postId: number): Promise<{ comments?: Comment[
 
 export async function createComment(data: CreateCommentData): Promise<{ comment?: Comment; error?: string }> {
   try {
-    const response = await apiRequest<{ status?: number; message?: Comment | string; error?: string }>('/comment', {
+    const response = await apiRequest<{ status?: number; message?: Comment | string; error?: string }>('/post/comment', {
       method: 'POST',
       data: data,
     });
@@ -306,7 +308,7 @@ export async function getFileDownloadUrl(filename: string): Promise<{ url?: stri
 
 export async function getTags(): Promise<{ tags?: Tag[]; error?: string }> {
   try {
-    const response = await apiRequest<{ status: number; data?: Tag[] }>('/tags', {
+    const response = await apiRequest<{ status: number; data?: Tag[] }>('/post/tags', {
       method: 'GET',
     });
 
@@ -436,6 +438,34 @@ export async function deleteMultipleFiles(fileIds: number[], postId: number): Pr
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : 'ลบไฟล์ล้มเหลว',
+    };
+  }
+}
+
+export async function deletePost(postId: number): Promise<{ success?: boolean; message?: string; error?: string }> {
+  try {
+    const response = await apiRequest<{ status?: number; message?: string; error?: string }>(`/post/${postId}`, {
+      method: 'DELETE',
+    });
+
+    if (response.error) {
+      return { error: response.error };
+    }
+
+    if (response.status && response.status === 200) {
+      return {
+        success: true,
+        message: response.message || 'ลบโพสต์สำเร็จ',
+      };
+    }
+
+    return {
+      success: true,
+      message: response.message || 'ลบโพสต์สำเร็จ',
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'ลบโพสต์ล้มเหลว',
     };
   }
 }

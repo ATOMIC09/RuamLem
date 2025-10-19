@@ -98,10 +98,22 @@ export default function MyPostsPage() {
   const confirmDelete = async () => {
     if (!postToDelete) return;
     
-    // TODO: Implement delete functionality when backend is ready
-    showNotification('info', 'ฟีเจอร์การลบโพสต์ยังไม่พร้อมใช้งาน');
-    setShowDeleteConfirm(false);
-    setPostToDelete(null);
+    try {
+      const result = await postService.deletePost(postToDelete);
+      
+      if (result.error) {
+        showNotification('error', result.error);
+      } else {
+        showNotification('success', 'ลบโพสต์สำเร็จ');
+        // Refresh posts list
+        await fetchMyPosts();
+      }
+    } catch {
+      showNotification('error', 'ไม่สามารถลบโพสต์ได้');
+    } finally {
+      setShowDeleteConfirm(false);
+      setPostToDelete(null);
+    }
   };
 
   const handleDownloadAttachment = async (e: React.MouseEvent, fileUrl: string) => {
