@@ -73,14 +73,24 @@ export default function ProfilePage() {
   };
 
   const handleSaveProfile = async () => {
+    // Validate required fields
+    if (!editedData.firstName.trim()) {
+      setErrorMessage('กรุณากรอกชื่อจริง');
+      return;
+    }
+    if (!editedData.lastName.trim()) {
+      setErrorMessage('กรุณากรอกนามสกุล');
+      return;
+    }
+
     setIsSaving(true);
     setErrorMessage('');
     setSuccessMessage('');
 
     try {
       const result = await profileService.updateProfile({
-        firstName: editedData.firstName,
-        lastName: editedData.lastName,
+        firstName: editedData.firstName.trim(),
+        lastName: editedData.lastName.trim(),
         bio: editedData.bio,
       });
 
@@ -268,29 +278,41 @@ export default function ProfilePage() {
               {/* First Name */}
               <div className="p-4 bg-[#f8f9fa] rounded-2xl">
                 <label className="text-xs text-[#7a8b99] font-medium mb-2 block">
-                  ชื่อจริง
+                  ชื่อจริง <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={editedData.firstName}
                   onChange={(e) => setEditedData({ ...editedData, firstName: e.target.value })}
                   disabled={!isEditing}
-                  className="w-full px-4 py-2 bg-white border border-[#dee5ed] rounded-lg text-[#1c2a48] text-sm disabled:bg-[#f8f9fa] disabled:cursor-not-allowed"
+                  className={`w-full px-4 py-2 bg-white border rounded-lg text-[#1c2a48] text-sm disabled:bg-[#f8f9fa] disabled:cursor-not-allowed ${
+                    isEditing && !editedData.firstName.trim() ? 'border-red-500' : 'border-[#dee5ed]'
+                  }`}
+                  placeholder="กรอกชื่อจริง"
                 />
+                {isEditing && !editedData.firstName.trim() && (
+                  <p className="text-xs text-red-500 mt-1">กรุณากรอกชื่อจริง</p>
+                )}
               </div>
 
               {/* Last Name */}
               <div className="p-4 bg-[#f8f9fa] rounded-2xl">
                 <label className="text-xs text-[#7a8b99] font-medium mb-2 block">
-                  นามสกุล
+                  นามสกุล <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={editedData.lastName}
                   onChange={(e) => setEditedData({ ...editedData, lastName: e.target.value })}
                   disabled={!isEditing}
-                  className="w-full px-4 py-2 bg-white border border-[#dee5ed] rounded-lg text-[#1c2a48] text-sm disabled:bg-[#f8f9fa] disabled:cursor-not-allowed"
+                  className={`w-full px-4 py-2 bg-white border rounded-lg text-[#1c2a48] text-sm disabled:bg-[#f8f9fa] disabled:cursor-not-allowed ${
+                    isEditing && !editedData.lastName.trim() ? 'border-red-500' : 'border-[#dee5ed]'
+                  }`}
+                  placeholder="กรอกนามสกุล"
                 />
+                {isEditing && !editedData.lastName.trim() && (
+                  <p className="text-xs text-red-500 mt-1">กรุณากรอกนามสกุล</p>
+                )}
               </div>
 
               {/* Bio */}
@@ -322,12 +344,6 @@ export default function ProfilePage() {
                   >
                     แก้ไขโปรไฟล์
                   </button>
-                  <Link
-                    href="/community"
-                    className="flex-1 px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all font-medium text-center shadow-sm bg-white"
-                  >
-                    ดูชุมชน
-                  </Link>
                   <button
                     onClick={handleSignOut}
                     className="flex-1 flex items-center justify-center space-x-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-3xl transition-colors font-medium shadow-sm cursor-pointer"
