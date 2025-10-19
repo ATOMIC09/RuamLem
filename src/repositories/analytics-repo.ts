@@ -2,13 +2,13 @@ import { supabase } from "../supabase";
 
 /**
  * Record a post view
- * @param postId - ID of the post
+ * @param postId - UUID of the post
  * @param userId - UUID of the user (optional for guest users)
  * @param ipAddress - IP address for tracking unique views (optional)
  * @returns Success status
  */
 export const recordPostView = async (
-  postId: number,
+  postId: string,
   userId: string | null = null,
   ipAddress: string | null = null
 ) => {
@@ -67,10 +67,10 @@ export const recordPostView = async (
 
 /**
  * Get view count for a post
- * @param postId - ID of the post
+ * @param postId - UUID of the post
  * @returns View count
  */
-export const getPostViewCount = async (postId: number) => {
+export const getPostViewCount = async (postId: string) => {
   try {
     const { count, error } = await supabase
       .from("post_views")
@@ -95,10 +95,10 @@ export const getPostViewCount = async (postId: number) => {
 
 /**
  * Get view counts for multiple posts
- * @param postIds - Array of post IDs
+ * @param postIds - Array of post UUIDs
  * @returns Array of objects with postId and viewCount
  */
-export const getMultiplePostViews = async (postIds: number[]) => {
+export const getMultiplePostViews = async (postIds: string[]) => {
   try {
     const { data, error } = await supabase
       .from("post_views")
@@ -129,13 +129,13 @@ export const getMultiplePostViews = async (postIds: number[]) => {
 
 /**
  * Record a file download
- * @param fileId - ID of the file
+ * @param fileId - UUID of the file
  * @param userId - UUID of the user (optional for guest users)
  * @param ipAddress - IP address for tracking (optional)
  * @returns Success status
  */
 export const recordFileDownload = async (
-  fileId: number,
+  fileId: string,
   userId: string | null = null,
   ipAddress: string | null = null
 ) => {
@@ -167,10 +167,10 @@ export const recordFileDownload = async (
 
 /**
  * Get download count for a file
- * @param fileId - ID of the file
+ * @param fileId - UUID of the file
  * @returns Download count
  */
-export const getFileDownloadCount = async (fileId: number) => {
+export const getFileDownloadCount = async (fileId: string) => {
   try {
     const { count, error } = await supabase
       .from("file_downloads")
@@ -195,10 +195,10 @@ export const getFileDownloadCount = async (fileId: number) => {
 
 /**
  * Get download counts for multiple files
- * @param fileIds - Array of file IDs
+ * @param fileIds - Array of file UUIDs
  * @returns Array of objects with fileId and downloadCount
  */
-export const getMultipleFileDownloads = async (fileIds: number[]) => {
+export const getMultipleFileDownloads = async (fileIds: string[]) => {
   try {
     const { data, error } = await supabase
       .from("file_downloads")
