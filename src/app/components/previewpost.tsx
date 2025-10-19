@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { IoMdPricetag, IoMdHeart } from "react-icons/io";
 import { GoPaperclip } from "react-icons/go";
 import { MdImage, MdDescription } from "react-icons/md";
-import { FaEye } from "react-icons/fa";
+import { FaEye, FaDownload } from "react-icons/fa";
 import { PostPreview } from "../../types/post";
 import { getFileDownloadUrl } from "../../services/post.service";
 import * as likeService from "@/services/like.service";
@@ -234,7 +234,7 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                                         <span>{downloadCount} ดาวน์โหลด</span>
                                     </div>
                                 </div>
-                                <span className="text-xs text-[#405168] ml-2 flex-shrink-0">📥</span>
+                                <FaDownload size={14} className="text-[#5e7593] ml-2 flex-shrink-0" />
                             </button>
                         );
                     })}
