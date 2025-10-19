@@ -15,7 +15,7 @@ export const analyticsRoute = new Elysia({ prefix: "/analytics" })
     ({ body, request }) => recordView({ body, request }),
     {
       body: t.Object({
-        postId: t.Number({ minimum: 1 }),
+        postId: t.String({ minLength: 1 }),
       }),
     }
   )
@@ -24,7 +24,7 @@ export const analyticsRoute = new Elysia({ prefix: "/analytics" })
     ({ body }) => getViewCount({ body }),
     {
       body: t.Object({
-        postId: t.Number({ minimum: 1 }),
+        postId: t.String({ minLength: 1 }),
       }),
     }
   )
@@ -33,7 +33,7 @@ export const analyticsRoute = new Elysia({ prefix: "/analytics" })
     ({ body }) => getMultipleViews({ body }),
     {
       body: t.Object({
-        postIds: t.Array(t.Number({ minimum: 1 })),
+        postIds: t.Array(t.String({ minLength: 1 })),
       }),
     }
   )
@@ -44,7 +44,7 @@ export const analyticsRoute = new Elysia({ prefix: "/analytics" })
     ({ body, request }) => recordDownload({ body, request }),
     {
       body: t.Object({
-        fileId: t.Number({ minimum: 1 }),
+        fileId: t.String({ minLength: 1 }),
       }),
     }
   )
@@ -53,7 +53,7 @@ export const analyticsRoute = new Elysia({ prefix: "/analytics" })
     ({ body }) => getDownloadCount({ body }),
     {
       body: t.Object({
-        fileId: t.Number({ minimum: 1 }),
+        fileId: t.String({ minLength: 1 }),
       }),
     }
   )
@@ -62,7 +62,7 @@ export const analyticsRoute = new Elysia({ prefix: "/analytics" })
     ({ body }) => getMultipleDownloads({ body }),
     {
       body: t.Object({
-        fileIds: t.Array(t.Number({ minimum: 1 })),
+        fileIds: t.Array(t.String({ minLength: 1 })),
       }),
     }
   );
