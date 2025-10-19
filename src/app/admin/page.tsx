@@ -52,6 +52,10 @@ interface RecentPost {
     likes: number;
     downloads: number;
     comments: number;
+    tags?: Array<{
+        id: number;
+        name: string;
+    }>;
 }
 
 export default function AdminDashboard() {
@@ -195,7 +199,8 @@ export default function AdminDashboard() {
                             views,
                             likes,
                             downloads,
-                            comments
+                            comments,
+                            tags: post.tags || []
                         };
                     })
                 );
@@ -251,7 +256,8 @@ export default function AdminDashboard() {
                             views,
                             likes,
                             downloads,
-                            comments
+                            comments,
+                            tags: post.tags || []
                         };
                     })
                 );
@@ -673,9 +679,23 @@ export default function AdminDashboard() {
                                                     <div className="w-7 h-7 bg-gradient-to-br from-[#405168] to-[#5e7593] rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                                                         #{post.id}
                                                     </div>
-                                                    <span className="font-medium text-[#1c2a48] line-clamp-1 overflow-hidden text-ellipsis">
-                                                        {post.title}
-                                                    </span>
+                                                    <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                                        <span className="font-medium text-[#1c2a48] line-clamp-1 overflow-hidden text-ellipsis">
+                                                            {post.title}
+                                                        </span>
+                                                        {post.tags && post.tags.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {post.tags.map((tag) => (
+                                                                    <span
+                                                                        key={tag.id}
+                                                                        className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
+                                                                    >
+                                                                        {tag.name}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
