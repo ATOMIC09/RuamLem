@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { uploadFile, downloadFile, deleteFileController, deleteMultipleFilesController } from "../controllers/file-controller";
+import { uploadFile, downloadFile, deleteFileController, deleteMultipleFilesController, uploadFileToPostController } from "../controllers/file-controller";
 
 export const fileRoute = (app: Elysia) => {
     app.post("/upload/file", async (c) => {
@@ -28,6 +28,36 @@ export const fileRoute = (app: Elysia) => {
             tags: ['Files'],
             summary: 'Upload File',
             description: 'Upload any file up to 50MB (requires authentication)',
+            security: [{ bearerAuth: [] }]
+        }
+    });
+
+    app.post("/upload/file/post/:postId", async (c) => {
+        const authHeader = c.request.headers.get("authorization");
+        if (!authHeader) return { status: 401, message: "No token" };
+        const token = authHeader.split(" ")[1];
+
+        const postId = parseInt(c.params.postId);
+        if (isNaN(postId)) {
+            return { status: 400, message: "Invalid post ID" };
+        }
+
+        const formData = await c.request.formData();
+        const file = formData.get("file") as File;
+
+        if (!file) {
+            return { status: 400, message: "No file uploaded" };
+        }
+
+        console.log("📁 Uploading file to post:", postId, "File:", file.name);
+
+        return uploadFileToPostController(token, file, postId);
+
+    }, {
+        detail: {
+            tags: ['Files'],
+            summary: 'Upload File to Post',
+            description: 'Upload a file and associate it with an existing post. You can only add files to your own posts.',
             security: [{ bearerAuth: [] }]
         }
     });
