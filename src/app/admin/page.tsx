@@ -428,70 +428,70 @@ export default function AdminDashboard() {
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 md:gap-6 mb-8">
                     {/* Total Members */}
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
-                                <IoMdPeople size={28} />
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-5 xl:p-6 text-white hover:shadow-xl transition-shadow">
+                        <div className="flex items-center justify-between mb-3 xl:mb-4">
+                            <div className="bg-white/20 p-2.5 xl:p-3 rounded-xl">
+                                <IoMdPeople size={24} className="xl:w-7 xl:h-7 text-white" />
                             </div>
-                            <IoMdTrendingUp size={20} className="opacity-60" />
+                            <IoMdTrendingUp size={18} className="xl:w-5 xl:h-5 opacity-80" />
                         </div>
-                        <h3 className="text-sm font-medium opacity-90 mb-1">สมาชิกทั้งหมด</h3>
-                        <p className="text-3xl font-bold">{stats?.totalMembers?.toLocaleString() || 0}</p>
+                        <h3 className="text-xs xl:text-sm font-medium opacity-90 mb-1">สมาชิกทั้งหมด</h3>
+                        <p className="text-2xl xl:text-3xl font-bold">{stats?.totalMembers?.toLocaleString() || 0}</p>
                     </div>
 
                     {/* Total Posts */}
-                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
-                                <IoMdDocument size={28} />
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-5 xl:p-6 text-white hover:shadow-xl transition-shadow">
+                        <div className="flex items-center justify-between mb-3 xl:mb-4">
+                            <div className="bg-white/20 p-2.5 xl:p-3 rounded-xl">
+                                <IoMdDocument size={24} className="xl:w-7 xl:h-7 text-white" />
                             </div>
-                            <IoMdTrendingUp size={20} className="opacity-60" />
+                            <IoMdTrendingUp size={18} className="xl:w-5 xl:h-5 opacity-80" />
                         </div>
-                        <h3 className="text-sm font-medium opacity-90 mb-1">โพสต์ทั้งหมด</h3>
-                        <p className="text-3xl font-bold">{stats?.totalPosts?.toLocaleString() || 0}</p>
+                        <h3 className="text-xs xl:text-sm font-medium opacity-90 mb-1">โพสต์ทั้งหมด</h3>
+                        <p className="text-2xl xl:text-3xl font-bold">{stats?.totalPosts?.toLocaleString() || 0}</p>
                     </div>
 
                     {/* Posts This Month */}
-                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
-                                <IoMdCalendar size={28} />
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-5 xl:p-6 text-white hover:shadow-xl transition-shadow">
+                        <div className="flex items-center justify-between mb-3 xl:mb-4">
+                            <div className="bg-white/20 p-2.5 xl:p-3 rounded-xl">
+                                <IoMdCalendar size={24} className="xl:w-7 xl:h-7 text-white" />
                             </div>
-                            <IoMdTrendingUp size={20} className="opacity-60" />
+                            <IoMdTrendingUp size={18} className="xl:w-5 xl:h-5 opacity-80" />
                         </div>
-                        <h3 className="text-sm font-medium opacity-90 mb-1">โพสต์เดือนนี้</h3>
-                        <p className="text-3xl font-bold">{stats?.postsThisMonth?.toLocaleString() || 0}</p>
+                        <h3 className="text-xs xl:text-sm font-medium opacity-90 mb-1">โพสต์เดือนนี้</h3>
+                        <p className="text-2xl xl:text-3xl font-bold">{stats?.postsThisMonth?.toLocaleString() || 0}</p>
                     </div>
 
                     {/* Total Comments */}
-                    <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
-                                <IoMdChatbubbles size={28} />
+                    <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg p-5 xl:p-6 text-white hover:shadow-xl transition-shadow">
+                        <div className="flex items-center justify-between mb-3 xl:mb-4">
+                            <div className="bg-white/20 p-2.5 xl:p-3 rounded-xl">
+                                <IoMdChatbubbles size={24} className="xl:w-7 xl:h-7 text-white" />
                             </div>
-                            <IoMdTrendingUp size={20} className="opacity-60" />
+                            <IoMdTrendingUp size={18} className="xl:w-5 xl:h-5 opacity-80" />
                         </div>
-                        <h3 className="text-sm font-medium opacity-90 mb-1">ความคิดเห็นทั้งหมด</h3>
-                        <p className="text-3xl font-bold">{stats?.totalComments?.toLocaleString() || 0}</p>
+                        <h3 className="text-xs xl:text-sm font-medium opacity-90 mb-1">ความคิดเห็นทั้งหมด</h3>
+                        <p className="text-2xl xl:text-3xl font-bold">{stats?.totalComments?.toLocaleString() || 0}</p>
                     </div>
 
                     {/* Total Likes */}
-                    <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
-                                <IoMdHeart size={28} />
+                    <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl shadow-lg p-5 xl:p-6 text-white hover:shadow-xl transition-shadow">
+                        <div className="flex items-center justify-between mb-3 xl:mb-4">
+                            <div className="bg-white/20 p-2.5 xl:p-3 rounded-xl">
+                                <IoMdHeart size={24} className="xl:w-7 xl:h-7 text-white" />
                             </div>
-                            <IoMdTrendingUp size={20} className="opacity-60" />
+                            <IoMdTrendingUp size={18} className="xl:w-5 xl:h-5 opacity-80" />
                         </div>
-                        <h3 className="text-sm font-medium opacity-90 mb-1">ไลค์ทั้งหมด</h3>
-                        <p className="text-3xl font-bold">{stats?.totalLikes?.toLocaleString() || 0}</p>
+                        <h3 className="text-xs xl:text-sm font-medium opacity-90 mb-1">ไลค์ทั้งหมด</h3>
+                        <p className="text-2xl xl:text-3xl font-bold">{stats?.totalLikes?.toLocaleString() || 0}</p>
                     </div>
                 </div>
 
                 {/* Secondary Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 md:gap-6 mb-8">
                     {/* Total Files */}
                     <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#dee5ed]">
                         <div className="flex items-center justify-between">
@@ -503,9 +503,6 @@ export default function AdminDashboard() {
                                 <p className="text-3xl font-bold text-[#1c2a48]">
                                     {stats?.totalFiles?.toLocaleString() || 0}
                                 </p>
-                            </div>
-                            <div className="bg-[#f8f9fa] p-4 rounded-xl">
-                                <IoMdCloudUpload size={32} className="text-[#405168]" />
                             </div>
                         </div>
                     </div>
@@ -522,9 +519,6 @@ export default function AdminDashboard() {
                                     {stats?.totalViews?.toLocaleString() || 0}
                                 </p>
                             </div>
-                            <div className="bg-[#f8f9fa] p-4 rounded-xl">
-                                <IoMdEye size={32} className="text-[#405168]" />
-                            </div>
                         </div>
                     </div>
 
@@ -539,9 +533,6 @@ export default function AdminDashboard() {
                                 <p className="text-3xl font-bold text-[#1c2a48]">
                                     {stats?.totalDownloads?.toLocaleString() || 0}
                                 </p>
-                            </div>
-                            <div className="bg-[#f8f9fa] p-4 rounded-xl">
-                                <IoMdCloudUpload size={32} className="text-[#405168]" />
                             </div>
                         </div>
                     </div>
@@ -561,9 +552,6 @@ export default function AdminDashboard() {
                                     }
                                 </p>
                             </div>
-                            <div className="bg-[#f8f9fa] p-4 rounded-xl">
-                                <IoMdPerson size={32} className="text-[#405168]" />
-                            </div>
                         </div>
                     </div>
 
@@ -581,9 +569,6 @@ export default function AdminDashboard() {
                                         : '0'
                                     }%
                                 </p>
-                            </div>
-                            <div className="bg-[#f8f9fa] p-4 rounded-xl">
-                                <IoMdTrendingUp size={32} className="text-[#405168]" />
                             </div>
                         </div>
                     </div>
@@ -856,7 +841,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     <button
                         onClick={() => router.push('/community')}
                         className="bg-white hover:bg-[#f8f9fa] border border-[#dee5ed] rounded-2xl p-6 text-left transition-all hover:shadow-lg group cursor-pointer"
