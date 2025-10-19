@@ -75,15 +75,6 @@ export default function SignInPage() {
         }
     };
 
-    const handleDemoSignIn = () => {
-        signIn({
-            id: "demo-user-id",
-            name: "John Doe",
-            email: "john@example.com"
-        });
-        router.push("/");
-    };
-
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#f8f9fa] to-white flex items-center justify-center p-6">
             <div className="w-full max-w-md">
@@ -162,18 +153,6 @@ export default function SignInPage() {
                         >
                             {isLoading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
                         </button>
-
-                        {/* Demo Sign In */}
-                        <div className="pt-4 border-t border-[#e0e7f1] text-center">
-                            <p className="text-sm text-[#7a8b99] mb-3">สำหรับการทดสอบ:</p>
-                            <button
-                                type="button"
-                                onClick={handleDemoSignIn}
-                                className="w-full px-4 py-2 text-sm bg-[#f0f4f8] text-[#5e7593] rounded-3xl hover:bg-[#e0e7f1] hover:shadow-md transition-all cursor-pointer border border-[#e0e7f1] shadow-sm"
-                            >
-                                🧪 เข้าสู่ระบบทดสอบ
-                            </button>
-                        </div>
                     </form>
                 </div>
 

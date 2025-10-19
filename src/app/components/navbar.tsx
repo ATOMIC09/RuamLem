@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 import * as profileService from "@/services/profile.service";
 
 export default function Navbar() {
-    const { isSignedIn, user, signOut, signIn } = useAuth();
+    const { isSignedIn, user, signOut } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showSignInModal, setShowSignInModal] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -60,20 +60,6 @@ export default function Navbar() {
         // Force a re-render to check auth state after navigation
         setForceUpdate(prev => prev + 1);
     }, [pathname]);
-
-    // Handle demo sign in
-    const handleDemoSignIn = () => {
-        signIn(
-            {
-                id: 'demo-uuid-1234-5678-abcd-efgh',
-                name: 'Demo User',
-                email: 'demo@example.com',
-                firstName: 'Demo',
-                lastName: 'User'
-            }, 'demo-token-12345'
-        );
-        setShowSignInModal(false);
-    };
 
     // Handle sign out
     const handleSignOut = () => {
@@ -352,17 +338,6 @@ export default function Navbar() {
                                 >
                                     สร้างบัญชีใหม่
                                 </Link>
-
-                                {/* Demo Sign In */}
-                                <div className="pt-4 border-t border-[#e0e7f1]">
-                                    <p className="text-sm text-[#7a8b99] mb-3">สำหรับการทดสอบ:</p>
-                                    <button
-                                        onClick={handleDemoSignIn}
-                                        className="w-full px-4 py-2 text-sm bg-[#e0e7f1] text-[#5e7593] rounded-full hover:bg-[#d1d9e4] transition-colors cursor-pointer"
-                                    >
-                                        🧪 เข้าสู่ระบบทดสอบ
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </div>
