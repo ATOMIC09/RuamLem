@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { IoMdPricetag, IoMdClose } from "react-icons/io";
 import { GoPaperclip } from "react-icons/go";
-import AuthGuard from "../components/auth-guard";
+import Link from "next/link";
 import * as postService from "@/services/post.service";
 
 interface Tag {
@@ -25,6 +25,7 @@ function AddPostForm() {
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
     const [filteredTags, setFilteredTags] = useState<Tag[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [showSignInPrompt, setShowSignInPrompt] = useState(false);
 
     // Fetch available tags on mount
     useEffect(() => {
@@ -152,7 +153,13 @@ function AddPostForm() {
             });
 
             if (response.error) {
-                setError(response.error || "การสร้างโพสต์ล้มเหลว");
+                // Check for JWT expiration
+                if (response.error.includes('JWT') || response.error.includes('expired')) {
+                    setShowSignInPrompt(true);
+                    setError("");
+                } else {
+                    setError(response.error || "การสร้างโพสต์ล้มเหลว");
+                }
                 setIsLoading(false);
                 return;
             }
@@ -422,14 +429,48 @@ function AddPostForm() {
                     </form>
                 </div>
             </div>
+
+            {/* Sign In Required Modal */}
+            {showSignInPrompt && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowSignInPrompt(false)}></div>
+                    <div className="relative bg-white rounded-3xl border border-[#e0e7f1] shadow-xl max-w-md w-full p-8">
+                        <button
+                            onClick={() => setShowSignInPrompt(false)}
+                            className="absolute top-4 right-4 p-2 text-[#7a8b99] hover:text-[#405168] transition-colors cursor-pointer"
+                        >
+                            <IoMdClose size={20} />
+                        </button>
+
+                        <div className="text-center">
+                            <div className="text-4xl mb-4">⏱️</div>
+                            <h2 className="text-2xl font-bold text-[#1c2a48] mb-4">เซสชันหมดอายุแล้ว</h2>
+                            <p className="text-[#7a8b99] mb-6">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+
+                            <div className="space-y-4">
+                                <Link
+                                    href="/signin"
+                                    className="block w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium"
+                                    onClick={() => setShowSignInPrompt(false)}
+                                >
+                                    เข้าสู่ระบบ
+                                </Link>
+
+                                <button
+                                    onClick={() => setShowSignInPrompt(false)}
+                                    className="w-full px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all font-medium shadow-sm bg-white"
+                                >
+                                    ปิด
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
 export default function AddPostPage() {
-    return (
-        <AuthGuard>
-            <AddPostForm />
-        </AuthGuard>
-    );
+    return <AddPostForm />;
 }

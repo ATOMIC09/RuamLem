@@ -1,24 +1,10 @@
 // Post service
 
 import { apiRequest } from '@/lib/api';
-import { removeAuthToken } from '@/lib/api';
 
 export interface Tag {
   id: number;
   name: string;
-}
-
-// Helper function to check if error is JWT expiration
-function isJWTExpired(message: string): boolean {
-  return message.toLowerCase().includes('jwt') && message.toLowerCase().includes('expired');
-}
-
-// Helper function to handle JWT expiration - clear localStorage
-function handleJWTExpiration(message: string): void {
-  if (isJWTExpired(message)) {
-    removeAuthToken();
-    localStorage.removeItem('user');
-  }
 }
 
 export interface CreatePostData {
@@ -138,12 +124,10 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
 
     // Handle various response formats from backend
     if (response.error) {
-      handleJWTExpiration(response.error);
       return { error: response.error };
     }
 
     if (!response.success && response.message) {
-      handleJWTExpiration(response.message);
       return { error: response.message };
     }
 
@@ -169,7 +153,6 @@ export async function getPosts(count: number = 10): Promise<{ posts?: Post[]; er
     }
 
     const errorMsg = response.error || 'การดึงข้อมูลโพสต์ล้มเหลว';
-    handleJWTExpiration(errorMsg);
     return {
       error: errorMsg,
     };
@@ -246,7 +229,6 @@ export async function createComment(data: CreateCommentData): Promise<{ comment?
     // Check for error status in response body (even if HTTP 200)
     if (response.status && response.status >= 400) {
       const errorMsg = typeof response.message === 'string' ? response.message : (response.error || 'การสร้างคอมเมนต์ล้มเหลว');
-      handleJWTExpiration(errorMsg);
       return { error: errorMsg };
     }
 
@@ -256,7 +238,6 @@ export async function createComment(data: CreateCommentData): Promise<{ comment?
     }
 
     if (response.error) {
-      handleJWTExpiration(response.error);
       return { error: response.error };
     }
 
