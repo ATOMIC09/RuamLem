@@ -2,12 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { IoMdPricetag } from "react-icons/io";
+import { useState, useEffect, useCallback } from "react";
+import { IoMdPricetag, IoMdHeart } from "react-icons/io";
 import { GoPaperclip } from "react-icons/go";
 import { MdImage, MdDescription } from "react-icons/md";
+import { FaEye } from "react-icons/fa";
 import { PostPreview } from "../../types/post";
 import { getFileDownloadUrl } from "../../services/post.service";
+import * as likeService from "@/services/like.service";
+import * as analyticsService from "@/services/analytics.service";
 
 interface PreviewPostProps {
   post?: PostPreview;
@@ -15,11 +18,45 @@ interface PreviewPostProps {
 
 export default function PreviewPost({ post }: PreviewPostProps) {
     const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+    const [likeCount, setLikeCount] = useState(0);
+    const [viewCount, setViewCount] = useState(0);
 
     const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
       setNotification({ type, message });
       setTimeout(() => setNotification(null), 4000);
     };
+
+    const fetchLikeCount = useCallback(async () => {
+        if (!post?.id) return;
+        try {
+            const result = await likeService.getPostLikeStatus(Number(post.id));
+            if (result.data) {
+                setLikeCount(result.data.likeCount);
+            }
+        } catch (err) {
+            console.error('Failed to fetch like count:', err);
+        }
+    }, [post?.id]);
+
+    const fetchViewCount = useCallback(async () => {
+        if (!post?.id) return;
+        try {
+            const result = await analyticsService.getPostViewCount(post.id);
+            if (result.viewCount !== undefined) {
+                setViewCount(result.viewCount);
+            }
+        } catch (err) {
+            console.error('Failed to fetch view count:', err);
+        }
+    }, [post?.id]);
+
+    // Fetch like count and view count when component mounts
+    useEffect(() => {
+        if (post?.id) {
+            fetchLikeCount();
+            fetchViewCount();
+        }
+    }, [post?.id, fetchLikeCount, fetchViewCount]);
     
     // Helper function to get the appropriate icon based on file type
     const getFileIcon = (fileType: string) => {
@@ -170,12 +207,24 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                     })}
                 </div>
             )}
-            {/* Comment count */}
-            {postData.commentCount !== undefined && (
-                <div className="mt-3 text-xs text-[#7a8b99]">
-                    💬 {postData.commentCount} ความเห็น
+            
+            {/* Stats Bar - Likes, Views, Comments */}
+            <div className="mt-4 pt-3 border-t border-[#f0f4f8] flex items-center gap-4 text-xs text-[#7a8b99]">
+                <div className="flex items-center gap-1">
+                    <IoMdHeart className="text-red-400" />
+                    <span>{likeCount} ไลค์</span>
                 </div>
-            )}
+                <div className="flex items-center gap-1">
+                    <FaEye className="text-[#5e7593]" />
+                    <span>{viewCount} ครั้ง</span>
+                </div>
+                {postData.commentCount !== undefined && (
+                    <div className="flex items-center gap-1">
+                        <span>💬</span>
+                        <span>{postData.commentCount} ความเห็น</span>
+                    </div>
+                )}
+            </div>
         </div>
         </Link>
         </>

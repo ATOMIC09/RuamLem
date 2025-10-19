@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { IoMdPricetag, IoMdArrowBack, IoMdShare } from "react-icons/io";
+import { IoMdPricetag, IoMdArrowBack, IoMdShare, IoMdHeart, IoMdHeartEmpty } from "react-icons/io";
 import { MdImage, MdDescription } from "react-icons/md";
 import { GoPaperclip } from "react-icons/go";
-import { FaDownload } from "react-icons/fa";
+import { FaDownload, FaEye } from "react-icons/fa";
 import { useParams } from "next/navigation";
 import * as postService from "@/services/post.service";
 import * as analyticsService from "@/services/analytics.service";
+import * as likeService from "@/services/like.service";
 import { useAuth } from "@/app/hooks/use-auth";
 import LoadingSpinner from "@/app/components/loading-spinner";
 
@@ -33,6 +34,12 @@ export default function PostDetailPage() {
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  
+  // Like and View states
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [viewCount, setViewCount] = useState(0);
+  const [isTogglingLike, setIsTogglingLike] = useState(false);
 
   // Show notification helper
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
@@ -69,6 +76,8 @@ export default function PostDetailPage() {
           const result = await analyticsService.recordPostView(postId);
           if (result.success) {
             console.log('✅ Post view recorded successfully');
+            // Fetch updated view count
+            fetchViewCount();
           } else if (result.error) {
             console.error('❌ Failed to record post view:', result.error);
           }
@@ -77,6 +86,12 @@ export default function PostDetailPage() {
         }
       }
     }, 2000); // 2 second delay to filter out quick bounces
+
+    // Fetch like status and view count
+    if (postId) {
+      fetchLikeStatus();
+      fetchViewCount();
+    }
 
     return () => clearTimeout(viewTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -116,6 +131,58 @@ export default function PostDetailPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการโหลดข้อมูล");
       setIsLoading(false);
+    }
+  };
+
+  const fetchLikeStatus = async () => {
+    if (!postId) return;
+    
+    try {
+      const result = await likeService.getPostLikeStatus(Number(postId));
+      if (result.data) {
+        setIsLiked(result.data.isLiked);
+        setLikeCount(result.data.likeCount);
+      }
+    } catch (err) {
+      console.error('Failed to fetch like status:', err);
+    }
+  };
+
+  const fetchViewCount = async () => {
+    if (!postId) return;
+    
+    try {
+      const result = await analyticsService.getPostViewCount(postId);
+      if (result.viewCount !== undefined) {
+        setViewCount(result.viewCount);
+      }
+    } catch (err) {
+      console.error('Failed to fetch view count:', err);
+    }
+  };
+
+  const handleToggleLike = async () => {
+    if (!isSignedIn) {
+      showNotification('info', 'กรุณาเข้าสู่ระบบเพื่อกดไลค์');
+      return;
+    }
+
+    if (isTogglingLike) return;
+
+    setIsTogglingLike(true);
+    try {
+      const result = await likeService.togglePostLike(Number(postId));
+      if (result.data) {
+        setIsLiked(result.data.isLiked);
+        setLikeCount(result.data.likeCount);
+      } else if (result.error) {
+        showNotification('error', result.error);
+      }
+    } catch (err) {
+      console.error('Failed to toggle like:', err);
+      showNotification('error', 'ไม่สามารถกดไลค์ได้');
+    } finally {
+      setIsTogglingLike(false);
     }
   };
 
@@ -297,6 +364,45 @@ export default function PostDetailPage() {
             </div>
           </div>
 
+          {/* Like, View Stats, and Share */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-[#f0f4f8]">
+            {/* Left side - Like Button and View Count */}
+            <div className="flex items-center gap-3">
+              {/* Like Button */}
+              <button
+                onClick={handleToggleLike}
+                disabled={isTogglingLike}
+                className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all ${
+                  isLiked 
+                    ? 'bg-red-50 text-red-500 hover:bg-red-100' 
+                    : 'bg-[#f0f4f8] text-[#5e7593] hover:bg-[#e0e7f1]'
+                } ${isTogglingLike ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                {isLiked ? (
+                  <IoMdHeart size={20} className="transition-transform hover:scale-110" />
+                ) : (
+                  <IoMdHeartEmpty size={20} className="transition-transform hover:scale-110" />
+                )}
+                <span className="text-sm font-medium">{likeCount} ไลค์</span>
+              </button>
+
+              {/* View Count */}
+              <div className="flex items-center gap-2 px-4 py-2 bg-[#f0f4f8] text-[#5e7593] rounded-2xl">
+                <FaEye size={18} />
+                <span className="text-sm font-medium">{viewCount} ครั้ง</span>
+              </div>
+            </div>
+
+            {/* Right side - Share Button */}
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-2 px-4 py-2 bg-[#f0f4f8] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors cursor-pointer"
+            >
+              <IoMdShare />
+              <span className="text-sm font-medium">แชร์</span>
+            </button>
+          </div>
+
           {/* Attachments */}
           {post.attachments && post.attachments.length > 0 && (
             <div className="mb-8 pt-6 border-t border-[#f0f4f8]">
@@ -421,21 +527,6 @@ export default function PostDetailPage() {
             ) : (
               <p className="text-center text-[#7a8b99] py-8">ยังไม่มีความเห็น เป็นคนแรกที่เพิ่มความเห็น!</p>
             )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-6 border-t border-[#f0f4f8] mt-6">
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-4 py-2 bg-[#f0f4f8] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors cursor-pointer"
-            >
-              <IoMdShare />
-              <span className="text-sm font-medium">แชร์</span>
-            </button>
-            
-            <div className="text-sm text-[#7a8b99]">
-              โพสต์ #{post.id}
-            </div>
           </div>
         </div>
       </div>
