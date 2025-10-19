@@ -36,6 +36,9 @@ export default function MyPostsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<number | null>(null);
 
   // Redirect to home if not signed in
   useEffect(() => {
@@ -81,35 +84,42 @@ export default function MyPostsPage() {
     }
   };
 
-  const handleDeletePost = async () => {
-    if (confirm("คุณแน่ใจหรือว่าต้องการลบโพสต์นี้?")) {
-      // TODO: Implement delete functionality when backend is ready
-      alert("ฟีเจอร์การลบโพสต์ยังไม่พร้อมใช้งาน");
-    }
+  // Show notification helper
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000);
   };
 
-  const handleDownloadAttachment = async (fileUrl: string, fileName: string) => {
+  const handleDeletePost = async (postId: number) => {
+    setPostToDelete(postId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!postToDelete) return;
+    
+    // TODO: Implement delete functionality when backend is ready
+    showNotification('info', 'ฟีเจอร์การลบโพสต์ยังไม่พร้อมใช้งาน');
+    setShowDeleteConfirm(false);
+    setPostToDelete(null);
+  };
+
+  const handleDownloadAttachment = async (e: React.MouseEvent, fileUrl: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     try {
-      // Create a fetch request to download the file
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
-      
-      // Create a temporary URL for the blob
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      
-      // Trigger download
-      document.body.appendChild(link);
-      link.click();
-      
-      // Cleanup
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const { url, error } = await postService.getFileDownloadUrl(fileUrl);
+      if (url) {
+        window.open(url, "_blank");
+        showNotification('success', 'กำลังดาวน์โหลดไฟล์...');
+      } else {
+        console.error('Download error:', error);
+        showNotification('error', 'ไม่สามารถดาวน์โหลดไฟล์ได้');
+      }
     } catch (error) {
       console.error('ไม่สามารถดาวน์โหลดไฟล์ได้:', error);
-      alert('ไม่สามารถดาวน์โหลดไฟล์ได้');
+      showNotification('error', 'ไม่สามารถดาวน์โหลดไฟล์ได้');
     }
   };
 
@@ -123,6 +133,20 @@ export default function MyPostsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f5f7fb] to-[#eef1f8] py-8">
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-6 right-6 px-6 py-3 rounded-2xl shadow-lg text-white text-sm font-medium transition-all duration-300 z-50 ${
+          notification.type === 'success' ? 'bg-green-500' : 
+          notification.type === 'error' ? 'bg-red-500' : 
+          'bg-blue-500'
+        }`}>
+          {notification.type === 'success' && '✓ '}
+          {notification.type === 'error' && '✕ '}
+          {notification.type === 'info' && 'ℹ '}
+          {notification.message}
+        </div>
+      )}
+
       <div className="container max-w-4xl mx-auto px-4">
         {/* Back Button */}
         <Link
@@ -205,7 +229,7 @@ export default function MyPostsPage() {
                       <IoMdCreate size={20} />
                     </Link>
                     <button
-                      onClick={() => handleDeletePost()}
+                      onClick={() => handleDeletePost(post.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                       title="ลบโพสต์"
                     >
@@ -222,7 +246,7 @@ export default function MyPostsPage() {
                       {post.attachments.slice(0, 3).map((attachment) => (
                         <button
                           key={attachment.id}
-                          onClick={() => handleDownloadAttachment(attachment.file_url, attachment.file_name)}
+                          onClick={(e) => handleDownloadAttachment(e, attachment.file_url)}
                           className="inline-flex items-center px-3 py-1 bg-[#f8f9fa] text-[#5e7593] rounded-lg text-xs hover:bg-[#e0e7f1] transition-colors cursor-pointer"
                         >
                           <MdAttachFile size={14} className="mr-1" />
@@ -242,6 +266,55 @@ export default function MyPostsPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="fixed inset-0 bg-black opacity-50" 
+            onClick={() => {
+              setShowDeleteConfirm(false);
+              setPostToDelete(null);
+            }}
+          ></div>
+          <div className="relative bg-white rounded-3xl border border-[#e0e7f1] shadow-xl max-w-md w-full p-8">
+            <button
+              onClick={() => {
+                setShowDeleteConfirm(false);
+                setPostToDelete(null);
+              }}
+              className="absolute top-4 right-4 p-2 text-[#7a8b99] hover:text-[#405168] transition-colors cursor-pointer"
+            >
+              <IoMdClose size={20} />
+            </button>
+
+            <div className="text-center">
+              <div className="text-5xl mb-4">🗑️</div>
+              <h2 className="text-2xl font-bold text-[#1c2a48] mb-4">ลบโพสต์</h2>
+              <p className="text-[#7a8b99] mb-6">คุณแน่ใจหรือว่าต้องการลบโพสต์นี้? การดำเนินการนี้ไม่สามารถยกเลิกได้</p>
+
+              <div className="space-y-3">
+                <button
+                  onClick={confirmDelete}
+                  className="w-full px-6 py-3 bg-red-500 text-white rounded-3xl hover:bg-red-600 transition-colors font-medium cursor-pointer"
+                >
+                  ยืนยันการลบ
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setPostToDelete(null);
+                  }}
+                  className="w-full px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all font-medium shadow-sm bg-white cursor-pointer"
+                >
+                  ยกเลิก
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sign In Required Modal */}
       {showSignInPrompt && (
