@@ -25,7 +25,7 @@ export async function getAllUsers() {
     const usersWithEmails = await Promise.all(
       (users || []).map(async (user) => {
         try {
-          const { data: authUser } = await supabase.auth.admin.getUserById(user.uuid);
+          const { data: authData } = await supabase.auth.admin.getUserById(user.uuid);
           
           // Get post count
           const { count: postCount } = await supabase
@@ -43,7 +43,7 @@ export async function getAllUsers() {
             uuid: user.uuid,
             firstName: user.first_name,
             lastName: user.last_name,
-            email: authUser?.user?.email || null,
+            email: authData?.user?.email || null,
             avatarUrl: user.avatar_url,
             bio: user.bio,
             userRole: user.user_role,
