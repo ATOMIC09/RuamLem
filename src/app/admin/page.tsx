@@ -27,7 +27,6 @@ import {
     IoMdCreate,
     IoMdCloudDownload,
     IoMdClose,
-    IoMdMail,
     IoMdSwap
 } from "react-icons/io";
 
@@ -328,36 +327,6 @@ export default function AdminDashboard() {
         } finally {
             setMembersLoading(false);
         }
-    };
-
-    // Delete member
-    const handleDeleteMember = async (userId: string, userName: string) => {
-        showConfirmationModal(
-            `คุณแน่ใจหรือไม่ว่าต้องการลบสมาชิก "${userName}"? การดำเนินการนี้ไม่สามารถย้อนกลับได้`,
-            async () => {
-                try {
-                    const result = await adminService.deleteUser(userId);
-                    
-                    if (result.success) {
-                        showNotificationModal('ลบสมาชิกสำเร็จ', 'success');
-                        // Refresh members list
-                        await fetchMembers();
-                        // Refresh dashboard stats
-                        await fetchDashboardData();
-                    } else {
-                        // Check for JWT expiration
-                        if (isJWTExpired(result.error)) {
-                            setShowSignInPrompt(true);
-                        } else {
-                            showNotificationModal(result.error || 'ไม่สามารถลบสมาชิกได้', 'error');
-                        }
-                    }
-                } catch (err) {
-                    console.error('Error deleting member:', err);
-                    showNotificationModal('เกิดข้อผิดพลาดในการลบสมาชิก', 'error');
-                }
-            }
-        );
     };
 
     // Update member role
@@ -962,9 +931,6 @@ export default function AdminDashboard() {
                                                 <th className="px-4 py-3 text-left text-xs font-semibold text-[#7a8b99] uppercase">
                                                     สมาชิก
                                                 </th>
-                                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#7a8b99] uppercase">
-                                                    อีเมล
-                                                </th>
                                                 <th className="px-4 py-3 text-center text-xs font-semibold text-[#7a8b99] uppercase">
                                                     สิทธิ์
                                                 </th>
@@ -1006,12 +972,6 @@ export default function AdminDashboard() {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-4">
-                                                        <div className="flex items-center gap-2 text-[#7a8b99]">
-                                                            <IoMdMail size={16} />
-                                                            <span className="text-sm">{member.email}</span>
-                                                        </div>
-                                                    </td>
                                                     <td className="px-4 py-4 text-center">
                                                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
                                                             member.userRole === 'admin'
@@ -1026,7 +986,9 @@ export default function AdminDashboard() {
                                                         {new Date(member.createdAt).toLocaleDateString('th-TH', {
                                                             year: 'numeric',
                                                             month: 'short',
-                                                            day: 'numeric'
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
                                                         })}
                                                     </td>
                                                     <td className="px-4 py-4">
@@ -1041,13 +1003,6 @@ export default function AdminDashboard() {
                                                                 title={member.userRole === 'admin' ? 'เปลี่ยนเป็นผู้ใช้ทั่วไป' : 'เปลี่ยนเป็นแอดมิน'}
                                                             >
                                                                 <IoMdSwap size={20} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleDeleteMember(member.uuid, `${member.firstName} ${member.lastName}`)}
-                                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                                                title="ลบสมาชิก"
-                                                            >
-                                                                <IoMdTrash size={20} />
                                                             </button>
                                                         </div>
                                                     </td>
@@ -1065,16 +1020,10 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-[#f8f9fa] px-6 py-4 flex items-center justify-between border-t border-[#dee5ed]">
-                            <p className="text-sm text-[#7a8b99]">
+                        <div className="bg-[#f8f9fa] px-6 py-4 border-t border-[#dee5ed]">
+                            <p className="text-sm text-[#7a8b99] text-center">
                                 สมาชิกทั้งหมด: <span className="font-semibold text-[#1c2a48]">{members.length}</span> คน
                             </p>
-                            <button
-                                onClick={() => setShowMemberModal(false)}
-                                className="px-6 py-2 bg-[#405168] text-white rounded-lg hover:bg-[#2d3a4c] transition-colors cursor-pointer"
-                            >
-                                ปิด
-                            </button>
                         </div>
                     </div>
                 </div>
