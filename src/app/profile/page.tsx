@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useAuth } from "../hooks/use-auth";
 import LoadingSpinner from "../components/loading-spinner";
 import Link from "next/link";
-import { IoMdArrowBack, IoMdLogOut, IoMdMail, IoMdPerson, IoMdCreate } from "react-icons/io";
+import { IoMdArrowBack, IoMdLogOut, IoMdMail, IoMdPerson, IoMdCreate, IoMdClose } from "react-icons/io";
 import * as profileService from "@/services/profile.service";
 
 export default function ProfilePage() {
@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
 
   // Redirect to home if not signed in
   useEffect(() => {
@@ -45,7 +46,13 @@ export default function ProfilePage() {
     try {
       const result = await profileService.getProfile();
       if (result.error) {
-        setErrorMessage(result.error);
+        // Check for JWT expiration
+        if (result.error.includes('JWT') || result.error.includes('expired')) {
+          setShowSignInPrompt(true);
+          setErrorMessage('');
+        } else {
+          setErrorMessage(result.error);
+        }
         setIsLoading(false);
         return;
       }
@@ -77,7 +84,13 @@ export default function ProfilePage() {
       });
 
       if (result.error) {
-        setErrorMessage(result.error);
+        // Check for JWT expiration
+        if (result.error.includes('JWT') || result.error.includes('expired')) {
+          setShowSignInPrompt(true);
+          setErrorMessage('');
+        } else {
+          setErrorMessage(result.error);
+        }
       } else if (result.profile) {
         setProfileData(result.profile);
         setSuccessMessage(result.message || 'อัปเดตโปรไฟล์สำเร็จ');
@@ -115,10 +128,27 @@ export default function ProfilePage() {
     try {
       const result = await profileService.uploadAvatar(file);
       if (result.error) {
-        setErrorMessage(result.error);
+        // Check for JWT expiration
+        if (result.error.includes('JWT') || result.error.includes('expired')) {
+          setShowSignInPrompt(true);
+          setErrorMessage('');
+        } else {
+          setErrorMessage(result.error);
+        }
       } else if (result.profile) {
         setProfileData(result.profile);
-        setSuccessMessage(result.message || 'อัปโหลดรูปโปรไฟล์สำเร็จ');
+        setSuccessMessage('อัปโหลดรูปโปรไฟล์สำเร็จ');
+        
+        // Update localStorage with new avatar
+        const updatedUser = {
+          ...user,
+          avatarUrl: result.profile.avatarUrl,
+        };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        // Trigger auth state change event for navbar to update avatar
+        window.dispatchEvent(new Event('auth-state-changed'));
+        
         setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch {
@@ -173,6 +203,11 @@ export default function ProfilePage() {
           <div className="h-32 bg-gradient-to-r from-[#405168] to-[#5e7593] relative">
             <div className="absolute bottom-0 left-0 right-0 flex justify-center">
               <div className="w-28 h-28 bg-white rounded-full border-4 border-[#f5f7fb] flex items-center justify-center shadow-lg transform translate-y-1/2 relative group">
+                {isUploadingAvatar && (
+                  <div className="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center z-10">
+                    <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
                 {profileData?.avatarUrl ? (
                   <Image
                     src={profileData.avatarUrl}
@@ -282,7 +317,7 @@ export default function ProfilePage() {
                 <>
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="flex-1 px-6 py-3 border border-[#405168] text-[#405168] rounded-3xl hover:bg-[#e8f0f7] transition-all font-medium shadow-sm bg-white"
+                    className="flex-1 px-6 py-3 border border-[#405168] text-[#405168] rounded-3xl hover:bg-[#e8f0f7] transition-all font-medium shadow-sm bg-white cursor-pointer"
                   >
                     แก้ไขโปรไฟล์
                   </button>
@@ -294,7 +329,7 @@ export default function ProfilePage() {
                   </Link>
                   <button
                     onClick={handleSignOut}
-                    className="flex-1 flex items-center justify-center space-x-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-3xl transition-colors font-medium shadow-sm"
+                    className="flex-1 flex items-center justify-center space-x-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-3xl transition-colors font-medium shadow-sm cursor-pointer"
                   >
                     <IoMdLogOut size={20} />
                     <span>ออกจากระบบ</span>
@@ -329,12 +364,50 @@ export default function ProfilePage() {
             {/* Info Section */}
             <div className="p-4 bg-[#e8f0f7] rounded-2xl border border-[#d1dce9]">
               <p className="text-sm text-[#5e7593]">
-                💡 <span className="font-medium">เคล็ดลับ:</span> คลิกที่ไอคอนกล้องบนรูปโปรไฟล์เพื่ออัปโหลดรูปใหม่ คลิก &quot;แก้ไขโปรไฟล์&quot; เพื่อแก้ไขชื่อและประวัติสั้น
+                💡 <span className="font-medium">เคล็ดลับ:</span> คลิกที่ไอคอนปากกาบนรูปโปรไฟล์เพื่ออัปโหลดรูปใหม่ คลิก &quot;แก้ไขโปรไฟล์&quot; เพื่อแก้ไขชื่อและประวัติสั้น
               </p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Sign In Required Modal */}
+      {showSignInPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowSignInPrompt(false)}></div>
+          <div className="relative bg-white rounded-3xl border border-[#e0e7f1] shadow-xl max-w-md w-full p-8">
+            <button
+              onClick={() => setShowSignInPrompt(false)}
+              className="absolute top-4 right-4 p-2 text-[#7a8b99] hover:text-[#405168] transition-colors cursor-pointer"
+            >
+              <IoMdClose size={20} />
+            </button>
+
+            <div className="text-center">
+              <div className="text-4xl mb-4">⏱️</div>
+              <h2 className="text-2xl font-bold text-[#1c2a48] mb-4">เซสชันหมดอายุแล้ว</h2>
+              <p className="text-[#7a8b99] mb-6">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+
+              <div className="space-y-4">
+                <Link
+                  href="/signin"
+                  className="block w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium"
+                  onClick={() => setShowSignInPrompt(false)}
+                >
+                  เข้าสู่ระบบ
+                </Link>
+
+                <button
+                  onClick={() => setShowSignInPrompt(false)}
+                  className="w-full px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all font-medium shadow-sm bg-white"
+                >
+                  ปิด
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
