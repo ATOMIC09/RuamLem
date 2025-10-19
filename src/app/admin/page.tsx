@@ -556,7 +556,7 @@ export default function AdminDashboard() {
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
                                                         onClick={() => router.push(`/post/${post.id}`)}
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                                                         title="ดูโพสต์"
                                                     >
                                                         <IoMdEye size={20} />
@@ -568,7 +568,7 @@ export default function AdminDashboard() {
                                                                 alert('ฟังก์ชันลบยังไม่ได้ implement');
                                                             }
                                                         }}
-                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                                                         title="ลบโพสต์"
                                                     >
                                                         <IoMdTrash size={20} />
@@ -604,7 +604,7 @@ export default function AdminDashboard() {
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setTopTab('views')}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
                                     topTab === 'views'
                                         ? 'bg-blue-500 text-white'
                                         : 'bg-[#f8f9fa] text-[#7a8b99] hover:bg-[#dee5ed]'
@@ -617,7 +617,7 @@ export default function AdminDashboard() {
                             </button>
                             <button
                                 onClick={() => setTopTab('likes')}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
                                     topTab === 'likes'
                                         ? 'bg-pink-500 text-white'
                                         : 'bg-[#f8f9fa] text-[#7a8b99] hover:bg-[#dee5ed]'
@@ -630,7 +630,7 @@ export default function AdminDashboard() {
                             </button>
                             <button
                                 onClick={() => setTopTab('downloads')}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
                                     topTab === 'downloads'
                                         ? 'bg-green-500 text-white'
                                         : 'bg-[#f8f9fa] text-[#7a8b99] hover:bg-[#dee5ed]'
@@ -729,7 +729,7 @@ export default function AdminDashboard() {
                 <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                     <button
                         onClick={() => router.push('/community')}
-                        className="bg-white hover:bg-[#f8f9fa] border border-[#dee5ed] rounded-2xl p-6 text-left transition-all hover:shadow-lg group"
+                        className="bg-white hover:bg-[#f8f9fa] border border-[#dee5ed] rounded-2xl p-6 text-left transition-all hover:shadow-lg group cursor-pointer"
                     >
                         <div className="flex items-center justify-between mb-3">
                             <IoMdDocument size={32} className="text-[#405168] group-hover:scale-110 transition-transform" />
@@ -741,7 +741,7 @@ export default function AdminDashboard() {
 
                     <button
                         onClick={() => alert('ฟังก์ชันจัดการสมาชิกยังไม่ได้ implement')}
-                        className="bg-white hover:bg-[#f8f9fa] border border-[#dee5ed] rounded-2xl p-6 text-left transition-all hover:shadow-lg group"
+                        className="bg-white hover:bg-[#f8f9fa] border border-[#dee5ed] rounded-2xl p-6 text-left transition-all hover:shadow-lg group cursor-pointer"
                     >
                         <div className="flex items-center justify-between mb-3">
                             <IoMdPeople size={32} className="text-[#405168] group-hover:scale-110 transition-transform" />
@@ -753,7 +753,7 @@ export default function AdminDashboard() {
 
                     <button
                         onClick={() => fetchDashboardData()}
-                        className="bg-gradient-to-br from-[#405168] to-[#5e7593] hover:from-[#2d3a4c] hover:to-[#405168] text-white rounded-2xl p-6 text-left transition-all hover:shadow-lg group"
+                        className="bg-gradient-to-br from-[#405168] to-[#5e7593] hover:from-[#2d3a4c] hover:to-[#405168] text-white rounded-2xl p-6 text-left transition-all hover:shadow-lg group cursor-pointer"
                     >
                         <div className="flex items-center justify-between mb-3">
                             <IoMdTrendingUp size={32} className="group-hover:scale-110 transition-transform" />
