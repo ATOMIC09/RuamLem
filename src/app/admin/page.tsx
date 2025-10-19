@@ -63,6 +63,7 @@ export default function AdminDashboard() {
     const [topTab, setTopTab] = useState<'views' | 'likes' | 'downloads'>('views');
     const [userRole, setUserRole] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showMemberModal, setShowMemberModal] = useState(false);
     const [members, setMembers] = useState<adminService.User[]>([]);
@@ -128,8 +129,12 @@ export default function AdminDashboard() {
     }, [isSignedIn, isLoading, router]);
 
     // Fetch dashboard data
-    const fetchDashboardData = async () => {
-        setLoading(true);
+    const fetchDashboardData = async (isRefresh = false) => {
+        if (isRefresh) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
         try {
             // Fetch statistics
             const statsResult = await statisticsService.getStatistics();
@@ -256,7 +261,11 @@ export default function AdminDashboard() {
         } catch (err) {
             console.error('Error fetching dashboard data:', err);
         } finally {
-            setLoading(false);
+            if (isRefresh) {
+                setRefreshing(false);
+            } else {
+                setLoading(false);
+            }
         }
     };
 
@@ -289,7 +298,7 @@ export default function AdminDashboard() {
                     if (result.success) {
                         showNotificationModal('ลบโพสต์สำเร็จ', 'success');
                         // Refresh dashboard data
-                        await fetchDashboardData();
+                        await fetchDashboardData(true);
                     } else {
                         // Check for JWT expiration
                         if (isJWTExpired(result.error)) {
@@ -402,6 +411,14 @@ export default function AdminDashboard() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#f8f9fa] to-[#e9ecef]">
+            {/* Refreshing Indicator */}
+            {refreshing && (
+                <div className="fixed top-4 right-4 z-50 bg-white rounded-2xl shadow-lg p-4 flex items-center gap-3 border border-[#dee5ed] animate-in slide-in-from-top-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#405168] border-t-transparent"></div>
+                    <span className="text-sm text-[#405168] font-medium">กำลังโหลดข้อมูล...</span>
+                </div>
+            )}
+            
             {/* Header */}
             <div className="bg-white border-b border-[#dee5ed]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -867,7 +884,7 @@ export default function AdminDashboard() {
                     </button>
 
                     <button
-                        onClick={() => fetchDashboardData()}
+                        onClick={() => fetchDashboardData(true)}
                         className="bg-gradient-to-br from-[#405168] to-[#5e7593] hover:from-[#2d3a4c] hover:to-[#405168] text-white rounded-2xl p-6 text-left transition-all hover:shadow-lg group cursor-pointer"
                     >
                         <div className="flex items-center justify-between mb-3">
