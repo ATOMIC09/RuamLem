@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { post, comment, getPostController, getPostAfterController, getCommentController, getPostFilterController, getTagsController, editPostController } from "../controllers/post-controller";
+import { post, comment, getPostController, getPostAfterController, getCommentController, getPostFilterController, getTagsController, editPostController, getPostByIdController } from "../controllers/post-controller";
 
 export const postRoute = (app: Elysia) => {
     app.post("/post", async (c) => {
@@ -71,6 +71,31 @@ export const postRoute = (app: Elysia) => {
             tags: ['Posts'],
             summary: 'Get Posts',
             description: 'Retrieve a list of posts'
+        }
+    });
+
+    app.post("/post/id", async ({ body }) => {
+        try {
+            if (!body.postId) {
+                return { status: 400, message: "postId is required" };
+            }
+            const postId = parseInt(body.postId);
+            if (isNaN(postId)) {
+                return { status: 400, message: "Invalid postId" };
+            }
+            return getPostByIdController(postId);
+        } catch (error: any) {
+            console.log("Error in getPostById:", error);
+            return { status: 500, message: "Internal server error", error: error.message };
+        }
+    }, {
+        body: t.Object({
+            postId: t.Union([t.String(), t.Number()], { description: "ID of the post to retrieve" })
+        }),
+        detail: {
+            tags: ['Posts'],
+            summary: 'Get Post by ID',
+            description: 'Retrieve a specific post with all its details (files, tags, comments count, user info)'
         }
     });
 

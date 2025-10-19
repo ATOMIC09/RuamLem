@@ -280,6 +280,26 @@ export async function getComment(post_id: number) {
   }
 }
 
+export async function getPostById(postId: number) {
+  try {
+    const { data: post, error } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", postId)
+      .single();
+
+    if (error || !post) {
+      return { status: 404, message: "Post not found" };
+    }
+
+    const postsWithDetails = await addPostDetails([post]);
+    return { status: 200, data: postsWithDetails[0] };
+  } catch (err: any) {
+    console.error("getPostById error:", err);
+    return { status: 500, message: err.message };
+  }
+}
+
 export async function getAllTags() {
   try {
     const { data, error } = await supabase

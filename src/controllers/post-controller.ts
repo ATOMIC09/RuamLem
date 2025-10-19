@@ -1,7 +1,7 @@
 import { status } from "elysia";
 import { supabase } from "../supabase";
 import { uploadFiles } from "../repositories/file-repo";
-import { uploadPost, uploadComment, getComment, getPost, getPostAfter, getPostFilter, getAllTags, editPost } from "../repositories/post-repo";
+import { uploadPost, uploadComment, getComment, getPost, getPostAfter, getPostFilter, getAllTags, editPost, getPostById } from "../repositories/post-repo";
 import { asHookType } from "elysia/dist/utils";
 
 
@@ -131,6 +131,15 @@ export async function editPostController(token: string, postId: number, title: s
         const userId = user.claims.sub;
 
         return editPost(userId, postId, title, body, tag);
+    }
+    catch (err: any) {
+        return { status: 500, message: err.message };
+    }
+}
+
+export async function getPostByIdController(postId: number) {
+    try {
+        return getPostById(postId);
     }
     catch (err: any) {
         return { status: 500, message: err.message };
