@@ -353,3 +353,89 @@ export async function updatePost(postId: number, title: string, body: string, ta
     };
   }
 }
+
+export async function uploadFileToPost(file: File, postId: number): Promise<{ file?: { id: number; file_name: string; file_url: string; file_size: number }; error?: string }> {
+  try {
+    // Validate file size - max 50MB per file
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        error: `ไฟล์ ${file.name} มีขนาดเกิน 50MB`,
+      };
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiRequest<{ success?: boolean; status?: number; file?: { id: number; file_name: string; file_url: string; file_size: number }; message?: string; error?: string }>(`/upload/file/post/${postId}`, {
+      method: 'POST',
+      data: formData,
+      isFormData: true,
+    });
+
+    if (response.error) {
+      return { error: response.error };
+    }
+
+    if (!response.success || response.status !== 200) {
+      return { error: response.message || 'การอัปโหลดไฟล์ล้มเหลว' };
+    }
+
+    return {
+      file: response.file,
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'การอัปโหลดไฟล์ล้มเหลว',
+    };
+  }
+}
+
+export async function deleteFile(fileId: number, postId: number): Promise<{ success?: boolean; message?: string; error?: string }> {
+  try {
+    const response = await apiRequest<{ success?: boolean; message?: string; error?: string }>(`/file/${fileId}`, {
+      method: 'DELETE',
+      data: {
+        postId,
+      },
+    });
+
+    if (response.error) {
+      return { error: response.error };
+    }
+
+    return {
+      success: response.success || true,
+      message: response.message || 'ลบไฟล์สำเร็จ',
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'ลบไฟล์ล้มเหลว',
+    };
+  }
+}
+
+export async function deleteMultipleFiles(fileIds: number[], postId: number): Promise<{ success?: boolean; message?: string; error?: string }> {
+  try {
+    const response = await apiRequest<{ success?: boolean; message?: string; error?: string }>('/files', {
+      method: 'DELETE',
+      data: {
+        fileIds,
+        postId,
+      },
+    });
+
+    if (response.error) {
+      return { error: response.error };
+    }
+
+    return {
+      success: response.success || true,
+      message: response.message || 'ลบไฟล์สำเร็จ',
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'ลบไฟล์ล้มเหลว',
+    };
+  }
+}

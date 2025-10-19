@@ -45,6 +45,7 @@ export default function EditPostPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -52,7 +53,7 @@ export default function EditPostPage() {
   const [tag, setTag] = useState("");
   const [newTag, setNewTag] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
-  const [removedAttachments, setRemovedAttachments] = useState<number[]>([]);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<number[]>([]);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [filteredTags, setFilteredTags] = useState<Tag[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -161,16 +162,25 @@ export default function EditPostPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
-      const totalFiles =
-        (post?.attachments?.length || 0) - removedAttachments.length + newFiles.length + selectedFiles.length;
+      
+      // Calculate total files: existing - removed + new files + selected files
+      const existingFiles = (post?.attachments?.length || 0) - removedAttachmentIds.length;
+      const totalFiles = existingFiles + newFiles.length + selectedFiles.length;
 
       if (totalFiles > 10) {
         setError(
-          `จำนวนไฟล์ทั้งหมดต้องไม่เกิน 10 ไฟล์ (ปัจจุบัน: ${
-            (post?.attachments?.length || 0) - removedAttachments.length
-          } + ${newFiles.length} + ${selectedFiles.length})`
+          `จำนวนไฟล์ทั้งหมดต้องไม่เกิน 10 ไฟล์ (ปัจจุบันมี: ${existingFiles} ไฟล์, เพิ่มใหม่: ${newFiles.length + selectedFiles.length} ไฟล์)`
         );
         return;
+      }
+
+      // Validate file size - max 50MB per file
+      const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+      for (const file of selectedFiles) {
+        if (file.size > MAX_FILE_SIZE) {
+          setError(`ไฟล์ ${file.name} มีขนาดเกิน 50MB`);
+          return;
+        }
       }
 
       setNewFiles([...newFiles, ...selectedFiles]);
@@ -186,18 +196,47 @@ export default function EditPostPage() {
 
   // Mark attachment for removal
   const markAttachmentForRemoval = (attachmentId: number) => {
-    if (!removedAttachments.includes(attachmentId)) {
-      setRemovedAttachments([...removedAttachments, attachmentId]);
+    if (!removedAttachmentIds.includes(attachmentId)) {
+      setRemovedAttachmentIds([...removedAttachmentIds, attachmentId]);
     }
   };
 
   // Undo removal of attachment
   const undoAttachmentRemoval = (attachmentId: number) => {
-    setRemovedAttachments(removedAttachments.filter((id) => id !== attachmentId));
+    setRemovedAttachmentIds(removedAttachmentIds.filter((id) => id !== attachmentId));
+  };
+
+  // Show notification helper
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000);
+  };
+
+  // Handle file download
+  const handleDownload = async (e: React.MouseEvent, fileUrl: string | undefined) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!fileUrl) return;
+    
+    try {
+      const { url, error } = await postService.getFileDownloadUrl(fileUrl);
+      if (url) {
+        window.open(url, "_blank");
+        showNotification('success', 'กำลังดาวน์โหลดไฟล์...');
+      } else {
+        console.error('Download error:', error);
+        showNotification('error', 'ไม่สามารถดาวน์โหลดไฟล์ได้');
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+      showNotification('error', 'ไม่สามารถดาวน์โหลดไฟล์ได้');
+    }
   };
 
   // Handle save
   const handleSave = async () => {
+    // Validation
     if (!title.trim() || !body.trim()) {
       setError("กรุณากรอกหัวข้อและเนื้อหา");
       return;
@@ -208,13 +247,24 @@ export default function EditPostPage() {
       return;
     }
 
+    // Calculate total files after changes
+    const existingFilesCount = (post?.attachments?.length || 0) - removedAttachmentIds.length;
+    const totalFilesAfterSave = existingFilesCount + newFiles.length;
+
+    // Must have at least 1 file
+    if (totalFilesAfterSave < 1) {
+      setError("โพสต์ต้องมีไฟล์อย่างน้อย 1 ไฟล์");
+      return;
+    }
+
     setIsSaving(true);
     setError("");
+    
     try {
+      // Step 1: Update post details (title, body, tag)
       const result = await postService.updatePost(parseInt(postId), title, body, tag);
 
       if (result.error) {
-        // Check for JWT expiration
         if (result.error.includes("JWT") || result.error.includes("expired")) {
           setShowSignInPrompt(true);
         } else {
@@ -224,8 +274,51 @@ export default function EditPostPage() {
         return;
       }
 
-      // Success - redirect to my posts
-      router.push("/my-posts");
+      // Step 2: Delete removed attachments (after post update succeeds)
+      if (removedAttachmentIds.length > 0) {
+        const deleteResult = await postService.deleteMultipleFiles(removedAttachmentIds, parseInt(postId));
+        if (deleteResult.error) {
+          if (deleteResult.error.includes("JWT") || deleteResult.error.includes("expired")) {
+            setShowSignInPrompt(true);
+            setIsSaving(false);
+            return;
+          }
+          // Post was updated but file deletion failed
+          showNotification('error', `โพสต์ถูกอัปเดตแล้ว แต่การลบไฟล์ล้มเหลว: ${deleteResult.error}`);
+          setTimeout(() => {
+            router.push("/my-posts");
+          }, 2000);
+          return;
+        }
+        showNotification('success', `ลบไฟล์ ${removedAttachmentIds.length} ไฟล์สำเร็จ`);
+      }
+
+      // Step 3: Upload new files
+      if (newFiles.length > 0) {
+        for (let i = 0; i < newFiles.length; i++) {
+          const file = newFiles[i];
+          showNotification('info', `กำลังอัปโหลดไฟล์ ${i + 1}/${newFiles.length}...`);
+          
+          const uploadResult = await postService.uploadFileToPost(file, parseInt(postId));
+          if (uploadResult.error) {
+            if (uploadResult.error.includes("JWT") || uploadResult.error.includes("expired")) {
+              setShowSignInPrompt(true);
+              setIsSaving(false);
+              return;
+            }
+            setError(`การอัปโหลดไฟล์ ${file.name} ล้มเหลว: ${uploadResult.error}`);
+            setIsSaving(false);
+            return;
+          }
+        }
+        showNotification('success', `อัปโหลดไฟล์ ${newFiles.length} ไฟล์สำเร็จ`);
+      }
+
+      // Success - show notification and redirect
+      showNotification('success', 'บันทึกการเปลี่ยนแปลงสำเร็จ');
+      setTimeout(() => {
+        router.push("/my-posts");
+      }, 1500);
     } catch {
       setError("ไม่สามารถบันทึกการเปลี่ยนแปลงได้");
       setIsSaving(false);
@@ -264,6 +357,20 @@ export default function EditPostPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f5f7fb] to-[#eef1f8] py-8">
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-6 right-6 px-6 py-3 rounded-2xl shadow-lg text-white text-sm font-medium transition-all duration-300 z-50 ${
+          notification.type === 'success' ? 'bg-green-500' : 
+          notification.type === 'error' ? 'bg-red-500' : 
+          'bg-blue-500'
+        }`}>
+          {notification.type === 'success' && '✓ '}
+          {notification.type === 'error' && '✕ '}
+          {notification.type === 'info' && 'ℹ '}
+          {notification.message}
+        </div>
+      )}
+
       <div className="container max-w-4xl mx-auto px-4">
         {/* Back Button */}
         <Link
@@ -414,52 +521,96 @@ export default function EditPostPage() {
             </div>
 
             {/* Existing Attachments */}
-            {post.attachments && post.attachments.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-[#1c2a48] mb-2">
-                  ไฟล์ที่แนบ (ปัจจุบัน)
-                </label>
+            <div>
+              <label className="block text-sm font-medium text-[#1c2a48] mb-2">
+                ไฟล์ที่มีอยู่ <span className="text-red-500">*</span> (ต้องมีอย่างน้อย 1 ไฟล์)
+              </label>
+              
+              {post?.attachments && post.attachments.length > 0 && (
                 <div className="space-y-2">
                   {post.attachments.map((attachment) => {
-                    const isMarkedForRemoval = removedAttachments.includes(attachment.id);
+                    const isMarkedForRemoval = removedAttachmentIds.includes(attachment.id);
+                    
                     return (
                       <div
                         key={attachment.id}
-                        className={`p-3 border border-[#dee5ed] rounded-xl flex items-center justify-between transition-all ${
+                        className={`p-3 rounded-xl flex items-center justify-between transition-all ${
                           isMarkedForRemoval
-                            ? "bg-red-50"
-                            : "bg-[#f8f9fa]"
+                            ? 'bg-red-50 border border-red-200 opacity-60'
+                            : 'bg-[#f8f9fa] border border-[#e0e7f1] hover:bg-[#f0f4f8]'
                         }`}
                       >
-                        <span className={`text-sm flex items-center ${
-                          isMarkedForRemoval ? "text-red-500" : "text-[#7a8b99]"
-                        }`}>
-                          <GoPaperclip className="mr-2" size={16} />
-                          {attachment.file_name} ({(attachment.file_size / 1024).toFixed(2)} KB)
-                        </span>
-                        {isMarkedForRemoval ? (
-                          <button
-                            type="button"
-                            onClick={() => undoAttachmentRemoval(attachment.id)}
-                            className="text-xs px-3 py-1 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors cursor-pointer"
-                          >
-                            เลิกลบ
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => markAttachmentForRemoval(attachment.id)}
-                            className="text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-                          >
-                            <IoMdTrash size={18} />
-                          </button>
-                        )}
+                        <div className="flex items-center flex-1 min-w-0">
+                          <GoPaperclip className="mr-3 flex-shrink-0 text-lg text-[#5e7593]" />
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium truncate ${
+                              isMarkedForRemoval ? 'text-red-500 line-through' : 'text-[#1c2a48]'
+                            }`}>
+                              {attachment.file_name}
+                            </p>
+                            <p className="text-xs text-[#7a8b99]">
+                              {(attachment.file_size / 1024).toFixed(2)} KB
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 ml-3">
+                          {!isMarkedForRemoval ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={(e) => handleDownload(e, attachment.file_url)}
+                                className="px-3 py-1.5 text-xs bg-[#405168] text-white rounded-full hover:bg-[#2d3a4c] transition-colors cursor-pointer"
+                                title="ดาวน์โหลด"
+                              >
+                                ดาวน์โหลด
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => markAttachmentForRemoval(attachment.id)}
+                                className="p-1.5 text-[#7a8b99] hover:text-red-500 transition-colors cursor-pointer"
+                                title="ทำเครื่องหมายลบ"
+                              >
+                                <IoMdTrash size={18} />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => undoAttachmentRemoval(attachment.id)}
+                              className="px-3 py-1.5 text-xs bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors cursor-pointer"
+                              title="ยกเลิกการลบ"
+                            >
+                              เลิกลบ
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
                 </div>
+              )}
+
+              {/* File count summary */}
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                <p className="text-sm text-blue-700">
+                  <strong>สรุป:</strong> ไฟล์ที่มีอยู่{' '}
+                  {(post?.attachments?.length || 0) - removedAttachmentIds.length} ไฟล์
+                  {removedAttachmentIds.length > 0 && (
+                    <span className="text-red-600">
+                      {' '}(จะลบ {removedAttachmentIds.length} ไฟล์)
+                    </span>
+                  )}
+                  {newFiles.length > 0 && (
+                    <span className="text-green-600">
+                      {' '}+ เพิ่มใหม่ {newFiles.length} ไฟล์
+                    </span>
+                  )}
+                  {' '}= รวม{' '}
+                  {(post?.attachments?.length || 0) - removedAttachmentIds.length + newFiles.length} ไฟล์
+                </p>
               </div>
-            )}
+            </div>
 
             {/* Add New Attachments */}
             <div>
