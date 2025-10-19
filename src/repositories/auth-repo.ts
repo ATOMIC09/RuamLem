@@ -75,6 +75,8 @@ export async function signInWithPassword(email: string, password: string) {
     uuid: data.user.id,
     firstName: profile_data.first_name,
     lastName: profile_data.last_name,
+    avatarUrl: profile_data.avatar_url,
+    bio: profile_data.bio,
     userRole: profile_data.user_role,
     session: data.session,
   };
