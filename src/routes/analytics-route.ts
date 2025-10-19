@@ -45,6 +45,7 @@ export const analyticsRoute = new Elysia({ prefix: "/analytics" })
     {
       body: t.Object({
         fileId: t.Number({ minimum: 1 }),
+        postId: t.Number({ minimum: 1 }),
       }),
     }
   )
