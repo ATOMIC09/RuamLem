@@ -1,222 +1,133 @@
-import { Elysia, t } from "elysia";
-import { post, comment, getPostController, getPostAfterController, getCommentController, getPostFilterController, getTagsController, editPostController, getPostByIdController } from "../controllers/post-controller";
+import Elysia, { t } from "elysia";
+import {
+  post,
+  comment,
+  getPostController,
+  getPostAfterController,
+  getPostFilterController,
+  getCommentController,
+  getTagsController,
+  editPostController,
+  deletePostController,
+  getPostByIdController,
+} from "../controllers/post-controller";
 
-export const postRoute = (app: Elysia) => {
-    app.post("/post", async (c) => {
-        const authHeader = c.request.headers.get("authorization");
-        if (!authHeader) return { status: 401, message: "No token" };
-        const token = authHeader.split(" ")[1];
-
-
-        const formData = await c.request.formData();
-        const files = formData.getAll("files") as File[];
-        const title = formData.get("title") as string;
-        const body = formData.get("body") as string;
-        const tag = formData.get("tag") as string
-
-
-        if (!files || files.length === 0) {
-            return { status: 400, message: "No files uploaded" };
+const postRoute = new Elysia({ prefix: "/post" })
+  .post(
+    "/",
+    ({ body, request }) => post({ body, request }),
+    {
+      body: t.Object({
+        title: t.String({ minLength: 1, maxLength: 255 }),
+        body: t.String({ minLength: 1 }),
+        tag: t.String({ minLength: 1, maxLength: 50 }),
+      }),
+      beforeHandle: ({ request }) => {
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader) {
+          throw new Error("Authorization header is required");
         }
-
-
-        return post(token, title, body, tag, files);
-
-    }, {
-        detail: {
-            tags: ['Posts'],
-            summary: 'Create Post',
-            description: 'Create a new post with file attachments (supports up to 10 files, any file up to 50MB)',
-            security: [{ bearerAuth: [] }]
+      },
+    }
+  )
+  .post(
+    "/comment",
+    ({ body, request }) => comment({ body, request }),
+    {
+      body: t.Object({
+        postId: t.String({ minLength: 1 }),
+        body: t.String({ minLength: 1 }),
+      }),
+      beforeHandle: ({ request }) => {
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader) {
+          throw new Error("Authorization header is required");
         }
-    });
-
-    app.post("/comment", async ({ request, body }) => {
-        const authHeader = request.headers.get("authorization");
-        if (!authHeader) return { status: 401, message: "No token" };
-        const token = authHeader.split(" ")[1];
-
-        const postId = body.post_id;
-        const postBody = body.post_body;
-
-        // console.log(postId, postBody);
-        
-        return comment(token, postId, postBody);
-    }, {
-        body: t.Object({
-            post_id: t.String({ description: "ID of the post to comment on" }),
-            post_body: t.String({ description: "Comment content" })
-        }),
-        detail: {
-            tags: ['Posts'],
-            summary: 'Add Comment',
-            description: 'Add a comment to a post',
-            security: [{ bearerAuth: [] }]
+      },
+    }
+  )
+  .post(
+    "/getPost",
+    ({ body }) => getPostController({ body }),
+    {
+      body: t.Object({
+        count: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
+      }),
+    }
+  )
+  .post(
+    "/id",
+    ({ body }) => getPostByIdController({ body }),
+    {
+      body: t.Object({
+        postId: t.Number({ minimum: 1 }),
+      }),
+    }
+  )
+  .post(
+    "/getPostFilter",
+    ({ body }) => getPostFilterController({ body }),
+    {
+      body: t.Object({
+        tags: t.String({ minLength: 1, maxLength: 50 }),
+        count: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
+      }),
+    }
+  )
+  .post(
+    "/getPostAfter",
+    ({ body }) => getPostAfterController({ body }),
+    {
+      body: t.Object({
+        lastId: t.Number({ minimum: 1 }),
+        count: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
+      }),
+    }
+  )
+  .post(
+    "/getComment",
+    ({ body }) => getCommentController({ body }),
+    {
+      body: t.Object({
+        postId: t.Number({ minimum: 1 }),
+      }),
+    }
+  )
+  .get("/tags", () => getTagsController())
+  .put(
+    "/:postId",
+    ({ body, request, params }) => editPostController({ body, request, params }),
+    {
+      params: t.Object({
+        postId: t.String(),
+      }),
+      body: t.Object({
+        title: t.String({ minLength: 1, maxLength: 255 }),
+        body: t.String({ minLength: 1 }),
+        tag: t.String({ minLength: 1, maxLength: 50 }),
+      }),
+      beforeHandle: ({ request }) => {
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader) {
+          throw new Error("Authorization header is required");
         }
-    });
+      },
+    }
+  )
+  .delete(
+    "/:postId",
+    ({ request, params }) => deletePostController({ request, params }),
+    {
+      params: t.Object({
+        postId: t.String(),
+      }),
+      beforeHandle: ({ request }) => {
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader) {
+          throw new Error("Authorization header is required");
+        }
+      },
+    }
+  );
 
-     app.post("/getPost", async ({ body }) => {
-        try {
-            const count = body?.count || 10;
-            return getPostController(count);
-        } catch (error: any) {
-            console.log("Error in getPost:", error);
-            return { status: 500, message: "Internal server error", error: error.message };
-        }
-    }, {
-        body: t.Optional(t.Object({
-            count: t.Optional(t.Number({ description: "Number of posts to retrieve (default: 10)" }))
-        })),
-        detail: {
-            tags: ['Posts'],
-            summary: 'Get Posts',
-            description: 'Retrieve a list of posts'
-        }
-    });
-
-    app.post("/post/id", async ({ body }) => {
-        try {
-            if (!body.postId) {
-                return { status: 400, message: "postId is required" };
-            }
-            const postId = parseInt(body.postId);
-            if (isNaN(postId)) {
-                return { status: 400, message: "Invalid postId" };
-            }
-            return getPostByIdController(postId);
-        } catch (error: any) {
-            console.log("Error in getPostById:", error);
-            return { status: 500, message: "Internal server error", error: error.message };
-        }
-    }, {
-        body: t.Object({
-            postId: t.Union([t.String(), t.Number()], { description: "ID of the post to retrieve" })
-        }),
-        detail: {
-            tags: ['Posts'],
-            summary: 'Get Post by ID',
-            description: 'Retrieve a specific post with all its details (files, tags, comments count, user info)'
-        }
-    });
-
-    app.post("/getPostFilter", async ({ body }) => {
-        try {
-            const tags = body.tags;
-            const count = body.count || 10;
-            
-            if (!tags) {
-                return { status: 400, message: "tags parameter is required" };
-            }
-            
-            return getPostFilterController(tags, count);
-        } catch (error: any) {
-            console.log("Error in getPostFilter:", error);
-            return { status: 500, message: "Internal server error", error: error.message };
-        }
-    }, {
-        body: t.Object({
-            tags: t.String({ description: "Tag to filter posts by" }),
-            count: t.Optional(t.Number({ description: "Number of posts to retrieve (default: 10)" }))
-        }),
-        detail: {
-            tags: ['Posts'],
-            summary: 'Get Posts by Tag',
-            description: 'Retrieve posts filtered by specific tag'
-        }
-    });
-
-    app.post("/getPostAfter", async ({ body }) => {
-        try {
-            const lastId = body.lastId;
-            const count = body.count || 10;
-            
-            if (!lastId) {
-                return { status: 400, message: "lastId parameter is required" };
-            }
-            
-            return getPostAfterController(lastId, count);
-        } catch (error: any) {
-            console.log("Error in getPostAfter:", error);
-            return { status: 500, message: "Internal server error", error: error.message };
-        }
-    }, {
-        body: t.Object({
-            lastId: t.Number({ description: "ID of the last post from previous request (for pagination)" }),
-            count: t.Optional(t.Number({ description: "Number of posts to retrieve (default: 10)" }))
-        }),
-        detail: {
-            tags: ['Posts'],
-            summary: 'Get Posts After ID',
-            description: 'Retrieve posts after a specific post ID (pagination)'
-        }
-    });
-
-    app.post("/getComment", async ({ body }) => {
-        try {
-            const postId = body.postId;
-            
-            if (!postId) {
-                return { status: 400, message: "postId parameter is required" };
-            }
-            
-            return getCommentController(postId);
-        } catch (error: any) {
-            console.log("Error in getComment:", error);
-            return { status: 500, message: "Internal server error", error: error.message };
-        }
-    }, {
-        body: t.Object({
-            postId: t.Number({ description: "ID of the post to get comments for" })
-        }),
-        detail: {
-            tags: ['Posts'],
-            summary: 'Get Comments',
-            description: 'Retrieve comments for a specific post'
-        }
-    });
-
-    app.get("/tags", async () => {
-        try {
-            return getTagsController();
-        } catch (error: any) {
-            console.log("Error in getTags:", error);
-            return { status: 500, message: "Internal server error", error: error.message };
-        }
-    }, {
-        detail: {
-            tags: ['Posts'],
-            summary: 'Get All Tags',
-            description: 'Retrieve all available tags'
-        }
-    });
-
-    app.put("/post/:postId", async (c) => {
-        const authHeader = c.request.headers.get("authorization");
-        if (!authHeader) return { status: 401, message: "No token provided" };
-        const token = authHeader.split(" ")[1];
-
-        const postId = parseInt(c.params.postId);
-        const body = c.body as any;
-
-        if (!body.title || !body.body || !body.tag) {
-            return { status: 400, message: "Title, body, and tag are required" };
-        }
-
-        return editPostController(token, postId, body.title, body.body, body.tag);
-
-    }, {
-        body: t.Object({
-            title: t.String({ description: "Post title" }),
-            body: t.String({ description: "Post content" }),
-            tag: t.String({ description: "Post tag" })
-        }),
-        detail: {
-            tags: ['Posts'],
-            summary: 'Edit Post',
-            description: 'Edit an existing post (title, body, and tag). You can only edit your own posts.',
-            security: [{ bearerAuth: [] }]
-        }
-    });
-
-    return app;
-}
+export default postRoute;
