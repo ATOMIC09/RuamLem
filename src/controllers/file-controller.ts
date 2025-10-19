@@ -1,6 +1,6 @@
 import { status } from "elysia";
 import { supabase } from "../supabase";
-import { uploadFiles, downloadPDF, deleteFileFromPost, deleteMultipleFilesFromPost } from "../repositories/file-repo";
+import { uploadFiles, uploadFileToPost, downloadPDF, deleteFileFromPost, deleteMultipleFilesFromPost } from "../repositories/file-repo";
 
 export async function uploadFile(token: string, file: File) {
     try {
@@ -17,8 +17,32 @@ export async function uploadFile(token: string, file: File) {
         } else {
             const userId = user.claims.sub; // Get actual user ID
             console.log("👤 User ID from token:", userId);
-            return uploadFiles(file, userId, null); // null for standalone file upload
+            return uploadFiles([file], userId, null); // Pass as array, null for standalone file upload
         }
+    }
+    catch (err: any) {
+        return { status: 500, message: err.message };
+    }
+}
+
+export async function uploadFileToPostController(token: string, file: File, postId: number) {
+    try {
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+        if (file.size > MAX_FILE_SIZE) {
+            return { success: false, message: "File size must be under 50MB" };
+        }
+
+        const { data: user, error } = await supabase.auth.getClaims(token);
+        if (error || !user) {
+            return { success: false, message: "Invalid session" };
+        }
+
+        const userId = user.claims.sub;
+        console.log("👤 User ID from token:", userId);
+        console.log("📤 Uploading file to post:", postId);
+
+        return uploadFileToPost(file, userId, postId);
     }
     catch (err: any) {
         return { status: 500, message: err.message };
