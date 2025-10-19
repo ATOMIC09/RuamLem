@@ -20,8 +20,11 @@ export const post = async ({ body, request }: any) => {
       throw new Error("No authorization token provided");
     }
 
-    const { data: claims } = await supabase.auth.getClaims(token);
-    const userId = claims?.sub;
+    const { data: user, error } = await supabase.auth.getClaims(token);
+    if (error || !user) {
+      throw new Error("Invalid session");
+    }
+    const userId = user.claims.sub;
 
     if (!userId) {
       throw new Error("Invalid user ID from token");
@@ -43,8 +46,11 @@ export const comment = async ({ body, request }: any) => {
       throw new Error("No authorization token provided");
     }
 
-    const { data: claims } = await supabase.auth.getClaims(token);
-    const userId = claims?.sub;
+    const { data: user, error } = await supabase.auth.getClaims(token);
+    if (error || !user) {
+      throw new Error("Invalid session");
+    }
+    const userId = user.claims.sub;
 
     if (!userId) {
       throw new Error("Invalid user ID from token");
@@ -127,8 +133,11 @@ export const editPostController = async ({ body, request, params }: any) => {
       throw new Error("No authorization token provided");
     }
 
-    const { data: claims } = await supabase.auth.getClaims(token);
-    const userId = claims?.sub;
+    const { data: user, error } = await supabase.auth.getClaims(token);
+    if (error || !user) {
+      throw new Error("Invalid session");
+    }
+    const userId = user.claims.sub;
 
     if (!userId) {
       throw new Error("Invalid user ID from token");
@@ -155,8 +164,11 @@ export const deletePostController = async ({ request, params }: any) => {
       throw new Error("No authorization token provided");
     }
 
-    const { data: claims } = await supabase.auth.getClaims(token);
-    const userId = claims?.sub;
+    const { data: user, error } = await supabase.auth.getClaims(token);
+    if (error || !user) {
+      throw new Error("Invalid session");
+    }
+    const userId = user.claims.sub;
 
     if (!userId) {
       throw new Error("Invalid user ID from token");
