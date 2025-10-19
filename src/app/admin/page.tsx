@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import { useAuth } from "../hooks/use-auth";
 import LoadingSpinner from "../components/loading-spinner";
 import * as statisticsService from "@/services/statistics.service";
@@ -9,6 +11,7 @@ import * as profileService from "@/services/profile.service";
 import * as postService from "@/services/post.service";
 import * as analyticsService from "@/services/analytics.service";
 import * as likeService from "@/services/like.service";
+import * as adminService from "@/services/admin.service";
 import { 
     IoMdPeople, 
     IoMdDocument, 
@@ -22,7 +25,10 @@ import {
     IoMdPerson,
     IoMdTrash,
     IoMdCreate,
-    IoMdCloudDownload
+    IoMdCloudDownload,
+    IoMdClose,
+    IoMdMail,
+    IoMdSwap
 } from "react-icons/io";
 
 interface Statistics {
@@ -59,6 +65,10 @@ export default function AdminDashboard() {
     const [userRole, setUserRole] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showMemberModal, setShowMemberModal] = useState(false);
+    const [members, setMembers] = useState<adminService.User[]>([]);
+    const [membersLoading, setMembersLoading] = useState(false);
+    const [showSignInPrompt, setShowSignInPrompt] = useState(false);
 
     // Check authentication and authorization
     useEffect(() => {
@@ -237,6 +247,127 @@ export default function AdminDashboard() {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    // Check if error is JWT expiration
+    const isJWTExpired = (error: string | undefined): boolean => {
+        if (!error) return false;
+        return error.includes('JWT') && error.includes('expired');
+    };
+
+    // Delete post function
+    const handleDeletePost = async (postId: string) => {
+        if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบโพสต์นี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้')) {
+            return;
+        }
+
+        try {
+            const result = await adminService.deletePostAsAdmin(Number(postId));
+            
+            if (result.success) {
+                alert('ลบโพสต์สำเร็จ');
+                // Refresh dashboard data
+                await fetchDashboardData();
+            } else {
+                // Check for JWT expiration
+                if (isJWTExpired(result.error)) {
+                    setShowSignInPrompt(true);
+                } else {
+                    alert(result.error || 'ไม่สามารถลบโพสต์ได้');
+                }
+            }
+        } catch (err) {
+            console.error('Error deleting post:', err);
+            alert('เกิดข้อผิดพลาดในการลบโพสต์');
+        }
+    };
+
+    // Fetch all members
+    const fetchMembers = async () => {
+        setMembersLoading(true);
+        try {
+            const result = await adminService.getAllUsers();
+            if (result.users) {
+                setMembers(result.users);
+            } else {
+                // Check for JWT expiration
+                if (isJWTExpired(result.error)) {
+                    setShowSignInPrompt(true);
+                } else {
+                    alert(result.error || 'ไม่สามารถดึงข้อมูลสมาชิกได้');
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching members:', err);
+            alert('เกิดข้อผิดพลาดในการดึงข้อมูลสมาชิก');
+        } finally {
+            setMembersLoading(false);
+        }
+    };
+
+    // Delete member
+    const handleDeleteMember = async (userId: string, userName: string) => {
+        if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบสมาชิก "${userName}"? การดำเนินการนี้ไม่สามารถย้อนกลับได้`)) {
+            return;
+        }
+
+        try {
+            const result = await adminService.deleteUser(userId);
+            
+            if (result.success) {
+                alert('ลบสมาชิกสำเร็จ');
+                // Refresh members list
+                await fetchMembers();
+                // Refresh dashboard stats
+                await fetchDashboardData();
+            } else {
+                // Check for JWT expiration
+                if (isJWTExpired(result.error)) {
+                    setShowSignInPrompt(true);
+                } else {
+                    alert(result.error || 'ไม่สามารถลบสมาชิกได้');
+                }
+            }
+        } catch (err) {
+            console.error('Error deleting member:', err);
+            alert('เกิดข้อผิดพลาดในการลบสมาชิก');
+        }
+    };
+
+    // Update member role
+    const handleUpdateRole = async (userId: string, currentRole: string, userName: string) => {
+        const newRole = currentRole === 'admin' ? 'user' : 'admin';
+        const roleText = newRole === 'admin' ? 'แอดมิน' : 'ผู้ใช้ทั่วไป';
+        
+        if (!confirm(`คุณต้องการเปลี่ยนสิทธิ์ของ "${userName}" เป็น "${roleText}" หรือไม่?`)) {
+            return;
+        }
+
+        try {
+            const result = await adminService.updateUserRole(userId, newRole);
+            
+            if (result.success) {
+                alert('อัปเดตสิทธิ์สำเร็จ');
+                // Refresh members list
+                await fetchMembers();
+            } else {
+                // Check for JWT expiration
+                if (isJWTExpired(result.error)) {
+                    setShowSignInPrompt(true);
+                } else {
+                    alert(result.error || 'ไม่สามารถอัปเดตสิทธิ์ได้');
+                }
+            }
+        } catch (err) {
+            console.error('Error updating role:', err);
+            alert('เกิดข้อผิดพลาดในการอัปเดตสิทธิ์');
+        }
+    };
+
+    // Open member management modal
+    const openMemberManagement = async () => {
+        setShowMemberModal(true);
+        await fetchMembers();
     };
 
     if (isLoading || loading) {
@@ -562,12 +693,7 @@ export default function AdminDashboard() {
                                                         <IoMdEye size={20} />
                                                     </button>
                                                     <button
-                                                        onClick={() => {
-                                                            if (confirm('คุณต้องการลบโพสต์นี้หรือไม่?')) {
-                                                                // TODO: Implement delete functionality
-                                                                alert('ฟังก์ชันลบยังไม่ได้ implement');
-                                                            }
-                                                        }}
+                                                        onClick={() => handleDeletePost(post.id)}
                                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                                                         title="ลบโพสต์"
                                                     >
@@ -681,10 +807,6 @@ export default function AdminDashboard() {
                                                     {post.title}
                                                 </h3>
                                                 <div className="flex items-center gap-4 mt-1 text-sm text-[#7a8b99]">
-                                                    <div className="flex items-center gap-1">
-                                                        <IoMdPerson size={16} />
-                                                        <span>{post.author.name}</span>
-                                                    </div>
                                                     <div className="flex items-center gap-3">
                                                         <span className="flex items-center gap-1">
                                                             <IoMdEye size={16} />
@@ -702,6 +824,10 @@ export default function AdminDashboard() {
                                                             <IoMdChatbubbles size={16} />
                                                             {post.comments.toLocaleString()}
                                                         </span>
+                                                    <div className="flex items-center gap-1">
+                                                        <IoMdPerson size={16} />
+                                                        <span>{post.author.name}</span>
+                                                    </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -740,7 +866,7 @@ export default function AdminDashboard() {
                     </button>
 
                     <button
-                        onClick={() => alert('ฟังก์ชันจัดการสมาชิกยังไม่ได้ implement')}
+                        onClick={openMemberManagement}
                         className="bg-white hover:bg-[#f8f9fa] border border-[#dee5ed] rounded-2xl p-6 text-left transition-all hover:shadow-lg group cursor-pointer"
                     >
                         <div className="flex items-center justify-between mb-3">
@@ -764,6 +890,198 @@ export default function AdminDashboard() {
                     </button>
                 </div>
             </div>
+
+            {/* Member Management Modal */}
+            {showMemberModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowMemberModal(false)}></div>
+                    <div className="relative bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-[#405168] to-[#5e7593] p-6 text-white flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <IoMdPeople size={32} />
+                                <div>
+                                    <h2 className="text-2xl font-bold">จัดการสมาชิก</h2>
+                                    <p className="text-sm opacity-90">ดูและจัดการสมาชิกทั้งหมดในระบบ</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowMemberModal(false)}
+                                className="p-2 hover:bg-white hover:text-[#405168] hover:bg-opacity-20 rounded-lg transition-colors cursor-pointer"
+                            >
+                                <IoMdClose size={24} />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                            {membersLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <LoadingSpinner />
+                                </div>
+                            ) : members.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-[#f8f9fa]">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#7a8b99] uppercase">
+                                                    สมาชิก
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#7a8b99] uppercase">
+                                                    อีเมล
+                                                </th>
+                                                <th className="px-4 py-3 text-center text-xs font-semibold text-[#7a8b99] uppercase">
+                                                    สิทธิ์
+                                                </th>
+                                                <th className="px-4 py-3 text-center text-xs font-semibold text-[#7a8b99] uppercase">
+                                                    วันที่สมัคร
+                                                </th>
+                                                <th className="px-4 py-3 text-center text-xs font-semibold text-[#7a8b99] uppercase">
+                                                    การดำเนินการ
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-[#dee5ed]">
+                                            {members.map((member) => (
+                                                <tr key={member.uuid} className="hover:bg-[#f8f9fa] transition-colors">
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            {member.avatarUrl ? (
+                                                                <Image
+                                                                    src={member.avatarUrl}
+                                                                    alt={`${member.firstName} ${member.lastName}`}
+                                                                    width={40}
+                                                                    height={40}
+                                                                    className="rounded-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#405168] to-[#5e7593] flex items-center justify-center text-white font-semibold">
+                                                                    {member.firstName.charAt(0)}{member.lastName.charAt(0)}
+                                                                </div>
+                                                            )}
+                                                            <div>
+                                                                <p className="font-medium text-[#1c2a48]">
+                                                                    {member.firstName} {member.lastName}
+                                                                </p>
+                                                                {member.bio && (
+                                                                    <p className="text-xs text-[#7a8b99] line-clamp-1">
+                                                                        {member.bio}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center gap-2 text-[#7a8b99]">
+                                                            <IoMdMail size={16} />
+                                                            <span className="text-sm">{member.email}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+                                                            member.userRole === 'admin'
+                                                                ? 'bg-purple-100 text-purple-700'
+                                                                : 'bg-blue-100 text-blue-700'
+                                                        }`}>
+                                                            <IoMdPerson size={14} />
+                                                            {member.userRole === 'admin' ? 'แอดมิน' : 'ผู้ใช้'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center text-sm text-[#7a8b99]">
+                                                        {new Date(member.createdAt).toLocaleDateString('th-TH', {
+                                                            year: 'numeric',
+                                                            month: 'short',
+                                                            day: 'numeric'
+                                                        })}
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <button
+                                                                onClick={() => handleUpdateRole(member.uuid, member.userRole, `${member.firstName} ${member.lastName}`)}
+                                                                className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                                                                    member.userRole === 'admin'
+                                                                        ? 'text-blue-600 hover:bg-blue-50'
+                                                                        : 'text-purple-600 hover:bg-purple-50'
+                                                                }`}
+                                                                title={member.userRole === 'admin' ? 'เปลี่ยนเป็นผู้ใช้ทั่วไป' : 'เปลี่ยนเป็นแอดมิน'}
+                                                            >
+                                                                <IoMdSwap size={20} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteMember(member.uuid, `${member.firstName} ${member.lastName}`)}
+                                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                                                title="ลบสมาชิก"
+                                                            >
+                                                                <IoMdTrash size={20} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 text-[#7a8b99]">
+                                    <IoMdPeople size={48} className="mx-auto opacity-30 mb-3" />
+                                    <p>ไม่มีข้อมูลสมาชิก</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-[#f8f9fa] px-6 py-4 flex items-center justify-between border-t border-[#dee5ed]">
+                            <p className="text-sm text-[#7a8b99]">
+                                สมาชิกทั้งหมด: <span className="font-semibold text-[#1c2a48]">{members.length}</span> คน
+                            </p>
+                            <button
+                                onClick={() => setShowMemberModal(false)}
+                                className="px-6 py-2 bg-[#405168] text-white rounded-lg hover:bg-[#2d3a4c] transition-colors cursor-pointer"
+                            >
+                                ปิด
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Sign In Required Modal */}
+            {showSignInPrompt && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowSignInPrompt(false)}></div>
+                    <div className="relative bg-white rounded-3xl border border-[#e0e7f1] shadow-xl max-w-md w-full p-8">
+                        <button
+                            onClick={() => setShowSignInPrompt(false)}
+                            className="absolute top-4 right-4 p-2 text-[#7a8b99] hover:text-[#405168] transition-colors cursor-pointer"
+                        >
+                            <IoMdClose size={20} />
+                        </button>
+
+                        <div className="text-center">
+                            <div className="text-4xl mb-4">⏱️</div>
+                            <h2 className="text-2xl font-bold text-[#1c2a48] mb-4">เซสชันหมดอายุแล้ว</h2>
+                            <p className="text-[#7a8b99] mb-6">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+
+                            <div className="space-y-4">
+                                <Link
+                                    href="/signin"
+                                    className="block w-full px-6 py-3 bg-[#405168] text-white rounded-3xl hover:bg-[#2d3a4c] transition-colors font-medium"
+                                    onClick={() => setShowSignInPrompt(false)}
+                                >
+                                    เข้าสู่ระบบ
+                                </Link>
+
+                                <button
+                                    onClick={() => setShowSignInPrompt(false)}
+                                    className="w-full px-6 py-3 border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all font-medium shadow-sm bg-white cursor-pointer"
+                                >
+                                    ปิด
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
