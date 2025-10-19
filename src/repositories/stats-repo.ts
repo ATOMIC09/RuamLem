@@ -1,0 +1,68 @@
+import { supabase } from "../supabase";
+
+export async function getStatistics() {
+  try {
+    // Get total posts count
+    const { count: totalPosts, error: postsError } = await supabase
+      .from("posts")
+      .select("id", { count: "exact", head: true });
+
+    if (postsError) {
+      console.error("Error fetching posts count:", postsError);
+    }
+
+    // Get total members count
+    const { count: totalMembers, error: membersError } = await supabase
+      .from("profiles")
+      .select("uuid", { count: "exact", head: true });
+
+    if (membersError) {
+      console.error("Error fetching members count:", membersError);
+    }
+
+    // Get posts this month
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    
+    const { count: postsThisMonth, error: monthPostsError } = await supabase
+      .from("posts")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", firstDayOfMonth);
+
+    if (monthPostsError) {
+      console.error("Error fetching posts this month:", monthPostsError);
+    }
+
+    // Get total comments count
+    const { count: totalComments, error: commentsError } = await supabase
+      .from("comments")
+      .select("id", { count: "exact", head: true });
+
+    if (commentsError) {
+      console.error("Error fetching comments count:", commentsError);
+    }
+
+    // Get total files count
+    const { count: totalFiles, error: filesError } = await supabase
+      .from("files")
+      .select("id", { count: "exact", head: true });
+
+    if (filesError) {
+      console.error("Error fetching files count:", filesError);
+    }
+
+    return {
+      status: 200,
+      data: {
+        totalPosts: totalPosts || 0,
+        totalMembers: totalMembers || 0,
+        postsThisMonth: postsThisMonth || 0,
+        totalComments: totalComments || 0,
+        totalFiles: totalFiles || 0,
+      }
+    };
+  } catch (err: any) {
+    console.error("getStatistics error:", err);
+    return { status: 500, message: err.message };
+  }
+}
