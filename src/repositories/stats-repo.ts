@@ -60,6 +60,24 @@ export async function getStatistics() {
       console.error("Error fetching likes count:", likesError);
     }
 
+    // Get total views count
+    const { count: totalViews, error: viewsError } = await supabase
+      .from("post_views")
+      .select("id", { count: "exact", head: true });
+
+    if (viewsError) {
+      console.error("Error fetching views count:", viewsError);
+    }
+
+    // Get total downloads count
+    const { count: totalDownloads, error: downloadsError } = await supabase
+      .from("file_downloads")
+      .select("id", { count: "exact", head: true });
+
+    if (downloadsError) {
+      console.error("Error fetching downloads count:", downloadsError);
+    }
+
     return {
       status: 200,
       data: {
@@ -69,6 +87,8 @@ export async function getStatistics() {
         totalComments: totalComments || 0,
         totalFiles: totalFiles || 0,
         totalLikes: totalLikes || 0,
+        totalViews: totalViews || 0,
+        totalDownloads: totalDownloads || 0,
       }
     };
   } catch (err: any) {
