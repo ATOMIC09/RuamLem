@@ -130,12 +130,14 @@ export const getMultiplePostViews = async (postIds: number[]) => {
 /**
  * Record a file download
  * @param fileId - ID of the file (integer)
+ * @param postId - ID of the post the file belongs to (integer)
  * @param userId - UUID of the user (optional for guest users)
  * @param ipAddress - IP address for tracking (optional)
  * @returns Success status
  */
 export const recordFileDownload = async (
   fileId: number,
+  postId: number,
   userId: string | null = null,
   ipAddress: string | null = null
 ) => {
@@ -145,6 +147,7 @@ export const recordFileDownload = async (
       .from("file_downloads")
       .insert({
         file_id: fileId,
+        post_id: postId,
         user_id: userId,
         ip_address: ipAddress,
       });
