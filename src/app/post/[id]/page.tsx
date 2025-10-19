@@ -9,6 +9,7 @@ import { GoPaperclip } from "react-icons/go";
 import { FaDownload } from "react-icons/fa";
 import { useParams } from "next/navigation";
 import * as postService from "@/services/post.service";
+import * as analyticsService from "@/services/analytics.service";
 import { useAuth } from "@/app/hooks/use-auth";
 import LoadingSpinner from "@/app/components/loading-spinner";
 
@@ -59,6 +60,25 @@ export default function PostDetailPage() {
 
   useEffect(() => {
     fetchPostData();
+    
+    // Record post view after a short delay to ensure it's a real view
+    const viewTimer = setTimeout(async () => {
+      if (postId) {
+        console.log('📊 Recording post view for post ID:', postId);
+        try {
+          const result = await analyticsService.recordPostView(postId);
+          if (result.success) {
+            console.log('✅ Post view recorded successfully');
+          } else if (result.error) {
+            console.error('❌ Failed to record post view:', result.error);
+          }
+        } catch (err) {
+          console.error('❌ Exception while recording post view:', err);
+        }
+      }
+    }, 2000); // 2 second delay to filter out quick bounces
+
+    return () => clearTimeout(viewTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
@@ -99,8 +119,13 @@ export default function PostDetailPage() {
     }
   };
 
-  const handleDownload = async (fileUrl: string) => {
+  const handleDownload = async (fileUrl: string, fileId: string) => {
     try {
+      // Record download before opening file (include postId)
+      analyticsService.recordFileDownload(fileId, postId).catch(err => {
+        console.error('Failed to record download:', err);
+      });
+      
       const result = await postService.getFileDownloadUrl(fileUrl);
       if (result.url) {
         window.open(result.url, "_blank");
@@ -284,7 +309,7 @@ export default function PostDetailPage() {
                   return (
                     <button
                       key={file.id}
-                      onClick={() => handleDownload(file.file_url)}
+                      onClick={() => handleDownload(file.file_url, String(file.id))}
                       className="w-full flex items-center justify-between p-4 bg-[#f8f9fa] rounded-2xl border border-[#e0e7f1] hover:bg-[#e0e7f1] transition-colors cursor-pointer group"
                     >
                       <div className="flex items-center flex-1 min-w-0">

@@ -9,6 +9,8 @@ export interface Statistics {
   totalComments: number;
   totalFiles: number;
   totalLikes: number;
+  totalViews: number;
+  totalDownloads: number;
 }
 
 export async function getStatistics(): Promise<{ stats?: Statistics; error?: string }> {

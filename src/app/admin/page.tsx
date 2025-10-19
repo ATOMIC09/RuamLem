@@ -29,6 +29,8 @@ interface Statistics {
     totalComments: number;
     totalFiles: number;
     totalLikes: number;
+    totalViews: number;
+    totalDownloads: number;
 }
 
 interface RecentPost {
@@ -245,7 +247,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Secondary Stats */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                     {/* Total Files */}
                     <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#dee5ed]">
                         <div className="flex items-center justify-between">
@@ -256,6 +258,42 @@ export default function AdminDashboard() {
                                 </div>
                                 <p className="text-3xl font-bold text-[#1c2a48]">
                                     {stats?.totalFiles?.toLocaleString() || 0}
+                                </p>
+                            </div>
+                            <div className="bg-[#f8f9fa] p-4 rounded-xl">
+                                <IoMdCloudUpload size={32} className="text-[#405168]" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Total Views */}
+                    <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#dee5ed]">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <div className="flex items-center gap-2 text-[#7a8b99] mb-2">
+                                    <IoMdEye size={20} />
+                                    <span className="text-sm font-medium">การดูทั้งหมด</span>
+                                </div>
+                                <p className="text-3xl font-bold text-[#1c2a48]">
+                                    {stats?.totalViews?.toLocaleString() || 0}
+                                </p>
+                            </div>
+                            <div className="bg-[#f8f9fa] p-4 rounded-xl">
+                                <IoMdEye size={32} className="text-[#405168]" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Total Downloads */}
+                    <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#dee5ed]">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <div className="flex items-center gap-2 text-[#7a8b99] mb-2">
+                                    <IoMdCloudUpload size={20} />
+                                    <span className="text-sm font-medium">ดาวน์โหลดทั้งหมด</span>
+                                </div>
+                                <p className="text-3xl font-bold text-[#1c2a48]">
+                                    {stats?.totalDownloads?.toLocaleString() || 0}
                                 </p>
                             </div>
                             <div className="bg-[#f8f9fa] p-4 rounded-xl">

@@ -70,13 +70,13 @@ export async function apiRequest<T = unknown>(
     isFormData?: boolean;
   } = {}
 ): Promise<T> {
-  try {
-    const config: Record<string, unknown> = {
-      method: options.method || 'GET',
-      url: endpoint,
-      headers: options.headers || {},
-    };
+  const config: Record<string, unknown> = {
+    method: options.method || 'GET',
+    url: endpoint,
+    headers: options.headers || {},
+  };
 
+  try {
     if (options.data) {
       config.data = options.data;
     }
@@ -101,6 +101,15 @@ export async function apiRequest<T = unknown>(
     
     return response.data;
   } catch (error) {
+    console.error('🚨 API Request Failed:', {
+      url: endpoint,
+      method: config.method,
+      error: error,
+      isAxiosError: axios.isAxiosError(error),
+      response: axios.isAxiosError(error) ? error.response : undefined,
+      message: axios.isAxiosError(error) ? error.message : undefined
+    });
+    
     if (axios.isAxiosError(error)) {
       const errorData = error.response?.data as Record<string, unknown> | undefined;
       
