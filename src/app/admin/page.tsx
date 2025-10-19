@@ -28,6 +28,7 @@ interface Statistics {
     postsThisMonth: number;
     totalComments: number;
     totalFiles: number;
+    totalLikes: number;
 }
 
 interface RecentPost {
@@ -162,7 +163,7 @@ export default function AdminDashboard() {
                         <div>
                             <h1 className="text-3xl font-bold text-[#1c2a48] flex items-center gap-3">
                                 <IoMdTrendingUp className="text-[#405168]" />
-                                แดshบอร์ดแอดมิน
+                                แดชบอร์ดแอดมิน
                             </h1>
                             <p className="text-[#7a8b99] mt-1">จัดการและควบคุมเว็บไซต์ RuamLem</p>
                         </div>
@@ -181,7 +182,7 @@ export default function AdminDashboard() {
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                     {/* Total Members */}
                     <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
                         <div className="flex items-center justify-between mb-4">
@@ -228,6 +229,18 @@ export default function AdminDashboard() {
                         </div>
                         <h3 className="text-sm font-medium opacity-90 mb-1">ความคิดเห็นทั้งหมด</h3>
                         <p className="text-3xl font-bold">{stats?.totalComments?.toLocaleString() || 0}</p>
+                    </div>
+
+                    {/* Total Likes */}
+                    <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="bg-white bg-opacity-20 p-3 rounded-xl">
+                                <IoMdHeart size={28} />
+                            </div>
+                            <IoMdTrendingUp size={20} className="opacity-60" />
+                        </div>
+                        <h3 className="text-sm font-medium opacity-90 mb-1">ไลค์ทั้งหมด</h3>
+                        <p className="text-3xl font-bold">{stats?.totalLikes?.toLocaleString() || 0}</p>
                     </div>
                 </div>
 
@@ -281,8 +294,8 @@ export default function AdminDashboard() {
                                     <span className="text-sm font-medium">อัตราการมีส่วนร่วม</span>
                                 </div>
                                 <p className="text-3xl font-bold text-[#1c2a48]">
-                                    {stats?.totalPosts && stats?.totalComments 
-                                        ? ((stats.totalComments / stats.totalPosts) * 100).toFixed(0)
+                                    {stats?.totalPosts && (stats?.totalComments || stats?.totalLikes)
+                                        ? (((stats.totalComments + stats.totalLikes) / stats.totalPosts) * 100).toFixed(0)
                                         : '0'
                                     }%
                                 </p>
