@@ -152,8 +152,8 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                                 className="w-full flex items-center px-4 py-2 bg-[#f8f9fa] text-[#5e7593] rounded-2xl hover:bg-[#e0e7f1] transition-colors border border-[#e0e7f1] group cursor-pointer truncate"
                             >
                                 {getFileIcon(fileExtension)}
-                                <div className="flex flex-col items-start flex-1 min-w-0">
-                                    <span className="text-sm font-medium truncate text-left">{attachment.file_name}</span>
+                                <div className="flex flex-col items-start flex-1 min-w-0 truncate">
+                                    <span className="text-sm font-medium text-left">{attachment.file_name}</span>
                                     {attachment.file_size && (
                                         <span className="text-xs text-[#7a8b99]">{(attachment.file_size / 1024 / 1024).toFixed(2)} MB</span>
                                     )}
