@@ -1,7 +1,7 @@
 "use client";
 
 import { GiOpenBook } from "react-icons/gi";
-import { IoMdMenu, IoMdClose, IoMdPerson, IoMdLogOut, IoMdCreate } from "react-icons/io";
+import { IoMdMenu, IoMdClose, IoMdPerson, IoMdLogOut, IoMdCreate, IoMdSettings } from "react-icons/io";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../hooks/use-auth";
@@ -14,6 +14,7 @@ export default function Navbar() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showSignInModal, setShowSignInModal] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
     const pathname = usePathname();
     const [, setForceUpdate] = useState(0);
 
@@ -23,10 +24,11 @@ export default function Navbar() {
             fetchUserAvatar();
         } else {
             setAvatarUrl(null);
+            setUserRole(null);
         }
     }, [isSignedIn, user]);
 
-    // Fetch profile to get avatar
+    // Fetch profile to get avatar and user role
     const fetchUserAvatar = async () => {
         try {
             const result = await profileService.getProfile();
@@ -43,6 +45,9 @@ export default function Navbar() {
             }
             if (result.profile?.avatarUrl) {
                 setAvatarUrl(result.profile.avatarUrl);
+            }
+            if (result.profile?.userRole) {
+                setUserRole(result.profile.userRole);
             }
         } catch {
             // Silent fail - will show default icon
@@ -164,6 +169,17 @@ export default function Navbar() {
                                         <span className="font-medium text-sm">โพสต์ของฉัน</span>
                                     </Link>
 
+                                    {/* Admin Dashboard - Only visible for admins */}
+                                    {userRole === 'admin' && (
+                                        <Link
+                                            href="/admin"
+                                            className="flex items-center space-x-3 px-4 py-3 text-[#405168] hover:bg-[#f8f9fa] rounded-xl transition-colors group/item"
+                                        >
+                                            <IoMdSettings size={18} className="text-[#5e7593]" />
+                                            <span className="font-medium text-sm">แดชบอร์ดแอดมิน</span>
+                                        </Link>
+                                    )}
+
                                     <button
                                         onClick={handleSignOut}
                                         className="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
@@ -265,6 +281,18 @@ export default function Navbar() {
                                             <IoMdCreate size={18} />
                                             <span>โพสต์ของฉัน</span>
                                         </Link>
+
+                                        {/* Admin Dashboard - Only visible for admins */}
+                                        {userRole === 'admin' && (
+                                            <Link
+                                                href="/admin"
+                                                className="flex items-center space-x-2 w-full px-4 py-3 border border-[#e0e7f1] text-[#405168] rounded-xl hover:bg-[#f8f9fa] transition-all font-medium shadow-sm bg-white"
+                                                onClick={() => setIsMobileMenuOpen(false)}
+                                            >
+                                                <IoMdSettings size={18} />
+                                                <span>แดชบอร์ดแอดมิน</span>
+                                            </Link>
+                                        )}
 
                                         <button
                                             onClick={handleSignOut}

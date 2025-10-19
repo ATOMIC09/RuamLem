@@ -10,6 +10,7 @@ interface User {
     email: string;
     firstName?: string;
     lastName?: string;
+    userRole?: string;
 }
 
 // Create a custom event for auth state changes
