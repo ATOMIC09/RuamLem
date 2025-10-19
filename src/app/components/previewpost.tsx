@@ -20,6 +20,7 @@ export default function PreviewPost({ post }: PreviewPostProps) {
     const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
     const [likeCount, setLikeCount] = useState(0);
     const [viewCount, setViewCount] = useState(0);
+    const [fileDownloadCounts, setFileDownloadCounts] = useState<Record<number, number>>({});
 
     const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
       setNotification({ type, message });
@@ -50,13 +51,37 @@ export default function PreviewPost({ post }: PreviewPostProps) {
         }
     }, [post?.id]);
 
+    const fetchFileDownloadCounts = useCallback(async () => {
+        if (!post?.attachments || post.attachments.length === 0) return;
+        
+        try {
+            const fileIds = post.attachments
+                .map(file => file.id)
+                .filter((id): id is number => id !== undefined);
+            
+            if (fileIds.length === 0) return;
+            
+            const result = await analyticsService.getMultipleFileDownloads(fileIds);
+            if (result.data) {
+                const countsMap: Record<number, number> = {};
+                result.data.forEach(item => {
+                    countsMap[item.fileId] = item.downloadCount;
+                });
+                setFileDownloadCounts(countsMap);
+            }
+        } catch (err) {
+            console.error('Failed to fetch file download counts:', err);
+        }
+    }, [post?.attachments]);
+
     // Fetch like count and view count when component mounts
     useEffect(() => {
         if (post?.id) {
             fetchLikeCount();
             fetchViewCount();
+            fetchFileDownloadCounts();
         }
-    }, [post?.id, fetchLikeCount, fetchViewCount]);
+    }, [post?.id, fetchLikeCount, fetchViewCount, fetchFileDownloadCounts]);
     
     // Helper function to get the appropriate icon based on file type
     const getFileIcon = (fileType: string) => {
@@ -187,6 +212,7 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                     {postData.attachments.map((attachment, index) => {
                         // Extract file type from file_name extension
                         const fileExtension = (attachment.file_name || '').split('.').pop()?.toLowerCase() || '';
+                        const downloadCount = attachment.id ? (fileDownloadCounts[attachment.id] || 0) : 0;
                         
                         return (
                             <button
@@ -197,9 +223,15 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                                 {getFileIcon(fileExtension)}
                                 <div className="flex flex-col items-start flex-1 min-w-0 truncate">
                                     <span className="text-sm font-medium text-left">{attachment.file_name}</span>
-                                    {attachment.file_size && (
-                                        <span className="text-xs text-[#7a8b99]">{(attachment.file_size / 1024 / 1024).toFixed(2)} MB</span>
-                                    )}
+                                    <div className="flex items-center gap-2 text-xs text-[#7a8b99]">
+                                        {attachment.file_size && (
+                                            <>
+                                                <span>{(attachment.file_size / 1024 / 1024).toFixed(2)} MB</span>
+                                                <span>•</span>
+                                            </>
+                                        )}
+                                        <span>{downloadCount} ดาวน์โหลด</span>
+                                    </div>
                                 </div>
                                 <span className="text-xs text-[#405168] ml-2 flex-shrink-0">📥</span>
                             </button>
