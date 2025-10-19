@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../hooks/use-auth";
 import LoadingSpinner from "../components/loading-spinner";
 import Link from "next/link";
-import { IoMdArrowBack, IoMdLogOut, IoMdMail, IoMdPerson } from "react-icons/io";
+import { IoMdArrowBack, IoMdLogOut, IoMdMail, IoMdPerson, IoMdCreate } from "react-icons/io";
 import * as profileService from "@/services/profile.service";
 
 export default function ProfilePage() {
@@ -191,7 +191,7 @@ export default function ProfilePage() {
                     disabled={isUploadingAvatar}
                     className="hidden"
                   />
-                  <IoMdArrowBack className="text-lg" style={{ transform: 'rotate(90deg)' }} />
+                  <IoMdCreate className="text-lg" />
                 </label>
               </div>
             </div>
