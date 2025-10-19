@@ -10,6 +10,7 @@ import { FaDownload } from "react-icons/fa";
 import { useParams } from "next/navigation";
 import * as postService from "@/services/post.service";
 import { useAuth } from "@/app/hooks/use-auth";
+import LoadingSpinner from "@/app/components/loading-spinner";
 
 interface PostDetail extends postService.Post {
   attachments?: Array<{
@@ -157,7 +158,7 @@ export default function PostDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-8">
         <div className="text-center">
-          <p className="text-[#5e7593]">กำลังโหลดโพสต์...</p>
+          <LoadingSpinner size="lg" text="กำลังโหลดโพสต์..." />
         </div>
       </div>
     );
