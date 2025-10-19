@@ -158,8 +158,8 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                 </div>
             )}
 
-            <Link href={`/post/${postData.id}`}>
-                <div className="w-full bg-white p-6 rounded-3xl shadow-sm border border-[#e0e7f1] text-[#5e7593] hover:shadow-md transition-shadow cursor-pointer">
+            <Link href={`/post/${postData.id}`} className="h-full block">
+                <div className="h-full w-full bg-white p-6 rounded-3xl shadow-sm border border-[#e0e7f1] text-[#5e7593] hover:shadow-md transition-shadow cursor-pointer flex flex-col">
             {/* Author */}
             <div className="flex items-center mb-4">
                 <div className="w-10 h-10 rounded-full mr-3 overflow-hidden bg-gradient-to-br from-[#5e7593] to-[#405168] flex-shrink-0">
@@ -190,24 +190,25 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                     </span>
                 </div>
             </div>
-            {/* Post content */}
-            {/* Title */}
-            <div className="mb-4">
-                <h2 className="text-xl font-bold text-[#1c2a48] line-clamp-2">{postData.title}</h2>
-            </div>
-            
-            {/* Description - 2-3 lines truncated */}
-            {postData.description && (
+            {/* Post content - Flex grow to push stats to bottom */}
+            <div className="flex-grow flex flex-col">
+                {/* Title */}
                 <div className="mb-4">
-                    <p className="text-sm text-[#5e7593] line-clamp-3 mb-2">{postData.description}</p>
-                    <span className="text-sm text-[#405168] font-medium group-hover:text-[#2d3a4c] transition-colors">
-                        อ่านเพิ่มเติม →
-                    </span>
+                    <h2 className="text-xl font-bold text-[#1c2a48] line-clamp-2">{postData.title}</h2>
                 </div>
-            )}
+                
+                {/* Description - 2-3 lines truncated */}
+                {postData.description && (
+                    <div className="mb-4">
+                        <p className="text-sm text-[#5e7593] line-clamp-3 mb-2">{postData.description}</p>
+                        <span className="text-sm text-[#405168] font-medium group-hover:text-[#2d3a4c] transition-colors">
+                            อ่านเพิ่มเติม →
+                        </span>
+                    </div>
+                )}
 
-            {/* All Attachments download buttons */}
-            {postData.attachments && postData.attachments.length > 0 && (
+                {/* All Attachments download buttons */}
+                {postData.attachments && postData.attachments.length > 0 && (
                 <div className="pt-4 border-t border-[#f0f4f8] space-y-2">
                     {postData.attachments.map((attachment, index) => {
                         // Extract file type from file_name extension
@@ -240,8 +241,8 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                 </div>
             )}
             
-            {/* Stats Bar - Likes, Views, Comments */}
-            <div className="mt-4 pt-3 border-t border-[#f0f4f8] flex items-center gap-4 text-xs text-[#7a8b99]">
+            {/* Stats Bar - Likes, Views, Comments - Always at bottom */}
+            <div className="mt-auto pt-4 border-t border-[#f0f4f8] flex items-center gap-4 text-xs text-[#7a8b99]">
                 <div className="flex items-center gap-1">
                     <IoMdHeart className="text-red-400" />
                     <span>{likeCount} ไลค์</span>
@@ -256,6 +257,7 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                         <span>{postData.commentCount} ความเห็น</span>
                     </div>
                 )}
+            </div>
             </div>
         </div>
         </Link>
