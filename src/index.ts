@@ -12,7 +12,7 @@ import { adminRoute } from "./routes/admin-route";
 
 const app = new Elysia()
   .use(cors({
-    origin: 'http://localhost:3000',
+    origin: [process.env.FRONTEND_URL || 'http://localhost:3000'],
     credentials: true
   }))
   .onRequest(({ request }) => {
@@ -27,7 +27,7 @@ const app = new Elysia()
       },
       servers: [
         {
-          url: 'http://localhost:3030',
+          url: process.env.FRONTEND_URL || 'http://localhost:3000',
           description: 'Development server'
         }
       ],
@@ -62,6 +62,6 @@ const app = new Elysia()
   .use(adminRoute);
 
 app.listen(3030, () => {
-  console.log("Server running on http://localhost:3030");
-  console.log("📖 API Documentation: http://localhost:3030/openapi");
+  console.log("Server running on " + process.env.FRONTEND_URL || 'http://localhost:3000');
+  console.log("📖 API Documentation: " + process.env.FRONTEND_URL || 'http://localhost:3000' + "/openapi");
 });
