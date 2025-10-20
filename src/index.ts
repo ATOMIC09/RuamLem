@@ -12,7 +12,11 @@ import { adminRoute } from "./routes/admin-route";
 
 const app = new Elysia()
   .use(cors({
-    origin: [process.env.FRONTEND_URL || 'http://localhost:3000'],
+    origin: [
+      'https://ruamlem.vercel.app',
+      'http://localhost:3000',
+      ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+    ],
     credentials: true
   }))
   .onRequest(({ request }) => {
@@ -62,6 +66,6 @@ const app = new Elysia()
   .use(adminRoute);
 
 app.listen(3030, () => {
-  console.log("Server running on " + process.env.FRONTEND_URL || 'http://localhost:3000');
-  console.log("📖 API Documentation: " + process.env.FRONTEND_URL || 'http://localhost:3000' + "/openapi");
+  console.log("Server running on " + (process.env.FRONTEND_URL || 'http://localhost:3000'));
+  console.log("📖 API Documentation: " + (process.env.FRONTEND_URL || 'http://localhost:3000') + "/openapi");
 });

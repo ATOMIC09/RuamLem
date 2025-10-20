@@ -12,7 +12,7 @@ export async function createAuthUser(email: string, password: string, firstName:
       email,
       password,
       options: {
-        emailRedirectTo: process.env.FRONTEND_URL + '/confirm-email' || 'http://localhost:3000/confirm-email'
+        emailRedirectTo: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/confirm-email'
       }
     });
 
@@ -99,7 +99,7 @@ export async function signOutWithSession(token:string) {
 export async function forgetPassword(email: string) {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: process.env.FRONTEND_URL + "/reset-password" || "http://localhost:3000/reset-password",
+      redirectTo: (process.env.FRONTEND_URL || "http://localhost:3000") + "/reset-password",
     });
 
     if (error) throw error;
