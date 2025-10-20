@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "../hooks/use-auth";
 
 interface AuthGuardProps {
@@ -11,7 +9,6 @@ interface AuthGuardProps {
 
 export default function AuthGuard({ children, required = true }: AuthGuardProps) {
     const { isSignedIn, signIn } = useAuth();
-    const router = useRouter();
 
     // Loading state
     if (isSignedIn === null) {
