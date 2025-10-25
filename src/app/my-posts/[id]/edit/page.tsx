@@ -57,6 +57,7 @@ export default function EditPostPage() {
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [filteredTags, setFilteredTags] = useState<Tag[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Redirect to home if not signed in
   useEffect(() => {
@@ -187,6 +188,57 @@ export default function EditPostPage() {
       setError("");
       e.target.value = "";
     }
+  };
+
+  // Handle drag events
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    
+    if (droppedFiles.length === 0) return;
+
+    // Calculate total files: existing - removed + new files + dropped files
+    const existingFiles = (post?.attachments?.length || 0) - removedAttachmentIds.length;
+    const totalFiles = existingFiles + newFiles.length + droppedFiles.length;
+
+    if (totalFiles > 10) {
+      setError(
+        `จำนวนไฟล์ทั้งหมดต้องไม่เกิน 10 ไฟล์ (ปัจจุบันมี: ${existingFiles} ไฟล์, เพิ่มใหม่: ${newFiles.length + droppedFiles.length} ไฟล์)`
+      );
+      return;
+    }
+
+    // Validate file size - max 50MB per file
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    for (const file of droppedFiles) {
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`ไฟล์ ${file.name} มีขนาดเกิน 50MB`);
+        return;
+      }
+    }
+
+    setNewFiles([...newFiles, ...droppedFiles]);
+    setError("");
   };
 
   // Remove new file
@@ -636,7 +688,17 @@ export default function EditPostPage() {
               <label className="block text-sm font-medium text-[#1c2a48] mb-2">
                 เพิ่มไฟล์ใหม่ (ไม่บังคับ)
               </label>
-              <div className="flex items-center justify-center px-4 py-6 border-2 border-dashed border-[#dee5ed] rounded-2xl hover:border-[#405168] transition-colors cursor-pointer bg-[#f8f9fa]">
+              <div 
+                className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
+                  isDragging 
+                    ? 'border-[#405168] bg-blue-50 scale-105' 
+                    : 'border-[#e0e7f1] bg-[#f8f9fa] hover:bg-[#f0f4f8]'
+                }`}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+              >
                 <input
                   type="file"
                   multiple
@@ -648,9 +710,9 @@ export default function EditPostPage() {
                   htmlFor="file-input"
                   className="flex flex-col items-center cursor-pointer w-full"
                 >
-                  <GoPaperclip size={24} className="text-[#405168] mb-2" />
+                  <GoPaperclip size={24} className={`mb-2 ${isDragging ? 'text-[#405168]' : 'text-[#5e7593]'}`} />
                   <span className="text-sm text-[#405168] font-medium">
-                    คลิกเพื่อเพิ่มไฟล์
+                    {isDragging ? 'วางไฟล์ที่นี่' : 'คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวาง'}
                   </span>
                   <span className="text-xs text-[#7a8b99]">
                     จำกัด 10 ไฟล์, 50MB ต่อไฟล์

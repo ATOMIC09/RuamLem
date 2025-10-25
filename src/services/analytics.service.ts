@@ -9,14 +9,14 @@ export async function recordPostView(postId: string | number): Promise<{ success
   try {
     // Convert to number if string
     const numericPostId = typeof postId === 'string' ? parseInt(postId, 10) : postId;
-    console.log('📡 Calling API: POST /analytics/view with postId:', numericPostId);
+    // console.log('📡 Calling API: POST /analytics/view with postId:', numericPostId);
     
     const response = await apiRequest<{ status?: number; message?: string; error?: string }>('/analytics/view', {
       method: 'POST',
       data: { postId: numericPostId },
     });
 
-    console.log('📡 API Response:', response);
+    // console.log('📡 API Response:', response);
 
     if (response.error) {
       console.error('❌ API Error:', response.error);
@@ -24,7 +24,7 @@ export async function recordPostView(postId: string | number): Promise<{ success
     }
 
     if (response.status === 200) {
-      console.log('✅ View recorded successfully');
+      // console.log('✅ View recorded successfully');
       return { success: true };
     }
 

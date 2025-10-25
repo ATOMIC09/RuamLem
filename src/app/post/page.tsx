@@ -26,6 +26,7 @@ function AddPostForm() {
     const [filteredTags, setFilteredTags] = useState<Tag[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     // Fetch available tags on mount
     useEffect(() => {
@@ -100,6 +101,43 @@ function AddPostForm() {
 
     const removeFile = (index: number) => {
         setFiles(files.filter((_, i) => i !== index));
+    };
+
+    // Handle drag and drop events
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        const totalFiles = files.length + droppedFiles.length;
+
+        // Check if total files exceed limit
+        if (totalFiles > 10) {
+            setError(`จำนวนไฟล์ทั้งหมดต้องไม่เกิน 10 ไฟล์ (ปัจจุบัน: ${files.length} + ${droppedFiles.length})`);
+            return;
+        }
+
+        // Add dropped files to existing files
+        setFiles([...files, ...droppedFiles]);
+        setError(""); // Clear any previous errors
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -359,7 +397,17 @@ function AddPostForm() {
                             <label className="block text-sm font-medium text-[#1c2a48] mb-2">
                                 แนบไฟล์ <span className="text-red-500">*</span> (สูงสุด 10 ไฟล์)
                             </label>
-                            <div className="border-2 border-dashed border-[#e0e7f1] rounded-2xl p-6 text-center bg-[#f8f9fa] hover:bg-[#f0f4f8] transition-colors">
+                            <div 
+                                className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
+                                    isDragging 
+                                        ? 'border-[#405168] bg-blue-50 scale-105' 
+                                        : 'border-[#e0e7f1] bg-[#f8f9fa] hover:bg-[#f0f4f8]'
+                                }`}
+                                onDragOver={handleDragOver}
+                                onDragEnter={handleDragEnter}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                            >
                                 <input
                                     type="file"
                                     multiple
@@ -369,8 +417,14 @@ function AddPostForm() {
                                     id="file-upload"
                                 />
                                 <label htmlFor="file-upload" className="cursor-pointer">
-                                    <GoPaperclip className="mx-auto mb-2 text-2xl text-[#5e7593]" />
-                                    <p className="text-[#5e7593] font-medium">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวาง</p>
+                                    <GoPaperclip className={`mx-auto mb-2 text-2xl transition-colors ${
+                                        isDragging ? 'text-[#405168]' : 'text-[#5e7593]'
+                                    }`} />
+                                    <p className={`font-medium transition-colors ${
+                                        isDragging ? 'text-[#405168]' : 'text-[#5e7593]'
+                                    }`}>
+                                        {isDragging ? 'วางไฟล์ที่นี่' : 'คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวาง'}
+                                    </p>
                                     <p className="text-sm text-[#7a8b99] mt-1">ขนาดสูงสุด 50MB ต่อไฟล์ (PDF, Word, PowerPoint, รูปภาพ, Text)</p>
                                 </label>
                             </div>

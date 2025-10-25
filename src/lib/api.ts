@@ -88,25 +88,25 @@ export async function apiRequest<T = unknown>(
     // Handle FormData specifically
     if (options.isFormData && options.data instanceof FormData) {
       (config.headers as Record<string, string>)['Content-Type'] = 'multipart/form-data';
-      console.log('📦 Sending FormData request to:', endpoint);
-      console.log('📦 FormData entries:');
+      // console.log('📦 Sending FormData request to:', endpoint);
+      // console.log('📦 FormData entries:');
       const formData = options.data as FormData;
       for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
-          console.log(`   ${key}: ${value.name} (${(value.size / 1024).toFixed(2)} KB)`);
+          // console.log(`   ${key}: ${value.name} (${(value.size / 1024).toFixed(2)} KB)`);
         } else {
-          console.log(`   ${key}: ${value}`);
+          // console.log(`   ${key}: ${value}`);
         }
       }
     }
 
     const response: AxiosResponse<T> = await axiosInstance(config);
     
-    console.log('✅ API Response received:', {
-      url: endpoint,
-      status: response.status,
-      statusText: response.statusText
-    });
+    // console.log('✅ API Response received:', {
+    //   url: endpoint,
+    //   status: response.status,
+    //   statusText: response.statusText
+    // });
     
     // Check if response contains an error status in the body (even if HTTP 200)
     const responseData = response.data as Record<string, unknown> | undefined;

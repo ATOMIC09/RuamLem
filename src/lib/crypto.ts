@@ -71,7 +71,7 @@ async function encryptRSABrowser(data: string, publicKey: string): Promise<strin
     
     // SHA-1 might not be supported in some browsers, try SHA-256
     try {
-      console.log('Trying SHA-256 as fallback...');
+      // console.log('Trying SHA-256 as fallback...');
       const pemContents = publicKey
         .replace('-----BEGIN PUBLIC KEY-----', '')
         .replace('-----END PUBLIC KEY-----', '')

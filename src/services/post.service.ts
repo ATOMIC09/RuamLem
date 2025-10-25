@@ -84,12 +84,12 @@ export interface Comment {
 
 export async function createPost(data: CreatePostData): Promise<{ post?: Post; error?: string }> {
   try {
-    console.log('📝 Creating post with data:', {
-      title: data.title,
-      body: data.body,
-      tags: data.tags,
-      filesCount: data.files?.length || 0
-    });
+    // console.log('📝 Creating post with data:', {
+    //   title: data.title,
+    //   body: data.body,
+    //   tags: data.tags,
+    //   filesCount: data.files?.length || 0
+    // });
 
     // Validate that files are provided
     if (!data.files || data.files.length === 0) {
@@ -116,7 +116,7 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
     }
 
     // Step 1: Create post without files first
-    console.log('📡 Step 1: Creating post without files');
+    // console.log('📡 Step 1: Creating post without files');
     const postResponse = await apiRequest<{ post?: Post; data?: Post; postId?: number; tagId?: number; error?: string; success?: boolean; message?: string; status?: number }>('/post', {
       method: 'POST',
       data: {
@@ -126,7 +126,7 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
       },
     });
 
-    console.log('📡 Post creation response:', postResponse);
+    // console.log('📡 Post creation response:', postResponse);
 
     // Handle errors from post creation
     if (postResponse.error) {
@@ -151,13 +151,13 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
       return { error: 'ไม่สามารถสร้างโพสต์ได้ - ไม่มี Post ID' };
     }
 
-    console.log('✅ Post created with ID:', postId);
+    // console.log('✅ Post created with ID:', postId);
 
     // Step 2: Upload files one by one to the created post
-    console.log('📡 Step 2: Uploading files');
+    // console.log('📡 Step 2: Uploading files');
     for (let i = 0; i < data.files.length; i++) {
       const file = data.files[i];
-      console.log(`📎 Uploading file ${i + 1}/${data.files.length}:`, file.name);
+      // console.log(`📎 Uploading file ${i + 1}/${data.files.length}:`, file.name);
 
       const uploadResult = await uploadFileToPost(file, postId);
       
@@ -169,10 +169,10 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
         };
       }
 
-      console.log(`✅ File ${i + 1}/${data.files.length} uploaded successfully`);
+      // console.log(`✅ File ${i + 1}/${data.files.length} uploaded successfully`);
     }
 
-    console.log('✅ All files uploaded successfully');
+    // console.log('✅ All files uploaded successfully');
     
     // Create a post object to return
     const createdPost: Post = {

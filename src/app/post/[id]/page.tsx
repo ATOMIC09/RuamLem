@@ -72,11 +72,11 @@ export default function PostDetailPage() {
     // Record post view after a short delay to ensure it's a real view
     const viewTimer = setTimeout(async () => {
       if (postId) {
-        console.log('📊 Recording post view for post ID:', postId);
+        // console.log('📊 Recording post view for post ID:', postId);
         try {
           const result = await analyticsService.recordPostView(postId);
           if (result.success) {
-            console.log('✅ Post view recorded successfully');
+            // console.log('✅ Post view recorded successfully');
             // Fetch updated view count
             fetchViewCount();
           } else if (result.error) {
