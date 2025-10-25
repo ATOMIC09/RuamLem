@@ -172,10 +172,10 @@ export default function Home() {
                 <Link
                   key={index}
                   href={`/community?tags=${encodeURIComponent(category.name)}`}
-                  className={`p-4 rounded-2xl ${category.color} hover:shadow-md transition-all cursor-pointer text-center`}
+                  className={`p-4 rounded-2xl ${category.color} hover:shadow-md transition-all cursor-pointer text-center flex flex-col justify-between`}
                 >
                   <div className="font-semibold">{category.name}</div>
-                  <div className="text-sm opacity-70">{category.count} โพสต์</div>
+                  <div className="text-sm opacity-70 mt-auto">{category.count} โพสต์</div>
                 </Link>
               ))}
             </div>
