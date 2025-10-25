@@ -72,6 +72,9 @@ export default function AdminDashboard() {
     const [showMemberModal, setShowMemberModal] = useState(false);
     const [members, setMembers] = useState<adminService.User[]>([]);
     const [membersLoading, setMembersLoading] = useState(false);
+    const [showPostModal, setShowPostModal] = useState(false);
+    const [allPosts, setAllPosts] = useState<RecentPost[]>([]);
+    const [postsLoading, setPostsLoading] = useState(false);
     const [showSignInPrompt, setShowSignInPrompt] = useState(false);
     
     // Notification modal states
@@ -381,6 +384,94 @@ export default function AdminDashboard() {
         await fetchMembers();
     };
 
+    // Fetch all posts for post management
+    const fetchAllPosts = async () => {
+        setPostsLoading(true);
+        try {
+            // Fetch all posts (increased limit for post management)
+            const postsResult = await postService.getPosts(100);
+            if (postsResult.posts) {
+                // Fetch analytics data for each post
+                const postsWithAnalytics = await Promise.all(
+                    postsResult.posts.map(async (post: postService.Post) => {
+                        const postId = post.id.toString();
+                        
+                        // Fetch view count
+                        let views = 0;
+                        try {
+                            const viewResult = await analyticsService.getPostViewCount(postId);
+                            views = viewResult.viewCount || 0;
+                        } catch (err) {
+                            console.error(`Error fetching views for post ${postId}:`, err);
+                        }
+
+                        // Fetch like count
+                        let likes = 0;
+                        try {
+                            const likeResult = await likeService.getPostLikeStatus(Number(postId));
+                            likes = likeResult.data?.likeCount || 0;
+                        } catch (err) {
+                            console.error(`Error fetching likes for post ${postId}:`, err);
+                        }
+
+                        // Get download count from all attachments
+                        let downloads = 0;
+                        if (post.attachments && post.attachments.length > 0) {
+                            try {
+                                const downloadCounts = await Promise.all(
+                                    post.attachments.map(async (attachment: { id: number }) => {
+                                        const downloadResult = await analyticsService.getFileDownloadCount(attachment.id.toString());
+                                        return downloadResult.downloadCount || 0;
+                                    })
+                                );
+                                downloads = downloadCounts.reduce((sum: number, count: number) => sum + count, 0);
+                            } catch (err) {
+                                console.error(`Error fetching downloads for post ${postId}:`, err);
+                            }
+                        }
+
+                        // Get comment count
+                        const comments = post.comment_count || 0;
+
+                        return {
+                            id: postId,
+                            title: post.title,
+                            author: {
+                                name: post.user_info ? `${post.user_info.firstName} ${post.user_info.lastName}` : 'Unknown'
+                            },
+                            createdAt: post.created_at || post.createdAt || new Date().toISOString(),
+                            views,
+                            likes,
+                            downloads,
+                            comments,
+                            tags: post.tags || []
+                        };
+                    })
+                );
+                
+                setAllPosts(postsWithAnalytics);
+            } else {
+                // Check for JWT expiration
+                if (isJWTExpired(postsResult.error)) {
+                    setShowSignInPrompt(true);
+                } else {
+                    showNotificationModal(postsResult.error || 'ไม่สามารถดึงข้อมูลโพสต์ได้', 'error');
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching posts:', err);
+            showNotificationModal('เกิดข้อผิดพลาดในการดึงข้อมูลโพสต์', 'error');
+        } finally {
+            setPostsLoading(false);
+        }
+    };
+
+    // Open post management modal
+    const openPostManagement = async () => {
+        setShowPostModal(true);
+        await fetchAllPosts();
+    };
+
     if (isLoading || loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-[#f8f9fa] to-[#e9ecef] flex items-center justify-center p-4">
@@ -611,9 +702,6 @@ export default function AdminDashboard() {
                         <table className="w-full">
                             <thead className="bg-[#f8f9fa]">
                                 <tr>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[120px]">
-                                        การดำเนินการ
-                                    </th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-[#7a8b99] uppercase tracking-wider min-w-[250px] max-w-[400px]">
                                         ชื่อโพสต์
                                     </th>
@@ -656,24 +744,6 @@ export default function AdminDashboard() {
                                             key={post.id}
                                             className="hover:bg-[#f8f9fa] transition-colors"
                                         >
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <button
-                                                        onClick={() => window.open(`/post/${post.id}`, '_blank')}
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                                                        title="ดูโพสต์"
-                                                    >
-                                                        <IoMdEye size={20} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeletePost(post.id)}
-                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                                        title="ลบโพสต์"
-                                                    >
-                                                        <IoMdTrash size={20} />
-                                                    </button>
-                                                </div>
-                                            </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3 min-w-0">
                                                     <div className="w-7 h-7 bg-gradient-to-br from-[#405168] to-[#5e7593] rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -880,15 +950,15 @@ export default function AdminDashboard() {
                 {/* Quick Actions */}
                 <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     <button
-                        onClick={() => router.push('/community')}
+                        onClick={openPostManagement}
                         className="bg-white hover:bg-[#f8f9fa] border border-[#dee5ed] rounded-2xl p-6 text-left transition-all hover:shadow-lg group cursor-pointer"
                     >
                         <div className="flex items-center justify-between mb-3">
                             <IoMdDocument size={32} className="text-[#405168] group-hover:scale-110 transition-transform" />
                             <span className="text-[#7a8b99] text-sm">→</span>
                         </div>
-                        <h3 className="font-bold text-[#1c2a48] mb-1">หน้าชุมชน</h3>
-                        <p className="text-[#7a8b99] text-sm">ดูโพสต์ทั้งหมด</p>
+                        <h3 className="font-bold text-[#1c2a48] mb-1">จัดการโพสต์</h3>
+                        <p className="text-[#7a8b99] text-sm">ดูและจัดการโพสต์ทั้งหมด</p>
                     </button>
 
                     <button
@@ -1045,6 +1115,177 @@ export default function AdminDashboard() {
                         <div className="bg-[#f8f9fa] px-6 py-4 border-t border-[#dee5ed]">
                             <p className="text-sm text-[#7a8b99] text-center">
                                 สมาชิกทั้งหมด: <span className="font-semibold text-[#1c2a48]">{members.length}</span> คน
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Post Management Modal */}
+            {showPostModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowPostModal(false)}></div>
+                    <div className="relative bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-[#405168] to-[#5e7593] p-6 text-white flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <IoMdDocument size={32} />
+                                <div>
+                                    <h2 className="text-2xl font-bold">จัดการโพสต์</h2>
+                                    <p className="text-sm opacity-90">ดูและจัดการโพสต์ทั้งหมดในระบบ</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowPostModal(false)}
+                                className="p-2 hover:bg-white hover:text-[#405168] hover:bg-opacity-20 rounded-lg transition-colors cursor-pointer"
+                            >
+                                <IoMdClose size={24} />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                            {postsLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <LoadingSpinner />
+                                </div>
+                            ) : allPosts.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-[#f8f9fa]">
+                                            <tr>
+                                                <th className="px-4 py-3 text-center text-xs font-semibold text-[#7a8b99] uppercase min-w-[120px]">
+                                                    การดำเนินการ
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#7a8b99] uppercase min-w-[300px]">
+                                                    ชื่อโพสต์
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#7a8b99] uppercase min-w-[150px]">
+                                                    ผู้เขียน
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#7a8b99] uppercase min-w-[180px]">
+                                                    วันที่สร้าง
+                                                </th>
+                                                <th className="px-4 py-3 text-center text-xs font-semibold text-[#7a8b99] uppercase min-w-[80px]">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <IoMdEye size={16} />
+                                                        <span>ดู</span>
+                                                    </div>
+                                                </th>
+                                                <th className="px-4 py-3 text-center text-xs font-semibold text-[#7a8b99] uppercase min-w-[80px]">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <IoMdHeart size={16} />
+                                                        <span>ไลค์</span>
+                                                    </div>
+                                                </th>
+                                                <th className="px-4 py-3 text-center text-xs font-semibold text-[#7a8b99] uppercase min-w-[100px]">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <IoMdCloudDownload size={16} />
+                                                        <span>ดาวน์โหลด</span>
+                                                    </div>
+                                                </th>
+                                                <th className="px-4 py-3 text-center text-xs font-semibold text-[#7a8b99] uppercase min-w-[100px]">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <IoMdChatbubbles size={16} />
+                                                        <span>ความคิดเห็น</span>
+                                                    </div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-[#dee5ed]">
+                                            {allPosts.map((post) => (
+                                                <tr key={post.id} className="hover:bg-[#f8f9fa] transition-colors">
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <button
+                                                                onClick={() => window.open(`/post/${post.id}`, '_blank')}
+                                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                                                title="ดูโพสต์"
+                                                            >
+                                                                <IoMdEye size={20} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setShowPostModal(false);
+                                                                    handleDeletePost(post.id);
+                                                                }}
+                                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                                                title="ลบโพสต์"
+                                                            >
+                                                                <IoMdTrash size={20} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <div className="w-7 h-7 bg-gradient-to-br from-[#405168] to-[#5e7593] rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                                                #{post.id}
+                                                            </div>
+                                                            <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                                                <span className="font-medium text-[#1c2a48] line-clamp-2 overflow-hidden text-ellipsis">
+                                                                    {post.title}
+                                                                </span>
+                                                                {post.tags && post.tags.length > 0 && (
+                                                                    <div className="flex flex-wrap gap-1">
+                                                                        {post.tags.map((tag) => (
+                                                                            <span
+                                                                                key={tag.id}
+                                                                                className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
+                                                                            >
+                                                                                {tag.name}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <IoMdPerson size={18} className="text-[#7a8b99] flex-shrink-0" />
+                                                            <span className="text-[#405168] truncate">{post.author.name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-[#7a8b99] text-sm">
+                                                        {formatDate(post.createdAt)}
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className="inline-flex items-center gap-1 text-[#7a8b99]">
+                                                            {post.views.toLocaleString()}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className="inline-flex items-center gap-1 text-[#7a8b99]">
+                                                            {post.likes.toLocaleString()}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className="inline-flex items-center gap-1 text-[#7a8b99]">
+                                                            {post.downloads.toLocaleString()}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className="inline-flex items-center gap-1 text-[#7a8b99]">
+                                                            {post.comments.toLocaleString()}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 text-[#7a8b99]">
+                                    <IoMdDocument size={48} className="mx-auto opacity-30 mb-3" />
+                                    <p>ไม่มีโพสต์ในขณะนี้</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-[#f8f9fa] px-6 py-4 border-t border-[#dee5ed]">
+                            <p className="text-sm text-[#7a8b99] text-center">
+                                โพสต์ทั้งหมด: <span className="font-semibold text-[#1c2a48]">{allPosts.length}</span> โพสต์
                             </p>
                         </div>
                     </div>
