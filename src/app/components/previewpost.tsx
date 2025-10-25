@@ -231,15 +231,15 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                             )}
                         </div>
                         {/* Username and Postdate */}
-                        <div className="flex-grow">
+                        <div className="flex-grow min-w-0 mr-2">
                             <div className="font-bold text-[#1c2a48]">{postData.author.name}</div>
                             <div className="text-sm text-[#7a8b99]">{postData.createdAt}</div>
                         </div>
                         {/* Post tags */}
-                        <div className="flex-shrink-0">
-                            <span className="px-3 py-1 text-xs bg-[#f0f4f8] text-[#5e7593] rounded-full border border-[#e0e7f1]">
-                                <IoMdPricetag className="inline-block mr-1" />
-                                {postData.category}
+                        <div className="flex-shrink-0 max-w-[150px]">
+                            <span className="px-3 py-1 text-xs bg-[#f0f4f8] text-[#5e7593] rounded-full border border-[#e0e7f1] inline-flex items-center max-w-full">
+                                <IoMdPricetag className="mr-1 flex-shrink-0" />
+                                <span className="truncate">{postData.category}</span>
                             </span>
                         </div>
                     </div>
