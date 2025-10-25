@@ -84,6 +84,13 @@ export interface Comment {
 
 export async function createPost(data: CreatePostData): Promise<{ post?: Post; error?: string }> {
   try {
+    console.log('📝 Creating post with data:', {
+      title: data.title,
+      body: data.body,
+      tags: data.tags,
+      filesCount: data.files?.length || 0
+    });
+
     // Validate that files are provided
     if (!data.files || data.files.length === 0) {
       return {
@@ -108,33 +115,76 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
       }
     }
 
-    const formData = new FormData();
-    formData.append('title', data.title);
-    formData.append('body', data.body);
-    formData.append('tag', data.tags.join(','));
-    
-    // Backend expects the field to be named "files" and accepts multiple files
-    for (const file of data.files) {
-      formData.append('files', file);
-    }
-
-    const response = await apiRequest<{ post?: Post; error?: string; success?: boolean; message?: string }>('/post', {
+    // Step 1: Create post without files first
+    console.log('📡 Step 1: Creating post without files');
+    const postResponse = await apiRequest<{ post?: Post; data?: Post; postId?: number; tagId?: number; error?: string; success?: boolean; message?: string; status?: number }>('/post', {
       method: 'POST',
-      data: formData,
-      isFormData: true,
+      data: {
+        title: data.title,
+        body: data.body,
+        tag: data.tags.join(','),
+      },
     });
 
-    // Handle various response formats from backend
-    if (response.error) {
-      return { error: response.error };
+    console.log('📡 Post creation response:', postResponse);
+
+    // Handle errors from post creation
+    if (postResponse.error) {
+      console.error('❌ Error creating post:', postResponse.error);
+      return { error: postResponse.error };
     }
 
-    if (!response.success && response.message) {
-      return { error: response.message };
+    // Get the post ID from the response
+    // Backend returns { status: 200, postId: 24, tagId: 11 }
+    let postId: number | undefined;
+    
+    if (postResponse.postId) {
+      postId = postResponse.postId;
+    } else if (postResponse.post?.id) {
+      postId = postResponse.post.id;
+    } else if (postResponse.data?.id) {
+      postId = postResponse.data.id;
     }
 
-    return response;
+    if (!postId) {
+      console.error('❌ No post ID returned from response:', postResponse);
+      return { error: 'ไม่สามารถสร้างโพสต์ได้ - ไม่มี Post ID' };
+    }
+
+    console.log('✅ Post created with ID:', postId);
+
+    // Step 2: Upload files one by one to the created post
+    console.log('📡 Step 2: Uploading files');
+    for (let i = 0; i < data.files.length; i++) {
+      const file = data.files[i];
+      console.log(`📎 Uploading file ${i + 1}/${data.files.length}:`, file.name);
+
+      const uploadResult = await uploadFileToPost(file, postId);
+      
+      if (uploadResult.error) {
+        console.error(`❌ Failed to upload file ${file.name}:`, uploadResult.error);
+        // Return error but note that post was created
+        return { 
+          error: `โพสต์ถูกสร้างแล้ว แต่การอัปโหลดไฟล์ ${file.name} ล้มเหลว: ${uploadResult.error}` 
+        };
+      }
+
+      console.log(`✅ File ${i + 1}/${data.files.length} uploaded successfully`);
+    }
+
+    console.log('✅ All files uploaded successfully');
+    
+    // Create a post object to return
+    const createdPost: Post = {
+      id: postId,
+      title: data.title,
+      body: data.body,
+      tag: data.tags[0],
+    };
+    
+    return { post: createdPost };
   } catch (error) {
+    console.error('❌ Exception in createPost:', error);
     const errorMessage = error instanceof Error ? error.message : 'การสร้างโพสต์ล้มเหลว';
     return {
       error: errorMessage,
