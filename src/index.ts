@@ -13,7 +13,7 @@ import { adminRoute } from "./routes/admin-route";
 const app = new Elysia()
   .use(cors({
     origin: [
-      ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+      process.env.FRONTEND_URL as string
     ],
     credentials: true
   }))
