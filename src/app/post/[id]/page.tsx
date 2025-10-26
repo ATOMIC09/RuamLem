@@ -41,6 +41,7 @@ export default function PostDetailPage() {
   const [viewCount, setViewCount] = useState(0);
   const [isTogglingLike, setIsTogglingLike] = useState(false);
   const [fileDownloadCounts, setFileDownloadCounts] = useState<Record<number, number>>({});
+  const [commentSort, setCommentSort] = useState<'newest' | 'oldest'>('newest');
 
   // Show notification helper
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
@@ -509,7 +510,24 @@ export default function PostDetailPage() {
 
           {/* Comments Section */}
           <div className="pt-6 border-t border-[#f0f4f8]">
-            <h3 className="text-lg font-semibold text-[#1c2a48] mb-4">ความเห็น ({comments.length})</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-[#1c2a48]">ความเห็น ({comments.length})</h3>
+              
+              {/* Comment Sort Dropdown */}
+              {comments.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-[#7a8b99]">เรียงตาม:</span>
+                  <select
+                    value={commentSort}
+                    onChange={(e) => setCommentSort(e.target.value as 'newest' | 'oldest')}
+                    className="px-3 py-1 bg-white border border-[#e0e7f1] rounded-lg text-sm text-[#405168] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#5e7593]"
+                  >
+                    <option value="newest">ใหม่สุด</option>
+                    <option value="oldest">เก่าสุด</option>
+                  </select>
+                </div>
+              )}
+            </div>
             
             {/* Add Comment Form or Login Prompt */}
             {isSignedIn ? (
@@ -546,7 +564,13 @@ export default function PostDetailPage() {
             {/* Comments List */}
             {comments.length > 0 ? (
               <div className="space-y-4">
-                {comments.map((comment) => {
+                {[...comments]
+                  .sort((a, b) => {
+                    const dateA = new Date(a.created_at || a.createdAt || new Date()).getTime();
+                    const dateB = new Date(b.created_at || b.createdAt || new Date()).getTime();
+                    return commentSort === 'newest' ? dateB - dateA : dateA - dateB;
+                  })
+                  .map((comment) => {
                   const authorName = comment.user_info 
                     ? `${comment.user_info.firstName} ${comment.user_info.lastName}`
                     : comment.author
@@ -593,7 +617,7 @@ export default function PostDetailPage() {
                       </div>
                     </div>
                   );
-                })}
+                  })}
               </div>
             ) : (
               <p className="text-center text-[#7a8b99] py-8">ยังไม่มีความเห็น เป็นคนแรกที่เพิ่มความเห็น!</p>
