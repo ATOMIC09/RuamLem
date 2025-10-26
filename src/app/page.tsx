@@ -18,6 +18,7 @@ interface TagWithCount {
 
 export default function Home() {
   const [recentPosts, setRecentPosts] = useState<postService.Post[]>([]);
+  const [popularPosts, setPopularPosts] = useState<postService.Post[]>([]);
   const [tags, setTags] = useState<TagWithCount[]>([]);
   const [stats, setStats] = useState({
     totalPosts: 0,
@@ -25,6 +26,7 @@ export default function Home() {
     postsThisMonth: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPopular, setIsLoadingPopular] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -32,6 +34,7 @@ export default function Home() {
 
   const fetchData = async () => {
     setIsLoading(true);
+    setIsLoadingPopular(true);
     try {
       // Fetch statistics from backend
       const statsResult = await statisticsService.getStatistics();
@@ -49,6 +52,13 @@ export default function Home() {
         // Get recent 3 posts
         const recent = postsResult.posts.slice(0, 3);
         setRecentPosts(recent);
+
+        // Get popular posts (top 3 by comment count)
+        const popular = [...postsResult.posts]
+          .sort((a, b) => (b.comment_count || 0) - (a.comment_count || 0))
+          .slice(0, 3);
+        setPopularPosts(popular);
+        setIsLoadingPopular(false);
 
         // Count posts by tag
         const tagMap = new Map<string, number>();
@@ -182,6 +192,65 @@ export default function Home() {
           ) : (
             <div className="text-center text-[#7a8b99]">ยังไม่มีหมวดหมู่</div>
           )}
+        </div>
+      </div>
+
+      {/* Popular Posts Section */}
+      <div className="w-full py-16 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          {/* Section Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-[#1c2a48] mb-2">โพสต์ยอดนิยม</h2>
+              <p className="text-[#7a8b99]">โพสต์ที่ได้รับความสนใจมากที่สุด</p>
+            </div>
+            <Link
+              href="/community"
+              className="flex items-center gap-2 px-6 py-3 bg-white border border-[#e0e7f1] text-[#405168] rounded-3xl hover:bg-[#f8f9fa] hover:shadow-md transition-all shadow-sm font-medium cursor-pointer"
+            >
+              <IoMdTrendingUp />
+              ดูทั้งหมด
+            </Link>
+          </div>
+          {/* Posts Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {isLoadingPopular ? (
+              <div className="col-span-3 flex justify-center py-8">
+                <LoadingSpinner size="lg" text="กำลังโหลดโพสต์ยอดนิยม..." />
+              </div>
+            ) : popularPosts.length > 0 ? (
+              popularPosts.map((post) => (
+                <PreviewPost
+                  key={post.id}
+                  post={{
+                    id: String(post.id),
+                    title: post.title,
+                    description: post.body,
+                    author: {
+                      name: post.user_info
+                        ? `${post.user_info.firstName} ${post.user_info.lastName}`
+                        : post.author
+                        ? `${post.author.firstName} ${post.author.lastName}`
+                        : "Anonymous",
+                      avatar: post.user_info?.avatarUrl || undefined,
+                    },
+                    createdAt: new Date(post.created_at || post.createdAt || new Date()).toLocaleDateString('th-TH', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }),
+                    category: post.tags && post.tags.length > 0 ? post.tags[0].name : post.tag || "General",
+                    attachments: post.attachments || (post.file ? [post.file] : []),
+                    commentCount: post.comment_count,
+                  }}
+                />
+              ))
+            ) : (
+              <div className="col-span-3 text-center text-[#7a8b99]">ยังไม่มีโพสต์ยอดนิยม</div>
+            )}
+          </div>
         </div>
       </div>
 
