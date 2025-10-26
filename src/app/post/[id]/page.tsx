@@ -579,7 +579,7 @@ export default function PostDetailPage() {
                             </div>
                           )}
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <div className="font-semibold text-[#1c2a48]">
                               {authorName}
@@ -588,7 +588,7 @@ export default function PostDetailPage() {
                               {createdDate}
                             </div>
                           </div>
-                          <p className="text-[#5e7593] mt-1">{comment.body}</p>
+                          <p className="text-[#5e7593] mt-1 break-words whitespace-pre-wrap">{comment.body}</p>
                         </div>
                       </div>
                     </div>
