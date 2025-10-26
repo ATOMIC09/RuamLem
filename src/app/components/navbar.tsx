@@ -107,7 +107,9 @@ export default function Navbar() {
                                             className="object-cover"
                                         />
                                     ) : (
-                                        <IoMdPerson size={18} />
+                                        <div className="w-full h-full flex items-center justify-center text-[#405168] font-bold text-sm">
+                                            {user?.firstName?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || 'U'}
+                                        </div>
                                     )}
                                 </div>
                                 <span className="font-medium text-sm">{user?.firstName}</span>
@@ -118,7 +120,7 @@ export default function Navbar() {
                                 {/* User Info Section */}
                                 <div className="p-4 border-b border-[#dee5ed]">
                                     <div className="flex items-center space-x-3 mb-3">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-[#405168] to-[#5e7593] rounded-full flex items-center justify-center text-white overflow-hidden relative">
+                                        <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center overflow-hidden relative">
                                             {avatarUrl ? (
                                                 <Image
                                                     src={avatarUrl}
@@ -127,7 +129,9 @@ export default function Navbar() {
                                                     className="object-cover"
                                                 />
                                             ) : (
-                                                <IoMdPerson size={24} />
+                                                <div className="w-full h-full flex items-center justify-center text-white bg-gradient-to-br from-[#405168] to-[#5e7593] font-bold text-lg">
+                                                    {user?.firstName?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || 'U'}
+                                                </div>
                                             )}
                                         </div>
                                         <div className="truncate">

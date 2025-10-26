@@ -213,25 +213,29 @@ export default function ProfilePage() {
           {/* Header Background */}
           <div className="h-32 bg-gradient-to-r from-[#405168] to-[#5e7593] relative">
             <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-              <div className="w-28 h-28 bg-white rounded-full border-4 border-[#f5f7fb] flex items-center justify-center shadow-lg transform translate-y-1/2 relative group">
-                {isUploadingAvatar && (
-                  <div className="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center z-10">
-                    <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                )}
-                {profileData?.avatarUrl ? (
-                  <Image
-                    src={profileData.avatarUrl}
-                    alt="User avatar"
-                    fill
-                    className="rounded-full object-cover"
-                  />
-                ) : (
-                  <IoMdPerson className="text-5xl text-[#405168]" />
-                )}
+              <div className="w-28 h-28 bg-white rounded-full border-4 border-[#f5f7fb] shadow-lg transform translate-y-1/2 relative group">
+                <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
+                  {isUploadingAvatar && (
+                    <div className="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center z-10">
+                      <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                  {profileData?.avatarUrl ? (
+                    <Image
+                      src={profileData.avatarUrl}
+                      alt="User avatar"
+                      fill
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#405168] to-[#5e7593] rounded-full flex items-center justify-center text-white font-bold text-4xl">
+                      {user?.firstName?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                  )}
+                </div>
 
                 {/* Avatar Upload Button */}
-                <label className="absolute bottom-0 right-0 bg-[#405168] text-white p-2 rounded-full cursor-pointer hover:bg-[#2d3a4c] transition-all shadow-md opacity-0 group-hover:opacity-100">
+                <label className="absolute bottom-0 right-0 bg-[#405168] text-white p-2 rounded-full cursor-pointer hover:bg-[#2d3a4c] transition-all shadow-md opacity-0 group-hover:opacity-100 z-10">
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/gif"
