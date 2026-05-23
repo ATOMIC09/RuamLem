@@ -84,7 +84,7 @@ The data layer uses PostgreSQL (via Supabase) utilizing a relational approach. T
 ### 🎨 Initial Database Design
 The original database architecture was a conceptual draft manually mapped out using dbdiagram.io, serving as the starting layout for features encompassing users, posts, and tags.
 
-<!-- เดี๋ยวเอามาลง -->
+<img width="1510" height="944" alt="ruamlem db" src="https://github.com/user-attachments/assets/220763b8-bf0d-44fd-86b1-fdd2e6994154" />
 
 ### 🛠️ Real Implementation
 The live schema expanded upon the initial draft, replacing generic identifiers with Supabase-native ones, accounting for engagement tracking, and optimizing specific entities.
