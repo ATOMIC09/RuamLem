@@ -1,11 +1,10 @@
 {
   "name": "RuamLem",
   "version": "1.0.50",
-  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target node",
+    "build": "bun build src/index.ts --outdir dist --target bun",
     "start": "bun run dist/index.js"
   },
   "dependencies": {
@@ -19,8 +18,7 @@
     "jsdom": "^27.0.0"
   },
   "devDependencies": {
-    "bun-types": "latest",
-    "typescript": "^5.0.0"
+    "bun-types": "latest"
   },
   "module": "src/index.js"
 }
