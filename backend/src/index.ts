@@ -61,9 +61,25 @@ const app = new Elysia()
   .use(statsRoute)
   .use(likeRoute)
   .use(analyticsRoute)
-  .use(adminRoute);
+  .use(adminRoute)
+  .group("/api", (api) =>
+    api
+      .use(authRoute)
+      .use(fileRoute)
+      .use(postRoute)
+      .use(profileRoute)
+      .use(statsRoute)
+      .use(likeRoute)
+      .use(analyticsRoute)
+      .use(adminRoute)
+  );
 
-app.listen(3030, () => {
-  console.log("Server running on " + process.env.FRONTEND_URL);
-  console.log("📖 API Documentation: " + process.env.FRONTEND_URL + "/openapi");
-});
+if (!process.env.VERCEL) {
+  app.listen(process.env.PORT || 3030, () => {
+    console.log("Server running on " + (process.env.FRONTEND_URL || "http://localhost:3030"));
+    console.log("📖 API Documentation: " + (process.env.FRONTEND_URL || "http://localhost:3030") + "/openapi");
+  });
+}
+
+export default app;
+
