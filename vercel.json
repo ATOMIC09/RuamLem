@@ -13,7 +13,9 @@
             "source": "/api(/.*)?",
             "destination": {
                 "type": "service",
-                "service": "backend"
+                "entrypoint": "src/index.ts", 
+                "service": "backend",
+                "runtime": "bun"
             }
         },
         {
