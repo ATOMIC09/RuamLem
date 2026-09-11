@@ -5,7 +5,9 @@
             "framework": "nextjs"
         },
         "backend": {
-            "root": "backend"
+            "root": "backend",
+            "entrypoint": "src/index.ts", 
+            "framework": "elysia"
         }
     },
     "rewrites": [
@@ -13,9 +15,7 @@
             "source": "/api(/.*)?",
             "destination": {
                 "type": "service",
-                "entrypoint": "src/index.ts", 
-                "service": "backend",
-                "runtime": "bun"
+                "service": "backend"
             }
         },
         {
