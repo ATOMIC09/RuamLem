@@ -18,7 +18,8 @@
     "jsdom": "^27.0.0"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "typescript": "^7.0.2"
   },
   "module": "src/index.js"
 }

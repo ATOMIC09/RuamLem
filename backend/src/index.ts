@@ -29,7 +29,7 @@ const app = new Elysia()
       },
       servers: [
         {
-          url: process.env.FRONTEND_URL,
+          url: process.env.FRONTEND_URL as string,
           description: 'Development server'
         }
       ],
