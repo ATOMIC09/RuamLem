@@ -29,7 +29,7 @@ describe("AskForm", () => {
     const onStopped = vi.fn();
     render(<Harness onAsk={onAsk} onStopped={onStopped} />);
 
-    await user.type(screen.getByLabelText(/ถามอะไรเกี่ยวกับข้อสอบ/), "มีข้อสอบ Signals ไหม");
+    await user.type(screen.getByLabelText(/ถามอะไรก็ได้เกี่ยวกับข้อสอบ/), "มีข้อสอบ Signals ไหม");
     await user.click(screen.getByRole("button", { name: "ถาม" }));
     expect(onAsk).toHaveBeenCalledTimes(1);
 
@@ -44,7 +44,7 @@ describe("AskForm", () => {
     const user = userEvent.setup();
     render(<Harness onAsk={() => {}} onStopped={() => {}} />);
 
-    await user.type(screen.getByLabelText(/ถามอะไรเกี่ยวกับข้อสอบ/), "คำถาม");
+    await user.type(screen.getByLabelText(/ถามอะไรก็ได้เกี่ยวกับข้อสอบ/), "คำถาม");
     const sendButton = screen.getByRole("button", { name: "ถาม" });
     await user.click(sendButton);
     const stopButton = screen.getByRole("button", { name: "หยุด" });
@@ -53,11 +53,20 @@ describe("AskForm", () => {
     expect(stopButton).toHaveAttribute("type", "button");
   });
 
+  it("clears the box after sending, so the next message starts empty", async () => {
+    const user = userEvent.setup();
+    render(<Harness onAsk={() => {}} onStopped={() => {}} />);
+    const box = screen.getByLabelText(/ถามอะไรก็ได้เกี่ยวกับข้อสอบ/);
+
+    await user.type(box, "สวัสดี{Enter}");
+    expect(box).toHaveValue("");
+  });
+
   it("Enter sends, Shift+Enter does not", async () => {
     const user = userEvent.setup();
     const onAsk = vi.fn();
     render(<Harness onAsk={onAsk} onStopped={() => {}} />);
-    const box = screen.getByLabelText(/ถามอะไรเกี่ยวกับข้อสอบ/);
+    const box = screen.getByLabelText(/ถามอะไรก็ได้เกี่ยวกับข้อสอบ/);
 
     await user.type(box, "คำถาม{Shift>}{Enter}{/Shift}ต่อ");
     expect(onAsk).not.toHaveBeenCalled();
@@ -71,7 +80,7 @@ describe("AskForm", () => {
     const user = userEvent.setup();
     const onAsk = vi.fn();
     render(<Harness onAsk={onAsk} onStopped={() => {}} />);
-    const box = screen.getByLabelText(/ถามอะไรเกี่ยวกับข้อสอบ/);
+    const box = screen.getByLabelText(/ถามอะไรก็ได้เกี่ยวกับข้อสอบ/);
 
     expect(screen.getByRole("button", { name: "ถาม" })).toBeDisabled();
     await user.type(box, "   {Enter}");

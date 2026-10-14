@@ -2,7 +2,7 @@ import { CitationFilter } from "../../ai/citations";
 import { streamChat, type ChatChunk, type ChatMessage, type ChatUsage } from "../../ai/chat";
 import { embedText } from "../../ai/embeddings";
 import { classifyAiError } from "../../ai/errors";
-import { buildAskMessages } from "../../ai/prompts";
+import { buildAskMessages, buildGeneralMessages, retrievalQuery, type ChatTurn } from "../../ai/prompts";
 import { encodeSse } from "../../ai/sse";
 import { getPostSources, matchPosts, type PostSource } from "../../repositories/embedding-repo";
 import { logger } from "../../utils/logger";
@@ -11,7 +11,6 @@ export const TOP_K = 5;
 // Cosine similarity cutoff, tuned on 13 provisional Thai questions against the real index:
 // unrelated questions topped out at 0.407 and the weakest correct hit was 0.464.
 export const MIN_SIMILARITY = 0.43;
-export const NO_MATCH_TEXT = "ไม่พบโพสต์ที่เกี่ยวข้องใน RuamLem";
 
 export type AskDeps = {
   embedQuestion: (question: string, signal?: AbortSignal) => Promise<{ vector: number[]; tokens: number }>;
@@ -28,9 +27,14 @@ const defaultDeps: AskDeps = {
   streamChat,
 };
 
-export type AskInput = { question: string; userId: string; signal?: AbortSignal };
+export type AskInput = { question: string; userId: string; history?: ChatTurn[]; signal?: AbortSignal };
 
 // SSE events: sources, delta, done, error. Nothing here logs the question, the answer or post text.
+//
+// Two modes, chosen by whether any published post matched:
+//   posts   -> answer only from the matching posts, with [n] citations
+//   general -> `sources` is empty and the model answers from its own knowledge (greetings, concepts,
+//              study advice); it is told never to pretend the answer came from the site
 export function askStream(input: AskInput, deps: AskDeps = defaultDeps): ReadableStream<Uint8Array> {
   const abort = new AbortController();
   input.signal?.addEventListener("abort", () => abort.abort(), { once: true });
@@ -53,7 +57,8 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
     const log = { userId: input.userId, sources: [] as number[], topSimilarity: 0, embeddingTokens: 0 };
 
     try {
-      const { vector, tokens: embeddingTokens } = await deps.embedQuestion(input.question, abort.signal);
+      const history = input.history ?? [];
+      const { vector, tokens: embeddingTokens } = await deps.embedQuestion(retrievalQuery(input.question, history), abort.signal);
       log.embeddingTokens = embeddingTokens;
 
       const matches = await deps.matchPosts(vector, TOP_K, MIN_SIMILARITY);
@@ -62,23 +67,18 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
       const found = matches.filter((m) => byId.has(m.postId));
       log.topSimilarity = found[0]?.similarity ?? 0;
 
-      // No match: answer without calling the chat model.
-      if (found.length === 0) {
-        send("sources", []);
-        send("delta", { text: NO_MATCH_TEXT });
-        send("done", { usage: usageOf(embeddingTokens), ms: Date.now() - started });
-        logger.info("ask finished", { ...log, outcome: "no_match", ms: Date.now() - started });
-        return;
-      }
-
       const sources = found.map((m, i) => ({ n: i + 1, post: byId.get(m.postId)! }));
       log.sources = sources.map((s) => s.post.id);
       send("sources", sources.map((s) => ({ n: s.n, postId: s.post.id, title: s.post.title })));
 
-      const messages = buildAskMessages(
-        input.question,
-        sources.map((s) => ({ n: s.n, title: s.post.title, tags: s.post.tags, body: s.post.body }))
-      );
+      const messages =
+        sources.length > 0
+          ? buildAskMessages(
+              input.question,
+              sources.map((s) => ({ n: s.n, title: s.post.title, tags: s.post.tags, body: s.post.body })),
+              history
+            )
+          : buildGeneralMessages(input.question, history);
 
       const citations = new CitationFilter(sources.length);
       let usage: ChatUsage | undefined;
@@ -104,7 +104,7 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
         send("done", { usage: usageOf(embeddingTokens, usage), ms: Date.now() - started });
         logger.info("ask finished", {
           ...log,
-          outcome: "answered",
+          outcome: sources.length > 0 ? "answered_from_posts" : "answered_general",
           promptTokens: usage?.promptTokens,
           completionTokens: usage?.completionTokens,
           ms: Date.now() - started,

@@ -4,7 +4,7 @@ import { askStream } from "../services/ai/ask-service";
 import { createDailyLimiter } from "../services/ai/rate-limit";
 import { supabaseAuth } from "../supabase";
 
-const limiter = createDailyLimiter(Number(process.env.AI_DAILY_LIMIT_PER_USER) || 20);
+const limiter = createDailyLimiter(Number(process.env.AI_DAILY_LIMIT_PER_USER) || 50);
 
 async function getUserId(request: Request): Promise<string | null> {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
@@ -15,7 +15,7 @@ async function getUserId(request: Request): Promise<string | null> {
   return data.claims.sub ?? null;
 }
 
-export const askController = async ({ body, request }: { body: { question: string }; request: Request }) => {
+export const askController = async ({ body, request }: { body: { question: string; history?: { role: "user" | "assistant"; content: string }[] }; request: Request }) => {
   const userId = await getUserId(request);
   if (!userId) {
     return new Response(JSON.stringify({ message: "Sign in to ask RuamLem" }), {
@@ -29,5 +29,5 @@ export const askController = async ({ body, request }: { body: { question: strin
   if (!isAiEnabled()) return sseResponse(errorStream("ai_disabled"));
   if (!limiter.tryConsume(userId)) return sseResponse(errorStream("rate_limited"));
 
-  return sseResponse(askStream({ question: body.question.trim(), userId, signal: request.signal }));
+  return sseResponse(askStream({ question: body.question.trim(), history: body.history, userId, signal: request.signal }));
 };

@@ -11,4 +11,3 @@ export const ASK_ERROR_MESSAGES: Record<AskFailure, string> = {
   invalid: "คำถามไม่ถูกต้อง ลองพิมพ์ใหม่ไม่เกิน 500 ตัวอักษร",
 };
 
-export const NO_MATCH_MESSAGE = "ไม่พบโพสต์ที่เกี่ยวข้องใน RuamLem";

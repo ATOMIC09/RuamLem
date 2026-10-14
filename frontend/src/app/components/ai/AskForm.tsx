@@ -18,7 +18,9 @@ export default function AskForm({ busy, onSubmit, onStop }: Props) {
 
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
-    if (canSubmit) onSubmit(question.trim());
+    if (!canSubmit) return;
+    onSubmit(question.trim());
+    setQuestion(""); // like a chat: the box is ready for the next message
   };
 
   // Enter sends, Shift+Enter adds a line, and Enter while composing (IME) does neither.
@@ -32,7 +34,7 @@ export default function AskForm({ busy, onSubmit, onStop }: Props) {
   return (
     <form onSubmit={submit} className="space-y-3">
       <label htmlFor={inputId} className="block text-sm font-medium text-[#405168]">
-        ถามอะไรเกี่ยวกับข้อสอบและสรุปวิชา
+        ถามอะไรก็ได้เกี่ยวกับข้อสอบและการเรียน
       </label>
       <textarea
         id={inputId}
@@ -42,7 +44,7 @@ export default function AskForm({ busy, onSubmit, onStop }: Props) {
         maxLength={MAX_QUESTION_LENGTH}
         rows={3}
         aria-describedby={hintId}
-        placeholder="เช่น มีข้อสอบ midterm วิชา Signals ไหม"
+        placeholder="เช่น มีข้อสอบ midterm วิชา Signals ไหม หรืออธิบาย deadlock ให้หน่อย"
         className="w-full resize-y rounded-2xl border border-[#e0e7f1] bg-white p-3 text-[#1c2a48] shadow-sm focus:border-[#405168] focus:outline-none focus:ring-2 focus:ring-[#405168]/30"
       />
       <div className="flex flex-wrap items-center justify-between gap-3">

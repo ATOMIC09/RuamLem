@@ -4,7 +4,8 @@ import type { AskState } from "@/app/hooks/use-ask";
 import AnswerStream, { announcementFor } from "./AnswerStream";
 
 const base: AskState = {
-  status: "idle",
+  id: 1,
+  status: "searching",
   question: "มีข้อสอบ Signals ไหม",
   text: "",
   sources: [{ n: 1, postId: 33, title: "มิดเทอม Signal ปี 2566" }],
@@ -12,11 +13,6 @@ const base: AskState = {
 };
 
 describe("AnswerStream", () => {
-  it("renders nothing when idle", () => {
-    const { container } = render(<AnswerStream state={base} />);
-    expect(container).toBeEmptyDOMElement();
-  });
-
   it("does not announce streamed tokens, only the finished answer", () => {
     const { rerender } = render(<AnswerStream state={{ ...base, status: "streaming", text: "มีข้อ" }} />);
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
@@ -35,10 +31,22 @@ describe("AnswerStream", () => {
     expect(screen.getByRole("article")).toHaveAttribute("aria-busy", "false");
   });
 
-  it("shows the no-match message without a source list", () => {
-    render(<AnswerStream state={{ ...base, status: "no_match", sources: [] }} />);
-    expect(screen.getAllByText("ไม่พบโพสต์ที่เกี่ยวข้องใน RuamLem").length).toBeGreaterThan(0);
+  it("an answer with no sources is labelled as a general answer, not one from RuamLem posts", () => {
+    render(<AnswerStream state={{ ...base, status: "done", text: "สวัสดีครับ มีอะไรให้ช่วยไหม", sources: [] }} />);
+    expect(screen.getByText("สวัสดีครับ มีอะไรให้ช่วยไหม")).toBeInTheDocument();
+    expect(screen.getByText(/คำตอบทั่วไป ไม่ได้อ้างอิงโพสต์ใน RuamLem/)).toBeInTheDocument();
     expect(screen.queryByText("แหล่งที่มา")).toBeNull();
+  });
+
+  it("an answer built from posts has its sources and no general-answer label", () => {
+    render(<AnswerStream state={{ ...base, status: "done", text: "มีครับ [1]" }} />);
+    expect(screen.getByText("แหล่งที่มา")).toBeInTheDocument();
+    expect(screen.queryByText(/คำตอบทั่วไป/)).toBeNull();
+  });
+
+  it("no general-answer label while the answer is still streaming", () => {
+    render(<AnswerStream state={{ ...base, status: "streaming", text: "กำลังตอบ", sources: [] }} />);
+    expect(screen.queryByText(/คำตอบทั่วไป/)).toBeNull();
   });
 
   it.each([

@@ -1,4 +1,5 @@
-import { ASK_ERROR_MESSAGES, NO_MATCH_MESSAGE } from "@/lib/ask-messages";
+import { ASK_ERROR_MESSAGES } from "@/lib/ask-messages";
+import { isGeneralAnswer } from "@/lib/conversation";
 import type { AskState } from "@/app/hooks/use-ask";
 import SafeMarkdown from "./SafeMarkdown";
 import SourceList from "./SourceList";
@@ -11,8 +12,6 @@ export function announcementFor(state: AskState): string {
       return "กำลังค้นหาโพสต์ที่เกี่ยวข้อง";
     case "done":
       return `ตอบเสร็จแล้ว ${state.text}`;
-    case "no_match":
-      return NO_MATCH_MESSAGE;
     case "stopped":
       return "หยุดการตอบแล้ว";
     case "error":
@@ -22,9 +21,9 @@ export function announcementFor(state: AskState): string {
   }
 }
 
+// One question and its answer.
 export default function AnswerStream({ state }: { state: AskState }) {
   const { status, text, sources, error } = state;
-  if (status === "idle") return null;
 
   return (
     <div className="mt-6">
@@ -48,9 +47,13 @@ export default function AnswerStream({ state }: { state: AskState }) {
           </p>
         )}
 
-        {status === "no_match" && <p className="text-[#5e7593]">{NO_MATCH_MESSAGE}</p>}
+        {text && <SafeMarkdown sources={sources}>{text}</SafeMarkdown>}
 
-        {text && status !== "no_match" && <SafeMarkdown sources={sources}>{text}</SafeMarkdown>}
+        {isGeneralAnswer(state) && (
+          <p className="mt-3 rounded-lg bg-[#f1f4f8] px-3 py-2 text-xs text-[#5e7593]">
+            คำตอบทั่วไป ไม่ได้อ้างอิงโพสต์ใน RuamLem (ไม่พบโพสต์ที่ตรงกับคำถามนี้)
+          </p>
+        )}
 
         {status === "stopped" && <p className="mt-3 text-sm text-[#7a8b99]">หยุดการตอบแล้ว</p>}
 
@@ -60,7 +63,7 @@ export default function AnswerStream({ state }: { state: AskState }) {
           </p>
         )}
 
-        {status !== "no_match" && <SourceList sources={sources} />}
+        <SourceList sources={sources} />
       </article>
     </div>
   );

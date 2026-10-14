@@ -1,4 +1,5 @@
 import { API_URL, getAuthToken } from "@/lib/api";
+import type { HistoryMessage } from "@/lib/conversation";
 import { createSseParser } from "@/lib/sse";
 import type { AskErrorCode, AskEvent, AskSource, AskUsage } from "@/types/ai";
 
@@ -52,6 +53,7 @@ export function toAskEvent(event: string, rawData: string): AskEvent | null {
 // fetch + stream reader, not EventSource: EventSource can't send POST or an Authorization header.
 export async function streamAsk(
   question: string,
+  history: HistoryMessage[],
   signal: AbortSignal,
   onEvent: (event: AskEvent) => void
 ): Promise<void> {
@@ -62,7 +64,8 @@ export async function streamAsk(
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ question }),
+    // The earlier messages let a follow-up such as "และปี 66 ล่ะ" make sense.
+    body: JSON.stringify(history.length > 0 ? { question, history } : { question }),
     signal,
   });
 

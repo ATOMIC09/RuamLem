@@ -18,7 +18,7 @@ function sseResponse(chunks: string[], status = 200): Response {
 async function collect(response: Response, signal = new AbortController().signal) {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response));
   const events: AskEvent[] = [];
-  await streamAsk("คำถาม", signal, (e) => events.push(e));
+  await streamAsk("คำถาม", [], signal, (e) => events.push(e));
   return events;
 }
 
@@ -49,7 +49,7 @@ describe("streamAsk", () => {
     });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(body)));
     const events: AskEvent[] = [];
-    await streamAsk("q", new AbortController().signal, (e) => events.push(e));
+    await streamAsk("q", [], new AbortController().signal, (e) => events.push(e));
     expect(events[0]).toEqual({ type: "delta", text: "ไทย" });
   });
 
@@ -57,7 +57,7 @@ describe("streamAsk", () => {
     localStorage.setItem("authToken", "tok-123");
     const fetchMock = vi.fn().mockResolvedValue(sseResponse(['event: done\ndata: {"ms":1}\n\n']));
     vi.stubGlobal("fetch", fetchMock);
-    await streamAsk("มีข้อสอบไหม", new AbortController().signal, () => {});
+    await streamAsk("มีข้อสอบไหม", [], new AbortController().signal, () => {});
 
     const [url, init] = fetchMock.mock.calls[0];
     expect(String(url)).toMatch(/\/ai\/ask$/);
@@ -65,6 +65,20 @@ describe("streamAsk", () => {
     expect(init.headers.Authorization).toBe("Bearer tok-123");
     expect(JSON.parse(init.body)).toEqual({ question: "มีข้อสอบไหม" });
     localStorage.removeItem("authToken");
+  });
+
+  it("sends the earlier messages with the question, and leaves the field out when there are none", async () => {
+    const fetchMock = vi.fn().mockImplementation(async () => sseResponse(['event: done\ndata: {"ms":1}\n\n']));
+    vi.stubGlobal("fetch", fetchMock);
+    const history = [
+      { role: "user" as const, content: "มีข้อสอบ Database ไหม" },
+      { role: "assistant" as const, content: "มีครับ [1]" },
+    ];
+    await streamAsk("แล้วปี 66 ล่ะ", history, new AbortController().signal, () => {});
+    await streamAsk("สวัสดี", [], new AbortController().signal, () => {});
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ question: "แล้วปี 66 ล่ะ", history });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ question: "สวัสดี" });
   });
 
   it("throws AskHttpError for a non-200 response", async () => {
