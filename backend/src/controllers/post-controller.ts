@@ -12,6 +12,7 @@ import {
   deletePost
 } from "../repositories/post-repo";
 import { supabase } from "../supabase";
+import { queueEmbedPost } from "../services/ai/embed-service";
 
 export const post = async ({ body, request }: any) => {
   try {
@@ -33,6 +34,7 @@ export const post = async ({ body, request }: any) => {
     const { title, body: postBody, tag } = body;
 
     const result = await uploadPost(userId, title, postBody, tag);
+    if (result.status === 200 && "postId" in result) queueEmbedPost(result.postId);
     return result;
   } catch (err: any) {
     return { status: 401, message: err.message };
@@ -151,6 +153,7 @@ export const editPostController = async ({ body, request, params }: any) => {
     const { title, body: postBody, tag } = body;
 
     const result = await editPost(userId, postId, title, postBody, tag);
+    if (result.status === 200) queueEmbedPost(postId);
     return result;
   } catch (err: any) {
     return { status: 401, message: err.message };

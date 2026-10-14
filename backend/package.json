@@ -5,7 +5,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
-    "start": "bun run dist/index.js"
+    "start": "bun run dist/index.js",
+    "ai:reindex": "bun run src/scripts/ai-reindex.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.0",
@@ -15,7 +16,8 @@
     "dotenv": "^17.2.2",
     "elysia": "latest",
     "form-data": "^4.0.4",
-    "jsdom": "^27.0.0"
+    "jsdom": "^27.0.0",
+    "openai": "^7.32.0"
   },
   "devDependencies": {
     "bun-types": "latest"
