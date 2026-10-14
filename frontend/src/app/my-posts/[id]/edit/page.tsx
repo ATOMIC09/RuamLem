@@ -8,6 +8,7 @@ import { GoPaperclip } from "react-icons/go";
 import Link from "next/link";
 import LoadingSpinner from "@/app/components/loading-spinner";
 import * as postService from "@/services/post.service";
+import { needsAttention, worstOf } from "@/lib/moderation";
 
 interface Post {
   id: number;
@@ -334,6 +335,8 @@ export default function EditPostPage() {
     try {
       // Step 1: Update post details (title, body, tag)
       const result = await postService.updatePost(parseInt(postId), title, body, tag);
+      // The edit is moderated again, and a new file name can hold the post too.
+      let moderation = result.moderation;
 
       if (result.error) {
         if (result.error.includes("JWT") || result.error.includes("expired")) {
@@ -381,12 +384,17 @@ export default function EditPostPage() {
             setIsSaving(false);
             return;
           }
+          moderation = worstOf(moderation, uploadResult.moderation);
         }
         showNotification('success', `อัปโหลดไฟล์ ${newFiles.length} ไฟล์สำเร็จ`);
       }
 
       // Success - show notification and redirect
-      showNotification('success', 'บันทึกการเปลี่ยนแปลงสำเร็จ');
+      if (needsAttention(moderation)) {
+        showNotification('info', moderation.status === 'rejected' ? 'บันทึกแล้ว แต่โพสต์ถูกปฏิเสธ ดูรายละเอียดและขออุทธรณ์ได้ในโพสต์ของฉัน' : 'บันทึกแล้ว โพสต์อยู่ระหว่างการตรวจสอบ ดูสถานะได้ในโพสต์ของฉัน');
+      } else {
+        showNotification('success', 'บันทึกการเปลี่ยนแปลงสำเร็จ');
+      }
       setTimeout(() => {
         router.push("/my-posts");
       }, 1500);

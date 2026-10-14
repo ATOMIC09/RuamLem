@@ -12,6 +12,8 @@ import * as postService from "@/services/post.service";
 import * as analyticsService from "@/services/analytics.service";
 import * as likeService from "@/services/like.service";
 import * as adminService from "@/services/admin.service";
+import ModerationTabs, { type AdminSection } from "../components/moderation/ModerationTabs";
+import ModerationQueue from "../components/moderation/ModerationQueue";
 import { 
     IoMdPeople, 
     IoMdDocument, 
@@ -65,6 +67,8 @@ export default function AdminDashboard() {
     const [recentPosts, setRecentPosts] = useState<RecentPost[]>([]);
     const [topPosts, setTopPosts] = useState<RecentPost[]>([]);
     const [topTab, setTopTab] = useState<'views' | 'likes' | 'downloads'>('views');
+    // The Moderation tab only exists while AI moderation is on (see ModerationTabs).
+    const [section, setSection] = useState<AdminSection>('overview');
     const [userRole, setUserRole] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -539,8 +543,12 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
+            <ModerationTabs section={section} onChange={setSection} />
+
+            {section === 'moderation' && <ModerationQueue />}
+
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className={section === 'overview' ? "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" : "hidden"}>
                 {/* Statistics Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 md:gap-6 mb-8">
                     {/* Total Members */}

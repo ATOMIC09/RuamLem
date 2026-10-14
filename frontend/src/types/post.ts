@@ -37,4 +37,8 @@ export interface PostPreview {
   category: string;
   attachments?: PostAttachment[];
   commentCount?: number;
+  // Only present while AI moderation is on, and only for your own held or rejected posts.
+  moderationStatus?: 'published' | 'held' | 'rejected';
+  moderationReason?: string | null;
+  moderationAppealed?: boolean;
 }

@@ -1,6 +1,7 @@
 // Post service
 
 import { apiRequest } from '@/lib/api';
+import { worstOf, type ModerationInfo, type ModerationStatus } from '@/lib/moderation';
 
 export interface Tag {
   id: number;
@@ -58,6 +59,9 @@ export interface Post {
     email: string;
   };
   comments?: Comment[];
+  moderation_status?: ModerationStatus;
+  moderation_reason?: string | null;
+  moderation_appealed?: boolean;
 }
 
 export interface Comment {
@@ -80,9 +84,12 @@ export interface Comment {
     email: string;
   };
   createdAt?: string;
+  moderation_status?: ModerationStatus;
+  moderation_reason?: string | null;
+  moderation_appealed?: boolean;
 }
 
-export async function createPost(data: CreatePostData): Promise<{ post?: Post; error?: string }> {
+export async function createPost(data: CreatePostData): Promise<{ post?: Post; moderation?: ModerationInfo; error?: string }> {
   try {
     // console.log('📝 Creating post with data:', {
     //   title: data.title,
@@ -117,12 +124,14 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
 
     // Step 1: Create post without files first
     // console.log('📡 Step 1: Creating post without files');
-    const postResponse = await apiRequest<{ post?: Post; data?: Post; postId?: number; tagId?: number; error?: string; success?: boolean; message?: string; status?: number }>('/post', {
+    const postResponse = await apiRequest<{ post?: Post; data?: Post; postId?: number; tagId?: number; error?: string; success?: boolean; message?: string; status?: number; moderation?: ModerationInfo }>('/post', {
       method: 'POST',
       data: {
         title: data.title,
         body: data.body,
         tag: data.tags.join(','),
+        // Names only, so they are moderated together with the text. Each file is checked again on upload.
+        fileNames: data.files.map((f) => f.name),
       },
     });
 
@@ -153,6 +162,9 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
 
     // console.log('✅ Post created with ID:', postId);
 
+    // What moderation decided for the text. A file name can make it worse (held) during step 2.
+    let moderation: ModerationInfo | undefined = postResponse.moderation;
+
     // Step 2: Upload files one by one to the created post
     // console.log('📡 Step 2: Uploading files');
     for (let i = 0; i < data.files.length; i++) {
@@ -169,6 +181,8 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
         };
       }
 
+      moderation = worstOf(moderation, uploadResult.moderation);
+
       // console.log(`✅ File ${i + 1}/${data.files.length} uploaded successfully`);
     }
 
@@ -182,7 +196,7 @@ export async function createPost(data: CreatePostData): Promise<{ post?: Post; e
       tag: data.tags[0],
     };
     
-    return { post: createdPost };
+    return { post: createdPost, moderation };
   } catch (error) {
     console.error('❌ Exception in createPost:', error);
     const errorMessage = error instanceof Error ? error.message : 'การสร้างโพสต์ล้มเหลว';
@@ -303,7 +317,7 @@ export async function getComments(postId: number): Promise<{ comments?: Comment[
   }
 }
 
-export async function createComment(data: CreateCommentData): Promise<{ comment?: Comment; error?: string }> {
+export async function createComment(data: CreateCommentData): Promise<{ comment?: Comment; moderation?: ModerationInfo; error?: string }> {
   try {
     // Transform the data to match backend API expectations
     const requestData = {
@@ -311,7 +325,7 @@ export async function createComment(data: CreateCommentData): Promise<{ comment?
       body: data.post_body,
     };
     
-    const response = await apiRequest<{ status?: number; message?: Comment | string; error?: string }>('/post/comment', {
+    const response = await apiRequest<{ status?: number; message?: Comment | string; error?: string; moderation?: ModerationInfo }>('/post/comment', {
       method: 'POST',
       data: requestData,
     });
@@ -324,7 +338,7 @@ export async function createComment(data: CreateCommentData): Promise<{ comment?
 
     // Backend returns { status: 200, message: {...} } on success
     if (response.message && typeof response.message === 'object' && 'id' in response.message) {
-      return { comment: response.message as Comment };
+      return { comment: response.message as Comment, moderation: response.moderation };
     }
 
     if (response.error) {
@@ -382,9 +396,9 @@ export async function getTags(): Promise<{ tags?: Tag[]; error?: string }> {
   }
 }
 
-export async function updatePost(postId: number, title: string, body: string, tag: string): Promise<{ success?: boolean; message?: string; error?: string }> {
+export async function updatePost(postId: number, title: string, body: string, tag: string): Promise<{ success?: boolean; message?: string; moderation?: ModerationInfo; error?: string }> {
   try {
-    const response = await apiRequest<{ success?: boolean; message?: string; error?: string }>(`/post/${postId}`, {
+    const response = await apiRequest<{ success?: boolean; message?: string; error?: string; status?: number; moderation?: ModerationInfo }>(`/post/${postId}`, {
       method: 'PUT',
       data: {
         title,
@@ -403,7 +417,7 @@ export async function updatePost(postId: number, title: string, body: string, ta
       return { success: true, message: response.message || 'แก้ไขโพสต์สำเร็จ' };
     }
 
-    return { success: true, message: response.message || 'แก้ไขโพสต์สำเร็จ' };
+    return { success: true, message: response.message || 'แก้ไขโพสต์สำเร็จ', moderation: response.moderation };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'แก้ไขโพสต์ล้มเหลว';
     return {
@@ -412,7 +426,7 @@ export async function updatePost(postId: number, title: string, body: string, ta
   }
 }
 
-export async function uploadFileToPost(file: File, postId: number): Promise<{ file?: { id: number; file_name: string; file_url: string; file_size: number }; error?: string }> {
+export async function uploadFileToPost(file: File, postId: number): Promise<{ file?: { id: number; file_name: string; file_url: string; file_size: number }; moderation?: ModerationInfo; error?: string }> {
   try {
     // Validate file size - max 50MB per file
     const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -425,7 +439,7 @@ export async function uploadFileToPost(file: File, postId: number): Promise<{ fi
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await apiRequest<{ success?: boolean; status?: number; file?: { id: number; file_name: string; file_url: string; file_size: number }; message?: string; error?: string }>(`/upload/file/post/${postId}`, {
+    const response = await apiRequest<{ success?: boolean; status?: number; file?: { id: number; file_name: string; file_url: string; file_size: number }; message?: string; error?: string; moderation?: ModerationInfo }>(`/upload/file/post/${postId}`, {
       method: 'POST',
       data: formData,
       isFormData: true,
@@ -441,6 +455,7 @@ export async function uploadFileToPost(file: File, postId: number): Promise<{ fi
 
     return {
       file: response.file,
+      moderation: response.moderation,
     };
   } catch (error) {
     return {
@@ -522,6 +537,31 @@ export async function deletePost(postId: number): Promise<{ success?: boolean; m
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : 'ลบโพสต์ล้มเหลว',
+    };
+  }
+}
+
+/**
+ * Ask an admin to look again at a post or comment the AI rejected.
+ * An admin's own rejection is final, and the backend refuses it.
+ */
+export async function appeal(kind: 'post' | 'comment', id: number): Promise<{ moderation?: ModerationInfo; error?: string }> {
+  try {
+    const path = kind === 'post' ? `/post/${id}/appeal` : `/post/comment/${id}/appeal`;
+    const response = await apiRequest<{ status?: number; message?: string; moderation?: ModerationInfo; error?: string }>(path, {
+      method: 'POST',
+    });
+
+    if (response.error) {
+      return { error: response.error };
+    }
+    if (response.status && response.status >= 400) {
+      return { error: response.message || 'ไม่สามารถส่งให้ตรวจสอบได้' };
+    }
+    return { moderation: response.moderation };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'ไม่สามารถส่งให้ตรวจสอบได้',
     };
   }
 }

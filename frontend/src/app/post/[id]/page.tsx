@@ -13,6 +13,8 @@ import * as analyticsService from "@/services/analytics.service";
 import * as likeService from "@/services/like.service";
 import { useAuth } from "@/app/hooks/use-auth";
 import LoadingSpinner from "@/app/components/loading-spinner";
+import ModerationNotice from "@/app/components/moderation/ModerationNotice";
+import { needsAttention } from "@/lib/moderation";
 
 interface PostDetail extends postService.Post {
   attachments?: Array<{
@@ -288,7 +290,12 @@ export default function PostDetailPage() {
       }
     } else {
       setCommentText("");
-      showNotification('success', 'เพิ่มคอมเมนต์สำเร็จ');
+      if (needsAttention(result.moderation)) {
+        // Held or rejected: only the author can see it until an admin decides.
+        showNotification('info', result.moderation.status === 'rejected' ? 'ความเห็นของคุณถูกปฏิเสธ ดูรายละเอียดใต้ความเห็น' : 'ความเห็นของคุณอยู่ระหว่างการตรวจสอบ');
+      } else {
+        showNotification('success', 'เพิ่มคอมเมนต์สำเร็จ');
+      }
       // Refresh comments
       await fetchPostData();
     }
@@ -417,6 +424,17 @@ export default function PostDetailPage() {
           </div>
 
           {/* Post Title */}
+          {post.moderation_status && post.moderation_status !== 'published' && (
+            <div className="mb-4">
+              <ModerationNotice
+                kind="post"
+                id={post.id}
+                status={post.moderation_status}
+                reason={post.moderation_reason ?? null}
+                appealed={post.moderation_appealed}
+              />
+            </div>
+          )}
           <h1 className="text-3xl font-bold text-[#1c2a48] mb-6">{post.title}</h1>
 
           {/* Post Content */}
@@ -613,6 +631,17 @@ export default function PostDetailPage() {
                             </div>
                           </div>
                           <p className="text-[#5e7593] mt-1 break-words whitespace-pre-wrap">{comment.body}</p>
+                          {comment.moderation_status && comment.moderation_status !== 'published' && (
+                            <div className="mt-3">
+                              <ModerationNotice
+                                kind="comment"
+                                id={comment.id}
+                                status={comment.moderation_status}
+                                reason={comment.moderation_reason ?? null}
+                                appealed={comment.moderation_appealed}
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

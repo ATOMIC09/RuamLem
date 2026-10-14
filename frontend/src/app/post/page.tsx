@@ -6,6 +6,8 @@ import { IoMdPricetag, IoMdClose } from "react-icons/io";
 import { GoPaperclip } from "react-icons/go";
 import Link from "next/link";
 import * as postService from "@/services/post.service";
+import ModerationNotice from "./../components/moderation/ModerationNotice";
+import { needsAttention, type ModerationInfo } from "@/lib/moderation";
 
 interface Tag {
   id: number;
@@ -22,6 +24,9 @@ function AddPostForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    // Set when AI moderation held or rejected the new post: stay on the page and explain.
+    const [moderation, setModeration] = useState<ModerationInfo | null>(null);
+    const [createdPostId, setCreatedPostId] = useState<number | null>(null);
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
     const [filteredTags, setFilteredTags] = useState<Tag[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -145,6 +150,7 @@ function AddPostForm() {
         setIsLoading(true);
         setError("");
         setSuccess(false);
+        setModeration(null);
 
         // Validation
         if (!title.trim()) {
@@ -202,12 +208,20 @@ function AddPostForm() {
                 return;
             }
 
-            // Success - show message and redirect
-            setSuccess(true);
             setTitle("");
             setDescription("");
             setTags([]);
             setFiles([]);
+
+            // Held or rejected by AI moderation: explain it (with the appeal option) instead of redirecting.
+            if (needsAttention(response.moderation) && response.post) {
+                setModeration(response.moderation);
+                setCreatedPostId(response.post.id);
+                return;
+            }
+
+            // Success - show message and redirect
+            setSuccess(true);
 
             // Redirect to community page after 2 seconds
             setTimeout(() => {
@@ -239,6 +253,21 @@ function AddPostForm() {
                         {error && (
                             <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm">
                                 {error}
+                            </div>
+                        )}
+
+                        {/* Held or rejected by moderation */}
+                        {moderation && createdPostId !== null && (
+                            <div className="space-y-3">
+                                <ModerationNotice
+                                    kind="post"
+                                    id={createdPostId}
+                                    status={moderation.status}
+                                    reason={moderation.reason}
+                                />
+                                <Link href="/my-posts" className="inline-block text-sm font-medium text-[#405168] underline hover:text-[#1c2a48]">
+                                    ไปที่โพสต์ของฉัน
+                                </Link>
                             </div>
                         )}
 

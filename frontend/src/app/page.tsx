@@ -244,6 +244,9 @@ export default function Home() {
                     category: post.tags && post.tags.length > 0 ? post.tags[0].name : post.tag || "General",
                     attachments: post.attachments || (post.file ? [post.file] : []),
                     commentCount: post.comment_count,
+                    moderationStatus: post.moderation_status,
+                    moderationReason: post.moderation_reason,
+                    moderationAppealed: post.moderation_appealed,
                   }}
                 />
               ))
@@ -303,6 +306,9 @@ export default function Home() {
                     category: post.tags && post.tags.length > 0 ? post.tags[0].name : post.tag || "General",
                     attachments: post.attachments || (post.file ? [post.file] : []),
                     commentCount: post.comment_count,
+                    moderationStatus: post.moderation_status,
+                    moderationReason: post.moderation_reason,
+                    moderationAppealed: post.moderation_appealed,
                   }}
                 />
               ))

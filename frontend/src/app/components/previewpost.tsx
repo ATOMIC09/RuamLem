@@ -11,6 +11,7 @@ import { PostPreview } from "../../types/post";
 import { getFileDownloadUrl } from "../../services/post.service";
 import * as likeService from "@/services/like.service";
 import * as analyticsService from "@/services/analytics.service";
+import ModerationBadge from "./moderation/ModerationBadge";
 
 interface PreviewPostProps {
     post?: PostPreview;
@@ -247,6 +248,9 @@ export default function PreviewPost({ post }: PreviewPostProps) {
                     <div className="flex-grow flex flex-col">
                         {/* Title */}
                         <div className="mb-4">
+                            {postData.moderationStatus && postData.moderationStatus !== "published" && (
+                                <div className="mb-2"><ModerationBadge status={postData.moderationStatus} appealed={postData.moderationAppealed} /></div>
+                            )}
                             <h2 className="text-xl font-bold text-[#1c2a48] line-clamp-2">{postData.title}</h2>
                         </div>
 

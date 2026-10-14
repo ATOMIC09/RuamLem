@@ -166,3 +166,64 @@ export async function deletePostAsAdmin(postId: number): Promise<{ success?: boo
     };
   }
 }
+
+export interface ModerationQueueItem {
+  type: 'post' | 'comment';
+  id: number;
+  postId: number | null;
+  title: string | null;
+  body: string;
+  tags: string[];
+  files: Array<{ name: string; size: number }>;
+  reason: string | null;
+  detail: string | null;
+  appealed: boolean;
+  author: { id: string; name: string };
+  createdAt: string;
+}
+
+/**
+ * Held posts and comments waiting for an admin, appealed ones first (admin only).
+ * `enabled` is false while AI moderation is switched off.
+ */
+export async function getModerationQueue(): Promise<{ enabled?: boolean; items?: ModerationQueueItem[]; error?: string }> {
+  try {
+    const response = await apiRequest<{ success?: boolean; enabled?: boolean; data?: ModerationQueueItem[]; error?: string }>('/admin/moderation', {
+      method: 'GET',
+    });
+
+    if (response.error) {
+      return { error: response.error };
+    }
+    return { enabled: response.enabled, items: response.data ?? [] };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'ไม่สามารถดึงรายการรอตรวจสอบได้',
+    };
+  }
+}
+
+/**
+ * Approve (publish) or reject one held item. Both are recorded in the audit log under the admin.
+ */
+export async function decideModeration(
+  type: 'post' | 'comment',
+  id: number,
+  decision: 'approve' | 'reject'
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const response = await apiRequest<{ success?: boolean; status?: number | string; error?: string }>(
+      `/admin/moderation/${type}/${id}/${decision}`,
+      { method: 'POST' }
+    );
+
+    if (response.error) {
+      return { error: response.error };
+    }
+    return { success: true };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'ไม่สามารถบันทึกการตัดสินใจได้',
+    };
+  }
+}

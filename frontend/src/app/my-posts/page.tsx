@@ -7,6 +7,7 @@ import { IoMdArrowBack, IoMdClose, IoMdTrash, IoMdCreate } from "react-icons/io"
 import { MdAttachFile } from "react-icons/md";
 import Link from "next/link";
 import LoadingSpinner from "../components/loading-spinner";
+import ModerationNotice from "../components/moderation/ModerationNotice";
 import * as postService from "@/services/post.service";
 
 interface Post {
@@ -27,6 +28,9 @@ interface Post {
     file_size: number;
   }>;
   comment_count?: number;
+  moderation_status?: 'published' | 'held' | 'rejected';
+  moderation_reason?: string | null;
+  moderation_appealed?: boolean;
 }
 
 export default function MyPostsPage() {
@@ -208,6 +212,17 @@ export default function MyPostsPage() {
                       <Link href={`/post/${post.id}`}>{post.title}</Link>
                     </h2>
                     <p className="text-[#7a8b99] line-clamp-2 mb-3">{post.body}</p>
+                    {post.moderation_status && post.moderation_status !== 'published' && (
+                      <div className="mb-3">
+                        <ModerationNotice
+                          kind="post"
+                          id={post.id}
+                          status={post.moderation_status}
+                          reason={post.moderation_reason ?? null}
+                          appealed={post.moderation_appealed}
+                        />
+                      </div>
+                    )}
                     
                     {/* Post Meta */}
                     <div className="flex flex-wrap items-center gap-4 text-sm">
