@@ -11,6 +11,7 @@
   "dependencies": {
     "@elysiajs/cors": "^1.4.0",
     "@elysiajs/openapi": "^1.4.11",
+    "@sinclair/typebox": "^0.34.41",
     "@supabase/supabase-js": "^2.57.4",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.2",
