@@ -12,7 +12,9 @@ export async function createAuthUser(email: string, password: string, firstName:
       email,
       password,
       options: {
-        emailRedirectTo: process.env.FRONTEND_URL + '/confirm-email'
+        emailRedirectTo: process.env.FRONTEND_URL + '/confirm-email',
+        // A database trigger turns this into the person's profile (a new account has no session to insert one itself).
+        data: { first_name: firstName, last_name: lastName }
       }
     });
 
@@ -23,11 +25,13 @@ export async function createAuthUser(email: string, password: string, firstName:
     const userId = data.user.id;
 
     try {
-      await createProfile(userId, firstName, lastName);
+      // The trigger has already created the profile. Where it is not installed yet, fall back to inserting it.
+      const { data: existing } = await supabase.from("profiles").select("uuid").eq("uuid", userId).maybeSingle();
+      if (!existing) await createProfile(userId, firstName, lastName);
       return userId;
     } catch (profileError) {
 
-      await supabase.auth.admin.deleteUser(userId);
+      console.error("Could not create the profile for", userId); // no admin key on the server: an admin removes the account
       throw profileError;
     }
   } catch (err) {
@@ -83,7 +87,13 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function signOutWithSession(token:string) {
-  const { error } = await supabase.auth.admin.signOut(token);
+  // Ends the session on every device, with the person's own token against the Auth service (no admin key).
+  const error = await fetch(`${process.env.SUPABASE_URL}/auth/v1/logout?scope=global`, {
+    method: "POST",
+    headers: { apikey: process.env.SUPABASE_KEY!, Authorization: `Bearer ${token}` },
+  })
+    .then((res) => (res.ok ? null : { message: `Sign-out failed (HTTP ${res.status})` }))
+    .catch((err: any) => ({ message: err.message }));
   if(!error){
     return {success:true};
   }

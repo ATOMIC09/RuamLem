@@ -63,23 +63,13 @@ export async function getStatistics() {
       console.error("Error fetching likes count:", likesError);
     }
 
-    // Get total views count
-    const { count: totalViews, error: viewsError } = await supabase
-      .from("post_views")
-      .select("id", { count: "exact", head: true });
-
-    if (viewsError) {
-      console.error("Error fetching views count:", viewsError);
+    // View and download totals come from a database function: those tables are closed to the API.
+    const { data: engagement, error: engagementError } = await supabase.rpc("engagement_totals");
+    if (engagementError) {
+      console.error("Error fetching views and downloads:", engagementError);
     }
-
-    // Get total downloads count
-    const { count: totalDownloads, error: downloadsError } = await supabase
-      .from("file_downloads")
-      .select("id", { count: "exact", head: true });
-
-    if (downloadsError) {
-      console.error("Error fetching downloads count:", downloadsError);
-    }
+    const totalViews = Number(engagement?.[0]?.total_views ?? 0);
+    const totalDownloads = Number(engagement?.[0]?.total_downloads ?? 0);
 
     return {
       status: 200,

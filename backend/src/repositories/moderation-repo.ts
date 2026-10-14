@@ -1,7 +1,7 @@
-import { getSupabaseAdmin } from "../supabase-admin";
+import { supabase } from "../supabase";
 
-// Everything that reads or writes moderation state goes through the service-role client:
-// the audit log is private to the backend, and status changes here are server-side decisions.
+// These calls run as the signed-in person making the request, so row level security decides what they may do:
+// authors see and change their own items, admins see and decide everything, and the audit log is admin-readable.
 
 export type TargetType = "post" | "comment";
 export type Status = "published" | "held" | "rejected";
@@ -17,7 +17,7 @@ export type ModerationItem = {
 };
 
 export async function getItem(type: TargetType, id: number): Promise<ModerationItem | null> {
-  const { data, error } = await getSupabaseAdmin()
+  const { data, error } = await supabase
     .from(TABLE[type])
     .select("id, user_id, moderation_status, moderation_reason, moderation_appealed")
     .eq("id", id)
@@ -40,7 +40,7 @@ export async function setStatus(
   id: number,
   change: { status: Status; reason: string | null; appealed: boolean }
 ) {
-  const { error } = await getSupabaseAdmin()
+  const { error } = await supabase
     .from(TABLE[type])
     .update({
       moderation_status: change.status,
@@ -63,7 +63,7 @@ export type LogEntry = {
 };
 
 export async function writeLog(entry: LogEntry) {
-  const { error } = await getSupabaseAdmin().from("moderation_log").insert({
+  const { error } = await supabase.from("moderation_log").insert({
     target_type: entry.targetType,
     target_id: entry.targetId,
     decision: entry.decision,
@@ -80,7 +80,7 @@ async function latestDetails(type: TargetType, ids: number[]): Promise<Map<numbe
   const details = new Map<number, string>();
   if (ids.length === 0) return details;
 
-  const { data, error } = await getSupabaseAdmin()
+  const { data, error } = await supabase
     .from("moderation_log")
     .select("target_id, detail, created_at")
     .eq("target_type", type)
@@ -110,7 +110,7 @@ export type QueueItem = {
 
 // Held items waiting for an admin, appealed ones first, then oldest first.
 export async function listQueue(): Promise<QueueItem[]> {
-  const db = getSupabaseAdmin();
+  const db = supabase;
 
   const [posts, comments] = await Promise.all([
     db
@@ -175,7 +175,7 @@ export async function listQueue(): Promise<QueueItem[]> {
 
 // For `ai:recheck`: held items whose check could not finish.
 export async function listHeldByReason(type: TargetType, reason: string) {
-  const { data, error } = await getSupabaseAdmin()
+  const { data, error } = await supabase
     .from(TABLE[type])
     .select(type === "post" ? "id, user_id, title, body" : "id, user_id, body")
     .eq("moderation_status", "held")
@@ -186,7 +186,7 @@ export async function listHeldByReason(type: TargetType, reason: string) {
 }
 
 export async function getPostTagsAndFiles(postId: number) {
-  const { data, error } = await getSupabaseAdmin()
+  const { data, error } = await supabase
     .from("posts")
     .select("post_tags(tags(subject_name)), files(file_name)")
     .eq("id", postId)

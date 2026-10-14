@@ -9,6 +9,7 @@ import { statsRoute } from "./routes/stats-route";
 import { likeRoute } from "./routes/like-route";
 import { analyticsRoute } from "./routes/analytics-route";
 import { adminRoute } from "./routes/admin-route";
+import { enterRequest } from "./request-context";
 import { aiRoute } from "./routes/ai-route";
 
 const app = new Elysia()
@@ -19,6 +20,8 @@ const app = new Elysia()
     credentials: true
   }))
   .onRequest(({ request }) => {
+    // From here on, every database call in this request runs as the person who sent it (or as anon).
+    enterRequest(request.headers.get("authorization"));
     console.log(`📨 ${request.method} ${new URL(request.url).pathname}`);
   })
   .use(openapi({

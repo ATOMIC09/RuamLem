@@ -1,7 +1,8 @@
 import "dotenv/config";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { getSupabaseAdmin } from "../supabase-admin";
+import { supabase } from "../supabase";
+import { runAsOperator } from "../ops/privileged-client";
 import { percent, summarize, judge, type Label, type Scored } from "../eval/score";
 import { decideModeration, DEFAULT_THRESHOLDS, type ModerationStatus, type Thresholds } from "../services/ai/moderation-decision";
 import { detectPii } from "../ai/pii";
@@ -25,7 +26,7 @@ const labels = JSON.parse(readFileSync(fileURLToPath(new URL("../eval/labels.jso
 
 // ---- build the item list ------------------------------------------------------------------------
 async function loadReal(): Promise<Item[]> {
-  const db = getSupabaseAdmin();
+  const db = supabase; // the operator's client, set up below
   const wanted = (kind: "normal" | "either") => ({
     posts: labels.real[kind].posts as number[],
     comments: labels.real[kind].comments as number[],
@@ -132,7 +133,7 @@ const SWEEP: Thresholds[] = [
 ];
 const label = (t: Thresholds) => `reject>=${t.reject}, hold>=${t.hold}`;
 
-const items = [...(await loadReal()), ...loadCrafted()];
+const items = [...(await runAsOperator(loadReal)), ...loadCrafted()];
 console.log(`Running ${items.length} items (${items.filter((i) => i.real).length} real, ${items.filter((i) => !i.real).length} crafted)...`);
 
 const started = Date.now();
