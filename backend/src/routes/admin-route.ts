@@ -6,7 +6,8 @@ import {
   updateUserRoleController,
   deletePostAsAdminController,
   getModerationQueueController,
-  moderationDecisionController
+  moderationDecisionController,
+  getAiUsageController
 } from "../controllers/admin-controller";
 
 /**
@@ -235,6 +236,31 @@ export const adminRoute = (app: Elysia) => {
       }
     });
   }
+
+  /**
+   * AI usage analytics (admin only)
+   */
+  app.get("/admin/ai-usage", async (c) => {
+    const authHeader = c.request.headers.get("authorization");
+    if (!authHeader) return { status: 401, message: "No token provided" };
+
+    const authCheck = await checkAdminRole(authHeader.split(" ")[1]);
+    if (!authCheck.isAdmin) {
+      return { status: 403, error: authCheck.error || "Access denied" };
+    }
+
+    return getAiUsageController((c.query as any).days);
+  }, {
+    query: t.Object({
+      days: t.Optional(t.String({ description: "How many Thai calendar days to cover, 1 to 365 (default 30)" }))
+    }),
+    detail: {
+      tags: ['Admin'],
+      summary: 'AI Usage',
+      description: 'Tokens, requests and estimated cost of the AI features by day, feature and user (admin only)',
+      security: [{ bearerAuth: [] }]
+    }
+  });
 
   return app;
 };

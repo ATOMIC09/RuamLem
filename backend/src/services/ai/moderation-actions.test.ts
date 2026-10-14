@@ -50,7 +50,7 @@ describe("admin approve (a human can always overturn the AI)", () => {
       actor: ADMIN,
       reason: "admin_approved",
     });
-    expect(syncIndex).toHaveBeenCalledWith(7, "published");
+    expect(syncIndex).toHaveBeenCalledWith(7, "published", ADMIN);
   });
 
   it("can also overturn an AI rejection", async () => {
@@ -80,7 +80,7 @@ describe("admin reject", () => {
     expect(result).toEqual({ ok: true, status: "rejected", reason: ADMIN_REJECTED });
     expect(setStatus).toHaveBeenCalledWith("post", 7, { status: "rejected", reason: ADMIN_REJECTED, appealed: false });
     expect(writeLog).toHaveBeenCalledWith(expect.objectContaining({ decision: "rejected", actor: ADMIN, reason: ADMIN_REJECTED }));
-    expect(syncIndex).toHaveBeenCalledWith(7, "rejected");
+    expect(syncIndex).toHaveBeenCalledWith(7, "rejected", ADMIN);
   });
 });
 

@@ -16,6 +16,7 @@ import { getItem, getPostTagsAndFiles, type TargetType } from "../repositories/m
 import { queueEmbedPost, syncPostIndex } from "../services/ai/embed-service";
 import { ADMIN_REJECTED, appealItem, recordAiDecision, toColumns } from "../services/ai/moderation-actions";
 import { moderate } from "../services/ai/moderation-service";
+import { recordModerationUsage } from "../services/ai/usage-service";
 import { getOptionalViewerId } from "../utils/viewer";
 
 // Verifies the bearer token and returns the user id (throws like the original inline checks did).
@@ -54,15 +55,17 @@ export const post = async ({ body, request }: any) => {
       ? await moderate({ kind: "post", title, body: postBody, tags: [tag], fileNames: cleanFileNames(fileNames) })
       : null;
 
+    if (screening) void recordModerationUsage(userId, screening);
+
     const result = await uploadPost(userId, title, postBody, tag, screening ? toColumns(screening) : undefined);
 
     if (result.status === 200 && "postId" in result) {
       if (screening) {
         await recordAiDecision("post", result.postId, screening);
-        syncPostIndex(result.postId, screening.status);
+        syncPostIndex(result.postId, screening.status, userId);
         return { ...result, moderation: { status: screening.status, reason: screening.status === "published" ? null : screening.reason } };
       }
-      queueEmbedPost(result.postId);
+      queueEmbedPost(result.postId, userId);
     }
     return result;
   } catch (err: any) {
@@ -77,6 +80,7 @@ export const comment = async ({ body, request }: any) => {
     const { postId, body: commentBody } = body;
 
     const screening = isModerationEnabled() ? await moderate({ kind: "comment", body: commentBody }) : null;
+    if (screening) void recordModerationUsage(userId, screening);
 
     const result = await uploadComment(userId, postId, commentBody, screening ? toColumns(screening) : undefined);
 
@@ -173,6 +177,7 @@ export const editPostController = async ({ body, request, params }: any) => {
         }
         const { fileNames } = await getPostTagsAndFiles(postId);
         screening = await moderate({ kind: "post", title, body: postBody, tags: [tag], fileNames });
+        void recordModerationUsage(userId, screening);
       }
     }
 
@@ -181,10 +186,10 @@ export const editPostController = async ({ body, request, params }: any) => {
     if (result.status === 200) {
       if (screening) {
         await recordAiDecision("post", postId, screening);
-        syncPostIndex(postId, screening.status);
+        syncPostIndex(postId, screening.status, userId);
         return { ...result, moderation: { status: screening.status, reason: screening.status === "published" ? null : screening.reason } };
       }
-      queueEmbedPost(postId);
+      queueEmbedPost(postId, userId);
     }
     return result;
   } catch (err: any) {

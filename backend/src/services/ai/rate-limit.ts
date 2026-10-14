@@ -25,3 +25,19 @@ export function createDailyLimiter(limit: number, now: () => number = Date.now) 
     },
   };
 }
+
+export type AskLimits = { dailyMessages: number; dailyTokens: number };
+
+// The daily limits, read from the environment. A token limit of 0 means no token limit.
+export function limitsFromEnv(): AskLimits {
+  return {
+    dailyMessages: Number(process.env.AI_DAILY_LIMIT_PER_USER) || 50,
+    dailyTokens: Number(process.env.AI_DAILY_TOKEN_LIMIT_PER_USER) || 0,
+  };
+}
+
+// Decides from what the user has already used today (counted in the database, so it survives restarts).
+export function isOverLimit(used: { asks: number; tokens: number }, limits: AskLimits): boolean {
+  if (used.asks >= limits.dailyMessages) return true;
+  return limits.dailyTokens > 0 && used.tokens >= limits.dailyTokens;
+}

@@ -369,3 +369,93 @@ describe("askStream: logging", () => {
     expect(JSON.stringify(errorSpy.mock.calls)).toContain("unavailable");
   });
 });
+
+describe("askStream: usage recording", () => {
+  const withRecorder = (opts: Parameters<typeof makeDeps>[0]) => {
+    const { deps, mocks } = makeDeps(opts);
+    const recordUsage = mock(async () => {});
+    return { deps: { ...deps, recordUsage } as AskDeps, recordUsage, mocks };
+  };
+  const entry = (recordUsage: ReturnType<typeof mock>) => (recordUsage.mock.calls[0] as any[])[0];
+
+  it("records the tokens of an answer from posts, against the asking user", async () => {
+    const { deps, recordUsage } = withRecorder({
+      chat: async function* () {
+        yield { delta: "มีครับ [1]" };
+        yield { usage: { promptTokens: 400, completionTokens: 20, totalTokens: 420 } };
+      },
+    });
+    await readAll(askStream(input, deps));
+    expect(recordUsage).toHaveBeenCalledTimes(1);
+    expect(entry(recordUsage)).toMatchObject({
+      userId: "user-1",
+      feature: "ask",
+      mode: "posts",
+      outcome: "ok",
+      embeddingTokens: 7,
+      chat: { promptTokens: 400, completionTokens: 20, totalTokens: 420 },
+    });
+    expect(typeof entry(recordUsage).latencyMs).toBe("number");
+  });
+
+  it("marks a general answer as such", async () => {
+    const { deps, recordUsage } = withRecorder({ matches: [] });
+    await readAll(askStream({ ...input, question: "สวัสดี" }, deps));
+    expect(entry(recordUsage)).toMatchObject({ mode: "general", outcome: "ok" });
+  });
+
+  it("never puts the question, the answer or post text into the usage entry", async () => {
+    const { deps, recordUsage } = withRecorder({});
+    await readAll(askStream(input, deps));
+    const json = JSON.stringify(recordUsage.mock.calls);
+    expect(json).not.toContain("Signals ไหม");
+    expect(json).not.toContain("มีครับ");
+    expect(json).not.toContain("BODYMARKER");
+  });
+
+  it("records a content-filtered reply, because the tokens were spent", async () => {
+    const { deps, recordUsage } = withRecorder({
+      chat: async function* () {
+        yield { delta: "x" };
+        yield { finishReason: "content_filter", usage: { promptTokens: 10, completionTokens: 1, totalTokens: 11 } };
+      },
+    });
+    await readAll(askStream(input, deps));
+    expect(entry(recordUsage)).toMatchObject({ outcome: "content_filtered", chat: { totalTokens: 11 } });
+  });
+
+  it("records a failed call as an error, with the embedding tokens that were already spent", async () => {
+    const { deps, recordUsage } = withRecorder({
+      chat: async function* () {
+        throw Object.assign(new Error("boom"), { status: 500 });
+      },
+    });
+    await readAll(askStream(input, deps));
+    expect(entry(recordUsage)).toMatchObject({ outcome: "error", embeddingTokens: 7 });
+  });
+
+  it("records a call the user stopped as aborted", async () => {
+    const request = new AbortController();
+    const started = Promise.withResolvers<void>();
+    const { deps, recordUsage } = withRecorder({
+      chat: async function* (_m, signal) {
+        started.resolve();
+        await new Promise((resolve) => signal?.addEventListener("abort", resolve));
+        throw new DOMException("aborted", "AbortError");
+      },
+    });
+    const done = readAll(askStream({ ...input, signal: request.signal }, deps));
+    await started.promise;
+    request.abort();
+    await done;
+    await Promise.resolve();
+    expect(entry(recordUsage)).toMatchObject({ outcome: "aborted" });
+  });
+
+  it("a recorder that fails does not break the answer", async () => {
+    const { deps } = makeDeps({});
+    const failing = { ...deps, recordUsage: async () => { throw new Error("db down"); } } as unknown as AskDeps;
+    const frames = await readAll(askStream(input, failing));
+    expect(frames.map((f) => f.event)).toContain("done");
+  });
+});

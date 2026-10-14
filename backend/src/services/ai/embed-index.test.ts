@@ -69,3 +69,22 @@ describe("embedPost: only published posts are indexed", () => {
     expect(embedText).toHaveBeenCalledTimes(0);
   });
 });
+
+describe("embedPost: usage recording", () => {
+  it("records the embedding tokens against the user who caused the indexing", async () => {
+    const { deps } = makeDeps(post({ moderationStatus: "published" }));
+    const recordUsage = mock(async () => {});
+    await embedPost(5, { userId: "u9" }, { ...deps, recordUsage } as EmbedDeps);
+    expect(recordUsage).toHaveBeenCalledTimes(1);
+    expect((recordUsage.mock.calls[0] as any[])[0]).toMatchObject({ userId: "u9", feature: "embedding", embeddingTokens: 3 });
+  });
+
+  it("records nothing for the operator script (no user) or when nothing was embedded", async () => {
+    const recordUsage = mock(async () => {});
+    const a = makeDeps(post({ moderationStatus: "published" }));
+    await embedPost(5, {}, { ...a.deps, recordUsage } as EmbedDeps);
+    const b = makeDeps(post({ moderationStatus: "held" }));
+    await embedPost(5, { userId: "u9" }, { ...b.deps, recordUsage } as EmbedDeps);
+    expect(recordUsage).toHaveBeenCalledTimes(0);
+  });
+});

@@ -7,6 +7,8 @@ import {
 import { isModerationEnabled } from "../ai/client";
 import { listQueue } from "../repositories/moderation-repo";
 import { approveItem, rejectItem } from "../services/ai/moderation-actions";
+import { getUsageSummary } from "../repositories/usage-repo";
+import { withCosts } from "../services/ai/usage-service";
 
 /**
  * Get all users (admin only)
@@ -114,5 +116,19 @@ export async function moderationDecisionController(
   } catch (err: any) {
     console.error("Error in moderationDecisionController:", err);
     return { error: err.message || "Failed to save the decision" };
+  }
+}
+
+/**
+ * AI usage for the dashboard: tokens, requests and an estimated cost, by day, feature and user (admin only).
+ * The prices come from the environment (AI_PRICE_*), so the cost can be re-priced without touching the data.
+ */
+export async function getAiUsageController(daysText: string | undefined) {
+  try {
+    const days = Math.min(Math.max(parseInt(daysText ?? "30") || 30, 1), 365);
+    return { success: true, data: withCosts(await getUsageSummary(days)) };
+  } catch (err: any) {
+    console.error("Error in getAiUsageController:", err);
+    return { error: err.message || "Failed to load AI usage" };
   }
 }

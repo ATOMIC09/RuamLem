@@ -1,10 +1,21 @@
 import { isAiEnabled } from "../ai/client";
 import { errorStream, sseResponse } from "../ai/sse";
 import { askStream } from "../services/ai/ask-service";
-import { createDailyLimiter } from "../services/ai/rate-limit";
+import { createDailyLimiter, isOverLimit, limitsFromEnv } from "../services/ai/rate-limit";
+import { thaiDayStartIso } from "../services/ai/usage-service";
+import { getMyAskUsageSince } from "../repositories/usage-repo";
 import { supabaseAuth } from "../supabase";
 
-const limiter = createDailyLimiter(Number(process.env.AI_DAILY_LIMIT_PER_USER) || 50);
+// Two guards. The in-memory counter stops a burst of parallel requests (usage is recorded only when a call ends)
+// and is the fallback if the database cannot be read. The database count is the real daily quota: it survives
+// restarts and works across several server instances.
+const limiter = createDailyLimiter(limitsFromEnv().dailyMessages);
+
+async function withinDailyLimits(userId: string): Promise<boolean> {
+  if (!limiter.tryConsume(userId)) return false;
+  const used = await getMyAskUsageSince(thaiDayStartIso());
+  return used ? !isOverLimit(used, limitsFromEnv()) : true;
+}
 
 async function getUserId(request: Request): Promise<string | null> {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
@@ -27,7 +38,7 @@ export const askController = async ({ body, request }: { body: { question: strin
   // Both of these answer with a normal SSE stream holding one error event,
   // so the browser handles every failure the same way.
   if (!isAiEnabled()) return sseResponse(errorStream("ai_disabled"));
-  if (!limiter.tryConsume(userId)) return sseResponse(errorStream("rate_limited"));
+  if (!(await withinDailyLimits(userId))) return sseResponse(errorStream("rate_limited"));
 
   return sseResponse(askStream({ question: body.question.trim(), history: body.history, userId, signal: request.signal }));
 };

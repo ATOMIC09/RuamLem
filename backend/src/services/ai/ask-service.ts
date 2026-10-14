@@ -6,6 +6,7 @@ import { buildAskMessages, buildGeneralMessages, retrievalQuery, type ChatTurn }
 import { encodeSse } from "../../ai/sse";
 import { getPostSources, matchPosts, type PostSource } from "../../repositories/embedding-repo";
 import { logger } from "../../utils/logger";
+import { recordUsage, type UsageEntry } from "./usage-service";
 
 export const TOP_K = 5;
 // Cosine similarity cutoff, tuned on 13 provisional Thai questions against the real index:
@@ -17,6 +18,8 @@ export type AskDeps = {
   matchPosts: typeof matchPosts;
   loadSources: (postIds: number[]) => Promise<PostSource[]>;
   streamChat: (messages: ChatMessage[], signal?: AbortSignal) => AsyncIterable<ChatChunk>;
+  // Writes the token counts for the usage dashboard. Optional so a test can leave it out.
+  recordUsage?: (entry: UsageEntry) => Promise<void>;
 };
 
 const defaultDeps: AskDeps = {
@@ -25,6 +28,7 @@ const defaultDeps: AskDeps = {
   // Published posts only: even a stale index entry can never surface a held or rejected post.
   loadSources: (postIds) => getPostSources(postIds, { publishedOnly: true }),
   streamChat,
+  recordUsage,
 };
 
 export type AskInput = { question: string; userId: string; history?: ChatTurn[]; signal?: AbortSignal };
@@ -55,6 +59,8 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
       if (!abort.signal.aborted) controller.enqueue(encodeSse(event, data));
     };
     const log = { userId: input.userId, sources: [] as number[], topSimilarity: 0, embeddingTokens: 0 };
+    // What the usage row says about this call; filled in as the call goes.
+    const spent: { outcome: UsageEntry["outcome"]; chat?: ChatUsage; mode: UsageEntry["mode"] } = { outcome: "ok", mode: null };
 
     try {
       const history = input.history ?? [];
@@ -69,6 +75,7 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
 
       const sources = found.map((m, i) => ({ n: i + 1, post: byId.get(m.postId)! }));
       log.sources = sources.map((s) => s.post.id);
+      spent.mode = sources.length > 0 ? "posts" : "general";
       send("sources", sources.map((s) => ({ n: s.n, postId: s.post.id, title: s.post.title })));
 
       const messages =
@@ -89,7 +96,10 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
           const safe = citations.push(chunk.delta);
           if (safe) send("delta", { text: safe });
         }
-        if (chunk.usage) usage = chunk.usage;
+        if (chunk.usage) {
+          usage = chunk.usage;
+          spent.chat = usage;
+        }
         // Azure cut the reply: treat as a final answer, never retry elsewhere.
         if (chunk.finishReason === "content_filter") filtered = true;
       }
@@ -98,6 +108,7 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
       if (tail) send("delta", { text: tail });
 
       if (filtered) {
+        spent.outcome = "content_filtered";
         send("error", { code: "content_filtered" });
         logger.warn("ask reply filtered", { ...log, ms: Date.now() - started });
       } else {
@@ -112,9 +123,11 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
       }
     } catch (err: any) {
       if (abort.signal.aborted) {
+        spent.outcome = "aborted";
         logger.info("ask aborted", { ...log, ms: Date.now() - started });
       } else {
         const failure = classifyAiError(err);
+        spent.outcome = failure.code === "content_filtered" ? "content_filtered" : "error";
         send("error", { code: failure.code });
         logger.error("ask failed", {
           ...log,
@@ -129,6 +142,23 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
         controller.close();
       } catch {
         // Already closed or cancelled by the client.
+      }
+      // The tokens were spent even if the user stopped or the call failed, so every call is counted.
+      // Fire and forget: nothing waits for it, and a failure to record must never reach the user.
+      try {
+        void Promise.resolve(
+          deps.recordUsage?.({
+            userId: input.userId,
+            feature: "ask",
+            mode: spent.mode,
+            outcome: spent.outcome,
+            chat: spent.chat,
+            embeddingTokens: log.embeddingTokens,
+            latencyMs: Date.now() - started,
+          })
+        ).catch(() => {});
+      } catch {
+        // ignored on purpose
       }
     }
   }

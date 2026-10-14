@@ -9,6 +9,7 @@ import {
   type PostSource,
 } from "../../repositories/embedding-repo";
 import { logger } from "../../utils/logger";
+import { recordUsage, type UsageEntry } from "./usage-service";
 
 // About 6000 characters keeps a post well under the embedding model's input limit.
 const MAX_EMBED_CHARS = 6000;
@@ -32,13 +33,15 @@ export type EmbedDeps = {
   upsertEmbedding: typeof upsertEmbedding;
   deleteEmbedding: typeof deleteEmbedding;
   embedText: typeof embedText;
+  // Writes the token count for the usage dashboard. Optional so a test can leave it out.
+  recordUsage?: (entry: UsageEntry) => Promise<void>;
 };
 
-const defaultDeps: EmbedDeps = { getPostSource, getContentHash, upsertEmbedding, deleteEmbedding, embedText };
+const defaultDeps: EmbedDeps = { getPostSource, getContentHash, upsertEmbedding, deleteEmbedding, embedText, recordUsage };
 
 export async function embedPost(
   postId: number,
-  opts: { force?: boolean } = {},
+  opts: { force?: boolean; userId?: string } = {},
   deps: EmbedDeps = defaultDeps
 ): Promise<EmbedResult> {
   const post = await deps.getPostSource(postId);
@@ -58,6 +61,8 @@ export async function embedPost(
   const started = Date.now();
   const { vector, tokens } = await deps.embedText(text);
   await deps.upsertEmbedding(postId, hash, vector);
+  // Counted against whoever caused the indexing. The operator script has no user, so nothing is recorded there.
+  if (opts.userId) void deps.recordUsage?.({ userId: opts.userId, feature: "embedding", embeddingTokens: tokens, latencyMs: Date.now() - started });
 
   logger.info("post embedded", { postId, tokens, ms: Date.now() - started });
   return "embedded";
@@ -65,8 +70,8 @@ export async function embedPost(
 
 // Brings the index in line with a post's moderation status: published posts are (re)indexed,
 // anything else is removed. Fire and forget, like queueEmbedPost.
-export function syncPostIndex(postId: number, status: string): void {
-  if (status === "published") return queueEmbedPost(postId);
+export function syncPostIndex(postId: number, status: string, userId?: string): void {
+  if (status === "published") return queueEmbedPost(postId, userId);
 
   deleteEmbedding(postId).catch((err: any) => {
     logger.error("post unindex failed", { postId, message: err?.message });
@@ -75,10 +80,10 @@ export function syncPostIndex(postId: number, status: string): void {
 
 // Fire and forget: the HTTP request that created or edited the post must never fail
 // or wait because of the index. Failures are logged with the id only.
-export function queueEmbedPost(postId: number): void {
+export function queueEmbedPost(postId: number, userId?: string): void {
   if (!isAiEnabled()) return;
 
-  embedPost(postId).catch((err: any) => {
+  embedPost(postId, { userId }).catch((err: any) => {
     logger.error("post embedding failed", { postId, message: err?.message });
   });
 }

@@ -4,7 +4,7 @@ import { classifyAiError } from "../../ai/errors";
 import { MODEL_VERDICT_JSON_SCHEMA, parseModelVerdict } from "../../ai/moderation-schema";
 import { detectPii, type PiiFlags } from "../../ai/pii";
 import { buildModerationMessages, type ModerationPromptInput } from "../../ai/prompts";
-import type { ChatMessage } from "../../ai/chat";
+import type { ChatMessage, ChatUsage } from "../../ai/chat";
 import { logger } from "../../utils/logger";
 import { decideModeration, type CheckOutcome, type DecisionInput, type ModerationDecision } from "./moderation-decision";
 
@@ -13,6 +13,8 @@ export type ModerationInput = ModerationPromptInput;
 export type ModerationResult = ModerationDecision & {
   // The raw check results the decision was made from. For the eval's threshold sweep; never logged.
   decisionInput: DecisionInput;
+  // Tokens the model check used, for the usage dashboard (absent when no model call finished).
+  usage?: ChatUsage;
   ms: number;
   checks: { pii: PiiFlags; contentSafety: "ok" | "failed" | "skipped"; model: "ok" | "invalid" | "blocked" | "failed" | "skipped" };
 };
@@ -86,6 +88,7 @@ export async function moderate(input: ModerationInput, deps: ModerationDeps = de
   return {
     ...decision,
     decisionInput,
+    usage: model.ok ? model.value.usage : undefined,
     ms: Date.now() - started,
     checks: { pii, contentSafety: safety.ok ? "ok" : "failed", model: modelStatus },
   };

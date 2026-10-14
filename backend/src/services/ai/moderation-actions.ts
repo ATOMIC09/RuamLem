@@ -13,7 +13,7 @@ export type ActionDeps = {
   getItem: typeof repo.getItem;
   setStatus: typeof repo.setStatus;
   writeLog: typeof repo.writeLog;
-  syncIndex: (postId: number, status: Status) => void;
+  syncIndex: (postId: number, status: Status, userId?: string) => void;
 };
 
 const defaultDeps: ActionDeps = {
@@ -78,7 +78,7 @@ async function applyHumanDecision(
   const storedReason = status === "published" ? null : reason;
   await deps.setStatus(type, id, { status, reason: storedReason, appealed: false });
   await deps.writeLog({ targetType: type, targetId: id, decision: status, actor: actorId, reason });
-  if (type === "post") deps.syncIndex(id, status);
+  if (type === "post") deps.syncIndex(id, status, actorId);
 
   logger.info("moderation override", { targetType: type, targetId: id, decision: status, reason, actor: actorId });
   return { ok: true, status, reason: storedReason };
