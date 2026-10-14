@@ -192,7 +192,7 @@ sequenceDiagram
 | `/my-posts/[id]/edit` | Edit a post and add or remove files |
 | `/ask` | Ask RuamLem, a chat that answers from posts or general knowledge (only when `NEXT_PUBLIC_AI_ENABLED=true`) |
 | `/profile` | Edit your name, bio and avatar |
-| `/admin` | Admin dashboard: statistics, top posts, members, posts, and a **Moderation** tab when moderation is on |
+| `/admin` | Admin dashboard: statistics, top posts, members, posts, and a **Moderation** tab when moderation is on, and an **AI usage** tab when an AI feature is on |
 | `/signin`, `/signup`, `/confirm-email`, `/forgot-password`, `/reset-password`, `/terms` | Account pages and terms |
 
 ### How the frontend code is organised
