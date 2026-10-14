@@ -81,6 +81,7 @@ The backend is a JSON API. Locally it runs at `http://localhost:3030`. An intera
 | GET | `/admin/moderation` | Admin | | `{ enabled, data: [ ...held items ] }`, appealed items first. See [moderation.md](moderation.md#the-admin-queue). |
 | POST | `/admin/moderation/:type/:id/approve` | Admin | | `type` is `post` or `comment`. Publishes the item. |
 | POST | `/admin/moderation/:type/:id/reject` | Admin | | Rejects the item. This decision is final. |
+| GET | `/admin/ai-usage?days=30` | Admin | | AI usage for the last 1 to 365 Thai calendar days: totals, by day, by feature and the top users, each with tokens and an estimated cost (`cost` is `null` when no price is set). See [ai-usage.md](ai-usage.md). |
 
 ## Ask RuamLem
 

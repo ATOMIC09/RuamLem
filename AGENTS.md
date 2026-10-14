@@ -23,6 +23,7 @@ Read this file first, then the page in `docs/` for the area you will touch. Do n
 | Every endpoint | `docs/api.md` |
 | Ask RuamLem (RAG, two modes, streaming, chat UI) | `docs/ask-ruamlem.md` |
 | Moderation (decision rules, appeals, admin queue, accuracy) | `docs/moderation.md` |
+| AI usage tracking, daily limits, cost estimate, dashboard | `docs/ai-usage.md` |
 | Protections, audit results, known gaps | `docs/security.md` |
 | Setup, environment variables, scripts, tests, deploy, troubleshooting | `docs/development.md` |
 | Original plan (history only, partly outdated) | `RuamLem-AI-PLAN.md` |
@@ -80,6 +81,7 @@ CI (`.github/workflows/ci.yml`) runs typecheck, tests and build for both parts o
 
 - **Commit messages are short and plain:** `type(scope): summary`, optionally one or two body lines. Never add `Co-Authored-By` or any attribution line.
 - **Never push or deploy** unless the owner asks.
+- Every new AI call must be recorded in `ai_usage` (counts and ids only, via `recordUsage` in `backend/src/services/ai/usage-service.ts`).
 - Add or update tests with every change. Tests must not call real models or the real database; use fakes.
 - The chat model deployment is limited to **15 requests per minute**, shared by Ask RuamLem and moderation. Do not add test loops that call it.
 - Testing against a real account: ask the owner. Pass credentials inline in a command and never write them to a file, a commit or memory.

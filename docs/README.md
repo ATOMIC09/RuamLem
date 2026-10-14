@@ -11,6 +11,7 @@ These pages explain how RuamLem works, in detail. They are written for developer
 | [API reference](api.md) | Every backend endpoint: method, path, who may call it, and what it expects |
 | [Ask RuamLem](ask-ruamlem.md) | The question-answering feature: how posts are indexed, searched and turned into a streamed answer with citations |
 | [AI moderation](moderation.md) | How new posts and comments are checked, who can see what, appeals, the admin queue, and how accurate it is |
+| [AI usage](ai-usage.md) | What is recorded about every AI call, the daily limits, the cost estimate with changeable prices, and the admin dashboard |
 | [Security](security.md) | What protects users and data, the results of a database access audit, and the known gaps |
 | [Development and operations](development.md) | Setting up a machine, environment variables, scripts, tests, CI, deploying, and fixing common problems |
 

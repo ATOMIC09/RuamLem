@@ -22,6 +22,7 @@ It also has two AI helpers: one is a study chatbot that knows the material on th
 - See statistics, the most popular posts and every member.
 - Remove posts, remove members, or make someone an admin.
 - Review the posts the AI was unsure about, and publish or reject them.
+- See how much the AI is used: who, how many tokens, and an estimated cost.
 
 ## The two AI helpers
 

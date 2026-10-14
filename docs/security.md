@@ -24,7 +24,7 @@ This page lists what protects RuamLem's users and data, what an audit of the dat
 | **Personal data in posts** | Phone numbers and Thai national IDs hold a post or comment for review, even inside a file name. | `backend/src/ai/pii.ts` |
 | **Hidden content leaking** | Held and rejected items are hidden by the database policies and by the backend's filters, and they are removed from the Ask RuamLem index. | `backend/src/utils/visibility.ts`, `sql/003` |
 | **Credentials in transit** | Sign-in and sign-up data is RSA-encrypted in the browser, on top of HTTPS. | `frontend/src/lib/crypto.ts` |
-| **Cost abuse** | Ask RuamLem needs a signed-in user and allows 50 messages per user per day (configurable). Messages are capped at 500 characters and the history at 8 messages. | `backend/src/services/ai/rate-limit.ts` |
+| **Cost abuse** | Ask RuamLem needs a signed-in user and allows 50 messages per user per day, plus an optional token limit. The quota is counted in the database (`ai_usage`), so a restart does not reset it. Messages are capped at 500 characters and the history at 8 messages. Admins can see who uses how many tokens. | `backend/src/services/ai/rate-limit.ts`, [ai-usage.md](ai-usage.md) |
 
 ## What the database enforces
 
@@ -97,7 +97,7 @@ With `AI_MODERATION_ENABLED=false` the backend stops screening new content and n
 | A signed-in author can mark their own post as published directly in the database | The AI decision is enforced by the backend. A user who also held the server's anon key (which is never sent to browsers) and their own token could skip it. The database does stop them overturning an admin's rejection. | Keep the anon key private. For stronger enforcement, have the database accept only signed moderation decisions. |
 | The session token is stored in `localStorage` | Any script injected into the page could read it | Move it to an httpOnly cookie |
 | Password reset uses one shared Supabase client (`setSession`, then `updateUser`) | Two resets at the same moment could interfere | Create a client per request for that flow |
-| The daily message limit is kept in memory | It is per server instance and resets on every restart | Store counts in the database if several instances are ever run |
+| A user holding the server's anon key and their own token could write fake `ai_usage` rows for themselves | They only raise their own count, but a flood could push other people's old rows out of the 200,000-row loop | Keep the anon key private. See [ai-usage.md](ai-usage.md#residual-risk). |
 | File contents are not scanned | Personal data inside a PDF or an image is not detected | Out of scope for now |
 | Most endpoints answer HTTP 200 with the error in the body | Monitoring tools see every failure as a success | Return real status codes |
 | Existing exam files were uploaded before ownership was tracked | `003` gives them their authors as owners, but files with no matching `files` row have no owner | Review storage for orphaned files |

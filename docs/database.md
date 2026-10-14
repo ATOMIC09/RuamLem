@@ -131,7 +131,8 @@ The original tables (profiles, posts, comments, files, tags, post_tags, likes) w
 | `003_database_hardening.sql` | Row level security on every table with all policies, the guard triggers, the sign-up trigger, the narrow functions, new storage policies | **Applied** |
 | `003b_finish_hardening.sql` | Removes the old open policies on `post_views`, `file_downloads` and both storage buckets, cuts table privileges back to what each role needs, adds `admin_delete_user` | **Applied** |
 | `003c_owner_reads_own_uploads.sql` | Lets an uploader see (and so delete) their own exam files before the post links them; removes anon's access to the two admin functions | **Applied** |
-| `004_cleanup_unused_tags.sql` | Adds `delete_unused_tags()`, which the backend calls when a post is deleted or changes tag, so a tag nobody uses any more is removed | **Run it** (the backend only logs a warning until it exists) |
+| `004_cleanup_unused_tags.sql` | Adds `delete_unused_tags()`, which the backend calls when a post is deleted or changes tag, so a tag nobody uses any more is removed | **Applied** |
+| `005_ai_usage.sql` | Adds the `ai_usage` table (one row per AI call: who, feature, tokens, time), its policies, the 200,000-row loop trigger, `my_ask_usage_since()` and `admin_ai_usage_summary()`. See [ai-usage.md](ai-usage.md). | **Run it** (until then usage is not recorded and the daily limit uses the in-memory counter) |
 
 Run them in the Supabase SQL editor, in order. Every file can be run again safely.
 
@@ -147,6 +148,7 @@ Row level security (RLS) is **on for every table**. The server runs each request
 | `tags`, `post_likes` | Everyone | Signed in users (likes only as yourself) |
 | `post_embeddings` | Entries of published posts | The post's owner or an admin |
 | `moderation_log` | Admins | Appends by the post's owner or an admin, never in someone else's name |
+| `ai_usage` | Your own rows; every row for admins | Insert your own rows only. Nobody updates or deletes. |
 | `post_views`, `file_downloads` | Nobody directly | Through `record_post_view` and `record_file_download` only (fully true after `003b`) |
 
 ### Triggers and functions added by `003`

@@ -31,6 +31,7 @@ Then run, in the Supabase SQL editor and in this order:
 4. `backend/sql/003b_finish_hardening.sql`: closes the old open policies and revokes extra privileges. Read it before running; it removes access on purpose.
 5. `backend/sql/003c_owner_reads_own_uploads.sql`: lets uploaders see and delete their own unlinked exam files
 6. `backend/sql/004_cleanup_unused_tags.sql`: removes a tag when its last post goes away
+7. `backend/sql/005_ai_usage.sql`: the AI usage table, the daily-limit counter and the dashboard function
 
 The backend of this version needs `003` (it calls the functions it adds), and an older backend stops being able to write once `003` is on, so deploy this version first. See [security.md](security.md).
 
@@ -65,7 +66,9 @@ Copy `backend/.env.example` to `backend/.env` and `frontend/.env.example` to `fr
 | `AZURE_OPENAI_CHAT_DEPLOYMENT` | Both AI features | The deployment **name**, not the model name |
 | `AZURE_OPENAI_EMBED_DEPLOYMENT` | Ask RuamLem | The deployment name of `text-embedding-3-small` |
 | `AZURE_CONTENT_SAFETY_ENDPOINT`, `AZURE_CONTENT_SAFETY_KEY` | Moderation | |
-| `AI_DAILY_LIMIT_PER_USER` | Ask RuamLem | Messages per user per day, default 50 |
+| `AI_DAILY_LIMIT_PER_USER` | Ask RuamLem | Messages per user per day, default 50 (counted in the database) |
+| `AI_DAILY_TOKEN_LIMIT_PER_USER` | Ask RuamLem | Optional tokens per user per day. 0 or empty means no limit. |
+| `AI_PRICE_CURRENCY`, `AI_PRICE_CHAT_INPUT_PER_MTOK`, `AI_PRICE_CHAT_OUTPUT_PER_MTOK`, `AI_PRICE_EMBEDDING_PER_MTOK` | Usage dashboard | Prices per million tokens for the estimated cost. Empty means tokens only. See [ai-usage.md](ai-usage.md). |
 
 **Frontend**
 
@@ -118,8 +121,8 @@ Student Azure subscriptions often have no quota for some models. Check **Usage +
 
 | Where | Count | What they cover |
 |---|---|---|
-| `backend/src/**/*.test.ts` | 319 tests in 22 files | Per-request tokens (including 40 interleaved requests), a guard that no server file mentions the service-role key, prompts and escaping, citations, SSE, the Ask flow with a fake model (both modes, history), the daily limit, error classification, file-type checks, Thai ID and phone rules, the moderation schema, decision, service, actions, recheck and eval scoring, the visibility rule, and the post read paths against an in-memory database |
-| `frontend/src/**/*.test.ts(x)` | 103 tests in 10 files | `SafeMarkdown` against XSS payloads, the SSE parser, the stream client, the chat hook and history builder, the ask form and answer states, the moderation labels, notice, queue and tabs |
+| `backend/src/**/*.test.ts` | 350 tests in 23 files | Per-request tokens (including 40 interleaved requests), a guard that no server file mentions the service-role key, prompts and escaping, citations, SSE, the Ask flow with a fake model (both modes, history), the daily limits, usage recording and cost estimate, error classification, file-type checks, Thai ID and phone rules, the moderation schema, decision, service, actions, recheck and eval scoring, the visibility rule, and the post read paths against an in-memory database |
+| `frontend/src/**/*.test.ts(x)` | 113 tests in 11 files | `SafeMarkdown` against XSS payloads, the SSE parser, the stream client, the chat hook and history builder, the ask form and answer states, the moderation labels, notice, queue and tabs |
 
 No test calls a real model or the real database. Anything that needs a service gets a fake.
 
@@ -145,7 +148,7 @@ Before turning on an AI feature in production:
 2. Make sure the SQL files `001`, `002` and `003` have been run.
 3. Deploy this version, then set the kill switches to `true`.
 4. Run `ai:reindex` once from your own machine.
-5. Run `003b`, `003c` and `004` from `backend/sql/` (in that order) if you have not yet.
+5. Run `003b`, `003c`, `004` and `005` from `backend/sql/` (in that order) if you have not yet.
 
 Row level security is on, so a backend from before this change (which sent no user token) can no longer write. Deploy this version before relying on the site.
 

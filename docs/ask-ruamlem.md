@@ -130,7 +130,7 @@ The model might cite `[7]` when only three posts were sent. A small filter (`bac
 
 A failed call to Azure is retried **once**, and only before the first piece of text has been sent, so an answer is never repeated.
 
-The daily limit is counted in memory, so it is per server instance and starts again when the server restarts. The day turns over at midnight Thailand time.
+The daily limit is counted in the database (every message is recorded in `ai_usage`), so it survives restarts and works across server instances. A small in-memory counter also stops bursts. The day turns over at midnight Thailand time. An optional per-user token limit exists too. See [ai-usage.md](ai-usage.md).
 
 ## 6. The page
 
@@ -163,6 +163,7 @@ The page is `frontend/src/app/ask/page.tsx`, built from these pieces:
 | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY` | The Azure OpenAI v1 endpoint and key |
 | `AZURE_OPENAI_CHAT_DEPLOYMENT`, `AZURE_OPENAI_EMBED_DEPLOYMENT` | Deployment names (not model names) |
 | `AI_DAILY_LIMIT_PER_USER` | Messages per user per day, default 50 |
+| `AI_DAILY_TOKEN_LIMIT_PER_USER` | Optional tokens per user per day, 0 = no limit |
 | `NEXT_PUBLIC_AI_ENABLED` | Shows the `/ask` page and its navbar link |
 
 The similarity cutoff (0.43) and the number of sources (5) are constants at the top of `backend/src/services/ai/ask-service.ts`. The history limits are in `backend/src/ai/prompts.ts`.
