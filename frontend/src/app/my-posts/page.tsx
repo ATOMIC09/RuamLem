@@ -208,11 +208,11 @@ export default function MyPostsPage() {
                 className="bg-white rounded-3xl border border-[#dee5ed] shadow-lg p-6 hover:shadow-xl transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h2 className="text-xl font-bold text-[#1c2a48] mb-2 hover:text-[#5e7593] transition-colors cursor-pointer">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-xl font-bold text-[#1c2a48] mb-2 break-words hover:text-[#5e7593] transition-colors cursor-pointer">
                       <Link href={`/post/${post.id}`}>{post.title}</Link>
                     </h2>
-                    <p className="text-[#7a8b99] line-clamp-2 mb-3">{post.body}</p>
+                    <p className="text-[#7a8b99] line-clamp-2 mb-3 break-words">{post.body}</p>
                     {post.moderation_status && post.moderation_status !== 'published' && (
                       <div className="mb-3">
                         <ModerationNotice

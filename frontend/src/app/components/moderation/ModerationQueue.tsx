@@ -33,12 +33,17 @@ export default function ModerationQueue() {
     setError("");
     setEnabled(result.enabled !== false);
     setItems(result.items ?? []);
-    announce(result.items?.length ?? 0);
   }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Tell the tab bar after the render commits. Dispatching from inside render (for example from a state
+  // updater) would update ModerationTabs while this component is still rendering, which React rejects.
+  useEffect(() => {
+    if (items) announce(items.length);
+  }, [items]);
 
   const decide = async (item: ModerationQueueItem, decision: "approve" | "reject") => {
     const key = keyOf(item);
@@ -53,11 +58,7 @@ export default function ModerationQueue() {
     }
     setError("");
     setMessage(decision === "approve" ? "เผยแพร่แล้ว" : "ปฏิเสธแล้ว");
-    setItems((current) => {
-      const next = (current ?? []).filter((i) => keyOf(i) !== key);
-      announce(next.length);
-      return next;
-    });
+    setItems((current) => (current ?? []).filter((i) => keyOf(i) !== key));
   };
 
   if (items === null && !error) {

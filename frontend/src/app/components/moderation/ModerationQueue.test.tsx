@@ -121,6 +121,32 @@ describe("ModerationQueue", () => {
   });
 });
 
+describe("queue and tab bar together", () => {
+  it("rejecting an item updates the badge without React's 'update a component while rendering' error", async () => {
+    getQueue.mockResolvedValue({ enabled: true, items: [item({}), item({ id: 2, title: "โพสต์ที่สอง" })] });
+    decide.mockResolvedValue({ success: true });
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const user = userEvent.setup();
+    render(
+      <>
+        <ModerationTabs section="moderation" onChange={() => {}} />
+        <ModerationQueue />
+      </>,
+    );
+
+    const first = (await screen.findByText("ขายคอร์สลับ")).closest("li")!;
+    await waitFor(() => expect(screen.getByRole("tab", { name: /ตรวจสอบเนื้อหา/ })).toHaveTextContent("2"));
+
+    await user.click(within(first).getByRole("button", { name: "ปฏิเสธ" }));
+    await user.click(within(first).getByRole("button", { name: /ยืนยันการปฏิเสธ/ }));
+
+    await waitFor(() => expect(screen.getByRole("tab", { name: /ตรวจสอบเนื้อหา/ })).toHaveTextContent("1"));
+    const warnings = errors.mock.calls.map((c) => String(c[0])).filter((m) => m.includes("while rendering a different component"));
+    errors.mockRestore();
+    expect(warnings).toEqual([]);
+  });
+});
+
 describe("ModerationTabs", () => {
   it("renders nothing while moderation is off, so the admin page is unchanged", async () => {
     getQueue.mockResolvedValue({ enabled: false, items: [] });

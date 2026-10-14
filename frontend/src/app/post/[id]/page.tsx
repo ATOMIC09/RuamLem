@@ -435,11 +435,11 @@ export default function PostDetailPage() {
               />
             </div>
           )}
-          <h1 className="text-3xl font-bold text-[#1c2a48] mb-6">{post.title}</h1>
+          <h1 className="text-3xl font-bold text-[#1c2a48] mb-6 break-words">{post.title}</h1>
 
           {/* Post Content */}
           <div className="prose max-w-none mb-8">
-            <div className="text-[#1c2a48] leading-relaxed whitespace-pre-line text-base">
+            <div className="text-[#1c2a48] leading-relaxed whitespace-pre-line break-words text-base">
               {post.body}
             </div>
           </div>
