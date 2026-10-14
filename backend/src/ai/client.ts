@@ -21,6 +21,8 @@ export function getAiClient(): OpenAI {
     throw new Error("Azure OpenAI is not configured (AZURE_OPENAI_ENDPOINT / AZURE_OPENAI_API_KEY)");
   }
 
-  client = new OpenAI({ baseURL, apiKey, timeout: 30_000, maxRetries: 2 });
+  // The SDK retries 429, 5xx and timeouts once, and only before a response starts,
+  // so a stream that already produced tokens is never replayed.
+  client = new OpenAI({ baseURL, apiKey, timeout: 30_000, maxRetries: 1 });
   return client;
 }

@@ -4,12 +4,14 @@ import { embedDeployment, getAiClient } from "./client";
 // produce 1536 dimensions, so switching models later needs no schema change.
 export const EMBEDDING_DIMENSIONS = 1536;
 
-export async function embedText(text: string): Promise<{ vector: number[]; tokens: number }> {
-  const res = await getAiClient().embeddings.create({
-    model: embedDeployment(),
-    input: text,
-    dimensions: EMBEDDING_DIMENSIONS,
-  });
+export async function embedText(
+  text: string,
+  signal?: AbortSignal
+): Promise<{ vector: number[]; tokens: number }> {
+  const res = await getAiClient().embeddings.create(
+    { model: embedDeployment(), input: text, dimensions: EMBEDDING_DIMENSIONS },
+    { signal }
+  );
 
   const vector = res.data[0]?.embedding;
   if (!vector || vector.length !== EMBEDDING_DIMENSIONS) {

@@ -9,6 +9,7 @@ import { statsRoute } from "./routes/stats-route";
 import { likeRoute } from "./routes/like-route";
 import { analyticsRoute } from "./routes/analytics-route";
 import { adminRoute } from "./routes/admin-route";
+import { aiRoute } from "./routes/ai-route";
 
 const app = new Elysia()
   .use(cors({
@@ -41,7 +42,8 @@ const app = new Elysia()
         { name: 'Stats', description: 'Platform statistics endpoints' },
         { name: 'Likes', description: 'Post like/engagement endpoints' },
         { name: 'Analytics', description: 'View and download tracking endpoints' },
-        { name: 'Admin', description: 'Admin-only user and content management endpoints' }
+        { name: 'Admin', description: 'Admin-only user and content management endpoints' },
+        { name: 'AI', description: 'Ask RuamLem: answers streamed from RuamLem posts' }
       ],
       components: {
         securitySchemes: {
@@ -61,7 +63,8 @@ const app = new Elysia()
   .use(statsRoute)
   .use(likeRoute)
   .use(analyticsRoute)
-  .use(adminRoute);
+  .use(adminRoute)
+  .use(aiRoute);
 
 app.listen(3030, () => {
   console.log("Server running on " + process.env.FRONTEND_URL);

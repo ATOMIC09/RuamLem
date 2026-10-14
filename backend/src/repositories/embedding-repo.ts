@@ -2,21 +2,28 @@ import { supabaseAdmin } from "../supabase-admin";
 
 export type PostSource = { id: number; title: string; body: string; tags: string[] };
 
-export async function getPostSource(postId: number): Promise<PostSource | null> {
+export async function getPostSources(postIds: number[]): Promise<PostSource[]> {
+  if (postIds.length === 0) return [];
+
   const { data, error } = await supabaseAdmin
     .from("posts")
     .select("id, title, body, post_tags(tags(subject_name))")
-    .eq("id", postId)
-    .maybeSingle();
+    .in("id", postIds);
 
-  if (error) throw new Error(`getPostSource failed: ${error.message}`);
-  if (!data) return null;
+  if (error) throw new Error(`getPostSources failed: ${error.message}`);
 
-  const tags = ((data as any).post_tags ?? [])
-    .map((pt: any) => pt.tags?.subject_name)
-    .filter((name: unknown): name is string => typeof name === "string");
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    title: row.title,
+    body: row.body,
+    tags: (row.post_tags ?? [])
+      .map((pt: any) => pt.tags?.subject_name)
+      .filter((name: unknown): name is string => typeof name === "string"),
+  }));
+}
 
-  return { id: data.id, title: data.title, body: data.body, tags };
+export async function getPostSource(postId: number): Promise<PostSource | null> {
+  return (await getPostSources([postId]))[0] ?? null;
 }
 
 export async function listPostIds(): Promise<number[]> {
