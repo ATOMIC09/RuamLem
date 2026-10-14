@@ -1,6 +1,7 @@
 import { status } from "elysia";
 import { supabase } from "../supabase";
 import { uploadFiles, uploadFileToPost, downloadPDF, deleteFileFromPost, deleteMultipleFilesFromPost } from "../repositories/file-repo";
+import { checkUpload } from "../utils/file-validation";
 
 export async function uploadFile(token: string, file: File) {
     try {
@@ -17,7 +18,11 @@ export async function uploadFile(token: string, file: File) {
         } else {
             const userId = user.claims.sub; // Get actual user ID
             console.log("👤 User ID from token:", userId);
-            return uploadFiles([file], userId, null); // Pass as array, null for standalone file upload
+
+            const checked = await checkUpload(file);
+            if (!checked.ok) return { success: false, message: checked.message };
+
+            return uploadFiles([checked.file], userId, null); // Pass as array, null for standalone file upload
         }
     }
     catch (err: any) {
@@ -42,7 +47,10 @@ export async function uploadFileToPostController(token: string, file: File, post
         console.log("👤 User ID from token:", userId);
         console.log("📤 Uploading file to post:", postId);
 
-        return uploadFileToPost(file, userId, postId);
+        const checked = await checkUpload(file);
+        if (!checked.ok) return { success: false, message: checked.message };
+
+        return uploadFileToPost(checked.file, userId, postId);
     }
     catch (err: any) {
         return { status: 500, message: err.message };

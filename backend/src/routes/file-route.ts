@@ -7,8 +7,6 @@ export const fileRoute = (app: Elysia) => {
         if (!authHeader) return { status: 401, message: "No token" };
         const token = authHeader.split(" ")[1];
 
-        console.log("🔑 Token received:", token.substring(0, 20) + "...");
-
         const formData = await c.request.formData();
         const file = formData.get("file") as File;
 
@@ -27,7 +25,7 @@ export const fileRoute = (app: Elysia) => {
         detail: {
             tags: ['Files'],
             summary: 'Upload File',
-            description: 'Upload any file up to 50MB (requires authentication)',
+            description: 'Upload a pdf, doc, docx, ppt, pptx, jpg, jpeg, png or txt file up to 50MB (requires authentication)',
             security: [{ bearerAuth: [] }]
         }
     });
