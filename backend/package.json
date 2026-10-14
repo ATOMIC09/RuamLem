@@ -23,7 +23,8 @@
     "openai": "^7.32.0"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "typescript": "^5.9"
   },
   "module": "src/index.js"
 }
