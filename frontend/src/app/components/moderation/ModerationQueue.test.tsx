@@ -155,6 +155,29 @@ describe("ModerationTabs", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("with moderation off but the AI page on, shows the overview and AI usage tabs only", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AI_ENABLED", "true");
+    getQueue.mockResolvedValue({ enabled: false, items: [] });
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<ModerationTabs section="overview" onChange={onChange} />);
+
+    const usageTab = await screen.findByRole("tab", { name: "การใช้งาน AI" });
+    expect(screen.queryByRole("tab", { name: /ตรวจสอบเนื้อหา/ })).toBeNull();
+    await user.click(usageTab);
+    expect(onChange).toHaveBeenCalledWith("ai-usage");
+    vi.unstubAllEnvs();
+  });
+
+  it("a non-admin never sees the tabs, even with the AI page on", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AI_ENABLED", "true");
+    getQueue.mockResolvedValue({ error: "Access denied" });
+    const { container } = render(<ModerationTabs section="overview" onChange={() => {}} />);
+    await waitFor(() => expect(getQueue).toHaveBeenCalled());
+    expect(container).toBeEmptyDOMElement();
+    vi.unstubAllEnvs();
+  });
+
   it("renders nothing when the queue cannot be loaded (for example, not an admin)", async () => {
     getQueue.mockResolvedValue({ error: "Access denied" });
     const { container } = render(<ModerationTabs section="overview" onChange={() => {}} />);

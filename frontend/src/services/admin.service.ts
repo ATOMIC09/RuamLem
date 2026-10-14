@@ -227,3 +227,52 @@ export async function decideModeration(
     };
   }
 }
+
+export interface TokenBreakdown {
+  requests: number;
+  promptTokens: number;
+  completionTokens: number;
+  embeddingTokens: number;
+  totalTokens: number;
+  /** Estimated cost in `currency`; null when no price is configured on the server. */
+  cost: number | null;
+}
+
+export type AiFeature = 'ask' | 'moderation' | 'embedding';
+
+export interface AiUsageSummary {
+  since: string;
+  days: number;
+  rowsStored: number;
+  oldestRow: string | null;
+  currency: string;
+  pricesConfigured: boolean;
+  totals: TokenBreakdown & { problems: number; avgLatencyMs: number; activeUsers: number };
+  byFeature: Array<TokenBreakdown & { feature: AiFeature }>;
+  byDay: Array<TokenBreakdown & { day: string }>;
+  topUsers: Array<TokenBreakdown & { userId: string; name: string | null; email: string | null; lastUsed: string }>;
+}
+
+/**
+ * AI usage for the last `days` Thai calendar days: tokens, requests and an estimated cost (admin only).
+ */
+export async function getAiUsage(days: number): Promise<{ summary?: AiUsageSummary; error?: string }> {
+  try {
+    const response = await apiRequest<{ success?: boolean; data?: AiUsageSummary; error?: string }>('/admin/ai-usage', {
+      method: 'GET',
+      params: { days },
+    });
+
+    if (response.error) {
+      return { error: response.error };
+    }
+    if (!response.data) {
+      return { error: 'ไม่สามารถดึงข้อมูลการใช้งาน AI ได้' };
+    }
+    return { summary: response.data };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'ไม่สามารถดึงข้อมูลการใช้งาน AI ได้',
+    };
+  }
+}

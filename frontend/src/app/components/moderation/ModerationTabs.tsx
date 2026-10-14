@@ -4,21 +4,24 @@ import { useEffect, useState } from "react";
 import * as adminService from "@/services/admin.service";
 import { QUEUE_CHANGED_EVENT } from "./ModerationQueue";
 
-export type AdminSection = "overview" | "moderation";
+export type AdminSection = "overview" | "moderation" | "ai-usage";
 
 type Props = { section: AdminSection; onChange: (section: AdminSection) => void };
 
-// Renders nothing until the backend says AI moderation is on, so with the switch off the admin
-// page looks exactly as it did before.
+// Renders nothing unless the caller is an admin AND an AI feature is on (moderation on the server, or the
+// Ask RuamLem page on the frontend), so with both switches off the admin page looks exactly as it did before.
 export default function ModerationTabs({ section, onChange }: Props) {
-  const [enabled, setEnabled] = useState(false);
+  const [moderationOn, setModerationOn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [pending, setPending] = useState(0);
+  const aiOn = process.env.NEXT_PUBLIC_AI_ENABLED === "true";
 
   useEffect(() => {
     let cancelled = false;
     adminService.getModerationQueue().then((result) => {
-      if (cancelled || result.error || !result.enabled) return;
-      setEnabled(true);
+      if (cancelled || result.error) return;
+      setIsAdmin(true);
+      setModerationOn(!!result.enabled);
       setPending(result.items?.length ?? 0);
     });
 
@@ -30,7 +33,7 @@ export default function ModerationTabs({ section, onChange }: Props) {
     };
   }, []);
 
-  if (!enabled) return null;
+  if (!isAdmin || !(moderationOn || aiOn)) return null;
 
   const tab = (id: AdminSection, label: string, count?: number) => {
     const selected = section === id;
@@ -56,7 +59,8 @@ export default function ModerationTabs({ section, onChange }: Props) {
     <div className="border-b border-[#dee5ed] bg-white">
       <div role="tablist" aria-label="ส่วนของแดชบอร์ด" className="mx-auto flex max-w-7xl flex-wrap gap-2 px-4 py-3 sm:px-6 lg:px-8">
         {tab("overview", "ภาพรวม")}
-        {tab("moderation", "ตรวจสอบเนื้อหา", pending)}
+        {moderationOn && tab("moderation", "ตรวจสอบเนื้อหา", pending)}
+        {tab("ai-usage", "การใช้งาน AI")}
       </div>
     </div>
   );

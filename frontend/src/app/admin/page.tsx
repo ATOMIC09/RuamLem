@@ -14,6 +14,7 @@ import * as likeService from "@/services/like.service";
 import * as adminService from "@/services/admin.service";
 import ModerationTabs, { type AdminSection } from "../components/moderation/ModerationTabs";
 import ModerationQueue from "../components/moderation/ModerationQueue";
+import AiUsagePanel from "../components/ai/AiUsagePanel";
 import { 
     IoMdPeople, 
     IoMdDocument, 
@@ -546,6 +547,7 @@ export default function AdminDashboard() {
             <ModerationTabs section={section} onChange={setSection} />
 
             {section === 'moderation' && <ModerationQueue />}
+            {section === 'ai-usage' && <AiUsagePanel />}
 
             {/* Main Content */}
             <div className={section === 'overview' ? "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" : "hidden"}>
