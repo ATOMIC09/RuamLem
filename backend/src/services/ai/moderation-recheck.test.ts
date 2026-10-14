@@ -12,6 +12,11 @@ const noChecks = {
 const verdict = (status: ModerationResult["status"], reason: string): ModerationResult => ({
   status,
   reason,
+  decisionInput: {
+    pii: noChecks.pii,
+    contentSafety: { ok: true, value: {} },
+    model: { ok: true, value: null },
+  },
   ms: 5,
   checks: noChecks,
 });

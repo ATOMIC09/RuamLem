@@ -22,9 +22,12 @@ export type DecisionInput = {
   model: CheckOutcome<ModelVerdict | null>;
 };
 
-// Starting thresholds, to be tuned on real data (see the moderation eval).
+// Content Safety severities are 0, 2, 4 or 6. Tuned with `bun run ai:moderation-eval` (see the README).
 export const REJECT_SEVERITY = 6;
 export const HOLD_SEVERITY = 4;
+
+export type Thresholds = { reject: number; hold: number };
+export const DEFAULT_THRESHOLDS: Thresholds = { reject: REJECT_SEVERITY, hold: HOLD_SEVERITY };
 
 const CATEGORY_CODE: Record<string, string> = {
   Hate: "hate",
@@ -38,7 +41,8 @@ type Finding = { status: "rejected" | "held"; reason: string; detail?: string; r
 // Lower rank wins within the same status, so a specific reason is preferred over a generic one.
 const RANK = { contentSafety: 0, modelRule: 1, modelUnsure: 2, invalid: 3, blocked: 4, failed: 5 };
 
-export function decideModeration(input: DecisionInput): ModerationDecision {
+// `thresholds` exists so the eval can try other cutoffs on saved check results without calling any model.
+export function decideModeration(input: DecisionInput, thresholds: Thresholds = DEFAULT_THRESHOLDS): ModerationDecision {
   // Deterministic personal-data hit: hold without waiting for any other check.
   if (input.pii.nationalId) return { status: "held", reason: "personal_data", detail: "thai_national_id" };
   if (input.pii.phone) return { status: "held", reason: "personal_data", detail: "phone_number" };
@@ -49,8 +53,8 @@ export function decideModeration(input: DecisionInput): ModerationDecision {
   if (input.contentSafety.ok) {
     for (const [category, severity] of Object.entries(input.contentSafety.value)) {
       const code = `content_safety:${CATEGORY_CODE[category] ?? category.toLowerCase()}`;
-      if (severity >= REJECT_SEVERITY) findings.push({ status: "rejected", reason: code, rank: RANK.contentSafety });
-      else if (severity >= HOLD_SEVERITY) findings.push({ status: "held", reason: code, rank: RANK.contentSafety });
+      if (severity >= thresholds.reject) findings.push({ status: "rejected", reason: code, rank: RANK.contentSafety });
+      else if (severity >= thresholds.hold) findings.push({ status: "held", reason: code, rank: RANK.contentSafety });
     }
   } else {
     findings.push({ status: "held", reason: "check_failed", detail: "content_safety", rank: RANK.failed });
