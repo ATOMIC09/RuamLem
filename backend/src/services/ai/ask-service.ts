@@ -4,7 +4,8 @@ import { embedText } from "../../ai/embeddings";
 import { classifyAiError } from "../../ai/errors";
 import { buildAskMessages, buildGeneralMessages, retrievalQuery, type ChatTurn } from "../../ai/prompts";
 import { encodeSse } from "../../ai/sse";
-import { getPostSources, matchPosts, type PostSource } from "../../repositories/embedding-repo";
+import { getPostSources, keywordMatchPosts, matchPosts, type PostSource } from "../../repositories/embedding-repo";
+import { queryGrams } from "../../ai/keywords";
 import { logger } from "../../utils/logger";
 import { recordUsage, type UsageEntry } from "./usage-service";
 
@@ -17,6 +18,8 @@ export type AskDeps = {
   embedQuestion: (question: string, signal?: AbortSignal) => Promise<{ vector: number[]; tokens: number }>;
   matchPosts: typeof matchPosts;
   loadSources: (postIds: number[]) => Promise<PostSource[]>;
+  // Plain-text search for names and rare words, which embeddings handle badly. Optional so a test can leave it out.
+  keywordPosts?: (grams: string[], limit: number) => Promise<number[]>;
   streamChat: (messages: ChatMessage[], signal?: AbortSignal) => AsyncIterable<ChatChunk>;
   // Writes the token counts for the usage dashboard. Optional so a test can leave it out.
   recordUsage?: (entry: UsageEntry) => Promise<void>;
@@ -27,6 +30,7 @@ const defaultDeps: AskDeps = {
   matchPosts,
   // Published posts only: even a stale index entry can never surface a held or rejected post.
   loadSources: (postIds) => getPostSources(postIds, { publishedOnly: true }),
+  keywordPosts: keywordMatchPosts,
   streamChat,
   recordUsage,
 };
@@ -58,7 +62,7 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
     const send = (event: string, data: unknown) => {
       if (!abort.signal.aborted) controller.enqueue(encodeSse(event, data));
     };
-    const log = { userId: input.userId, sources: [] as number[], topSimilarity: 0, embeddingTokens: 0 };
+    const log = { userId: input.userId, sources: [] as number[], topSimilarity: 0, keywordHits: 0, embeddingTokens: 0 };
     // What the usage row says about this call; filled in as the call goes.
     const spent: { outcome: UsageEntry["outcome"]; chat?: ChatUsage; mode: UsageEntry["mode"] } = { outcome: "ok", mode: null };
 
@@ -68,9 +72,21 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
       log.embeddingTokens = embeddingTokens;
 
       const matches = await deps.matchPosts(vector, TOP_K, MIN_SIMILARITY);
-      const byId = new Map((await deps.loadSources(matches.map((m) => m.postId))).map((p) => [p.id, p]));
-      // Keep best-first order; a post deleted since indexing simply drops out.
-      const found = matches.filter((m) => byId.has(m.postId));
+      // Names and rare words: the question's own text, falling back to the text with the previous question
+      // when the new one has almost nothing specific left ("แล้วปี 66 ล่ะ"). One piece alone never matches.
+      const own = queryGrams(input.question);
+      const grams = own.length >= 2 ? own : queryGrams(retrievalQuery(input.question, history));
+      const keywordIds = (await deps.keywordPosts?.(grams, TOP_K)) ?? [];
+      log.keywordHits = keywordIds.length;
+
+      // Meaning-based matches first (best first), then the ones only the keywords found.
+      const orderedIds = [...matches.map((m) => m.postId), ...keywordIds.filter((id) => !matches.some((m) => m.postId === id))];
+      const byId = new Map((await deps.loadSources(orderedIds)).map((p) => [p.id, p]));
+      // A post deleted since indexing simply drops out.
+      const found = orderedIds
+        .filter((id) => byId.has(id))
+        .slice(0, TOP_K)
+        .map((id) => ({ postId: id, similarity: matches.find((m) => m.postId === id)?.similarity ?? 0 }));
       log.topSimilarity = found[0]?.similarity ?? 0;
 
       const sources = found.map((m, i) => ({ n: i + 1, post: byId.get(m.postId)! }));

@@ -103,3 +103,17 @@ export async function matchPosts(
   if (error) throw new Error(`match_posts failed: ${error.message}`);
   return (data ?? []).map((row: any) => ({ postId: row.post_id, similarity: row.similarity }));
 }
+
+// Published posts whose text contains most of the given pieces (see sql/006_keyword_search.sql). Best first.
+// A failure (for example the function does not exist yet) returns nothing, so Ask falls back to the
+// meaning-based search alone instead of failing.
+export async function keywordMatchPosts(grams: string[], limit: number): Promise<number[]> {
+  if (grams.length === 0) return [];
+
+  const { data, error } = await supabase.rpc("keyword_match_posts", { p_grams: grams, p_limit: limit });
+  if (error) {
+    console.error("keyword_match_posts failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row: any) => Number(row.post_id));
+}

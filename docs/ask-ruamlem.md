@@ -27,6 +27,7 @@ sequenceDiagram
     API->>E: embed the question (with the previous question if it is a short follow-up)
     E-->>API: 1536 numbers
     API->>DB: match_posts(top 5, similarity >= 0.43), as the caller
+    API->>DB: keyword_match_posts(pieces of the question), as the caller
     alt posts match
         API->>DB: load those posts (published only)
         API-->>B: event: sources [posts]
@@ -58,7 +59,19 @@ Code: `backend/src/services/ai/embed-service.ts`, `backend/src/repositories/embe
 
 ## 2. Finding the right posts
 
-The question is embedded with the same model, and the database function `match_posts` returns the posts whose embeddings are closest (cosine similarity). The backend keeps at most **5** posts with a similarity of at least **0.43**.
+Two searches run for every message and their results are merged.
+
+**Meaning (embeddings).** The question is embedded with the same model, and the database function `match_posts` returns the posts whose embeddings are closest (cosine similarity). The backend keeps at most **5** posts with a similarity of at least **0.43**.
+
+**Keywords (names and rare words).** Embeddings are weak on names. A question that is only a teacher's name ("เรวัต", or "มีข้อสอบอาจารย์เรวัตมั้ย") scores about 0.30 against a post that mentions the teacher, under the cutoff, and used to be answered as "no post found". So the question is also matched as plain text:
+
+1. Generic exam words (`ข้อสอบ`, `วิชา`, `อาจารย์`, `มี`, `ไหม`, `midterm`, `final` and a few more, listed in `backend/src/ai/keywords.ts`) are removed, because they say nothing about which post is meant.
+2. What is left is cut into overlapping **4-character pieces** (Thai has no spaces, and a word splitter breaks names badly): `เรวัต` becomes `เรวั`, `รวัต`.
+3. The database function `keyword_match_posts` (`sql/006_keyword_search.sql`) returns the published posts whose title, body and tags contain **at least 2 pieces and at least 60%** of all the pieces.
+
+Results are merged: meaning-based matches first (best first), then the posts only the keywords found, at most 5 in all. If the question has almost nothing specific left (a short follow-up such as "แล้วปี 66 ล่ะ"), the previous question is used for the keywords too. If the keyword function is missing, the search quietly falls back to meaning only.
+
+On the real data, "เรวัต" finds all four posts that name that teacher (#26, #33, #35, #38), while questions about things that are not on the site ("ข้อสอบวิชาเคมีอินทรีย์", "ร้านอาหารอร่อยใกล้มหาวิทยาลัย", "ข้อสอบ calculus") find nothing.
 
 **Follow-ups.** A short follow-up such as "แล้วปี 66 ล่ะ" means nothing on its own. When the new message is under 25 characters, the previous user message is added to the text that is searched, so the search still finds the right exams.
 
@@ -69,7 +82,7 @@ The 0.43 cutoff was tuned on real data. On 13 Thai test questions written from t
 | 8 about posts that exist | The right post was in the top 5 for 7 of them. The miss was "ข้อสอบวิชาปัญญาประดิษฐ์" (artificial intelligence, in Thai) against a post titled "AI". |
 | 5 about things that are not on the site | All 5 matched no post. They scored at most 0.41, while the weakest correct match scored 0.46. |
 
-Before the chatbot change, a question with no match got a refusal. Now it gets a general answer, so a cutoff that is slightly too strict simply means more general answers. The cutoff should be checked again with questions from real students. If Thai matching turns out weak, the documented fix is the `text-embedding-3-large` model with `dimensions: 1536` (same table), followed by `bun run ai:reindex`.
+Before the chatbot change, a question with no match got a refusal. (Names are now covered by the keyword search above, not by lowering this cutoff.) Now it gets a general answer, so a cutoff that is slightly too strict simply means more general answers. The cutoff should be checked again with questions from real students. If Thai matching turns out weak, the documented fix is the `text-embedding-3-large` model with `dimensions: 1536` (same table), followed by `bun run ai:reindex`.
 
 As a second safety net, posts are loaded "published only", so even a stale index row can never show a hidden post.
 
@@ -177,7 +190,8 @@ The similarity cutoff (0.43) and the number of sources (5) are constants at the 
 ## Known limitations
 
 - General answers come from the model's own knowledge. They can be wrong, and they are not reviewed. The label tells the reader they are not from RuamLem posts, and the model is told to say when it is unsure.
-- Thai matching is decent but not perfect (the "ปัญญาประดิษฐ์" vs "AI" miss above).
+- Thai matching is decent but not perfect (the "ปัญญาประดิษฐ์" vs "AI" miss above). The keyword search helps with names and exact words, but not with synonyms or translations.
+- The keyword search scans the text of every published post for each message. That is fine for thousands of posts. For far more, add a trigram or full-text index.
 - Very short test posts in the database (for example "สวัสดีชาวโลก") sometimes appear as weak sources. Removing junk posts improves answers.
 - The answer arrives in a burst after a short wait, because of how the Azure deployment releases text.
 - The conversation lives only in the browser tab. There is no saved history.

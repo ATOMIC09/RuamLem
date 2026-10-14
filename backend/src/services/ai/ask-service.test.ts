@@ -459,3 +459,71 @@ describe("askStream: usage recording", () => {
     expect(frames.map((f) => f.event)).toContain("done");
   });
 });
+
+describe("askStream: keyword search for names", () => {
+  const withKeywords = (opts: Parameters<typeof makeDeps>[0], ids: number[]) => {
+    const { deps, mocks } = makeDeps(opts);
+    const keywordPosts = mock(async (_grams: string[], _limit: number) => ids);
+    return { deps: { ...deps, keywordPosts } as AskDeps, keywordPosts, mocks };
+  };
+
+  it("answers from posts found only by the keywords, when the meaning-based search finds nothing", async () => {
+    const { deps, keywordPosts } = withKeywords({ matches: [] }, [33, 48]);
+    const frames = await readAll(askStream({ ...input, question: "มีข้อสอบอาจารย์เรวัตมั้ย" }, deps));
+
+    expect(keywordPosts).toHaveBeenCalledTimes(1);
+    expect((keywordPosts.mock.calls[0] as any[])[0]).toEqual(["เรวั", "รวัต"]); // the name, generic words removed
+    expect(frames[0].event).toBe("sources");
+    expect(frames[0].data.map((s: any) => s.postId)).toEqual([33, 48]);
+  });
+
+  it("uses the grounded prompt, not the general one, once a keyword hit exists", async () => {
+    const { deps, mocks } = withKeywords({ matches: [] }, [33]);
+    await readAll(askStream({ ...input, question: "เรวัต" }, deps));
+    const messages = (mocks.streamChat.mock.calls[0] as any[])[0] as { role: string; content: string }[];
+    expect(messages[0].content).not.toBe(GENERAL_SYSTEM_PROMPT);
+    expect(messages[1].content).toContain("<sources>");
+  });
+
+  it("puts meaning-based matches first, then keyword-only ones, without repeating a post", async () => {
+    const { deps } = withKeywords({ matches: [{ postId: 48, similarity: 0.6 }] }, [33, 48]);
+    const frames = await readAll(askStream(input, deps));
+    expect(frames[0].data.map((s: any) => s.postId)).toEqual([48, 33]);
+    expect(frames[0].data.map((s: any) => s.n)).toEqual([1, 2]);
+  });
+
+  it("never shows more than 5 sources", async () => {
+    const many = [1, 2, 3, 4, 5, 6, 7].map((id) => post(id, `โพสต์ ${id}`));
+    const { deps } = withKeywords({ matches: [], loaded: many }, [1, 2, 3, 4, 5, 6, 7]);
+    const frames = await readAll(askStream({ ...input, question: "เรวัต" }, deps));
+    expect(frames[0].data).toHaveLength(TOP_K);
+  });
+
+  it("a keyword hit that is not a published post is dropped, because sources are loaded as published only", async () => {
+    const { deps } = withKeywords({ matches: [], loaded: [post(33, "มิดเทอม Signal")] }, [99, 33]);
+    const frames = await readAll(askStream({ ...input, question: "เรวัต" }, deps));
+    expect(frames[0].data.map((s: any) => s.postId)).toEqual([33]);
+  });
+
+  it("with nothing specific in the question there are no pieces to look for, and it stays general", async () => {
+    const { deps, keywordPosts } = withKeywords({ matches: [] }, []);
+    const frames = await readAll(askStream({ ...input, question: "มีข้อสอบไหม" }, deps));
+    expect((keywordPosts.mock.calls[0] as any[])[0]).toEqual([]);
+    expect(frames[0].data).toEqual([]);
+  });
+
+  it("a short follow-up with nothing specific uses the previous question for the keywords", async () => {
+    const { deps, keywordPosts } = withKeywords({ matches: [] }, []);
+    await readAll(askStream({ ...input, question: "แล้วปี 66 ล่ะ", history: [{ role: "user", content: "ข้อสอบอาจารย์เรวัต" }, { role: "assistant", content: "ok" }] }, deps));
+    expect((keywordPosts.mock.calls[0] as any[])[0]).toEqual(expect.arrayContaining(["เรวั", "รวัต"]));
+  });
+
+  it("does not log the pieces (they are the user's words)", async () => {
+    const spies = [spyOn(logger, "info"), spyOn(logger, "warn"), spyOn(logger, "error"), spyOn(logger, "debug")];
+    const { deps } = withKeywords({ matches: [] }, [33]);
+    await readAll(askStream({ ...input, question: "เรวัต" }, deps));
+    const logged = JSON.stringify(spies.flatMap((s) => s.mock.calls));
+    expect(logged).not.toContain("เรวั");
+    expect(logged).toContain("keywordHits");
+  });
+});

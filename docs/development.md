@@ -32,6 +32,7 @@ Then run, in the Supabase SQL editor and in this order:
 5. `backend/sql/003c_owner_reads_own_uploads.sql`: lets uploaders see and delete their own unlinked exam files
 6. `backend/sql/004_cleanup_unused_tags.sql`: removes a tag when its last post goes away
 7. `backend/sql/005_ai_usage.sql`: the AI usage table, the daily-limit counter and the dashboard function
+8. `backend/sql/006_keyword_search.sql`: the keyword search that finds posts by a teacher's name or a rare word
 
 The backend of this version needs `003` (it calls the functions it adds), and an older backend stops being able to write once `003` is on, so deploy this version first. See [security.md](security.md).
 
@@ -121,7 +122,7 @@ Student Azure subscriptions often have no quota for some models. Check **Usage +
 
 | Where | Count | What they cover |
 |---|---|---|
-| `backend/src/**/*.test.ts` | 350 tests in 23 files | Per-request tokens (including 40 interleaved requests), a guard that no server file mentions the service-role key, prompts and escaping, citations, SSE, the Ask flow with a fake model (both modes, history), the daily limits, usage recording and cost estimate, error classification, file-type checks, Thai ID and phone rules, the moderation schema, decision, service, actions, recheck and eval scoring, the visibility rule, and the post read paths against an in-memory database |
+| `backend/src/**/*.test.ts` | 365 tests in 24 files | Per-request tokens (including 40 interleaved requests), a guard that no server file mentions the service-role key, prompts and escaping, citations, keyword pieces, SSE, the Ask flow with a fake model (both modes, history, keyword hits), the daily limits, usage recording and cost estimate, error classification, file-type checks, Thai ID and phone rules, the moderation schema, decision, service, actions, recheck and eval scoring, the visibility rule, and the post read paths against an in-memory database |
 | `frontend/src/**/*.test.ts(x)` | 113 tests in 11 files | `SafeMarkdown` against XSS payloads, the SSE parser, the stream client, the chat hook and history builder, the ask form and answer states, the moderation labels, notice, queue and tabs |
 
 No test calls a real model or the real database. Anything that needs a service gets a fake.
@@ -148,7 +149,7 @@ Before turning on an AI feature in production:
 2. Make sure the SQL files `001`, `002` and `003` have been run.
 3. Deploy this version, then set the kill switches to `true`.
 4. Run `ai:reindex` once from your own machine.
-5. Run `003b`, `003c`, `004` and `005` from `backend/sql/` (in that order) if you have not yet.
+5. Run `003b`, `003c`, `004`, `005` and `006` from `backend/sql/` (in that order) if you have not yet.
 
 Row level security is on, so a backend from before this change (which sent no user token) can no longer write. Deploy this version before relying on the site.
 
@@ -166,6 +167,7 @@ The chat deployment on the student subscription allows **15 requests and 15,000 
 |---|---|---|
 | New posts all wait as "under review" with `check_failed` | Azure rate limit (HTTP 429), an outage, or a wrong Azure variable | Check the backend log for `moderation check failed` and its status. Fix the cause, then run `bun run ai:recheck`. |
 | Ask RuamLem always gives general answers and never cites posts | The index is empty, or the posts are not published | Run `bun run ai:reindex` |
+| Asking for a teacher's name or a rare word finds nothing | `sql/006` has not been run (the keyword search is missing), or no published post contains that text | Run `006`. The backend log says `keyword_match_posts failed` when the function is missing. |
 | Ask RuamLem answers "AI disabled" | `AI_ENABLED` is not `true`, or the backend was not restarted | Set it and restart |
 | Ask RuamLem shows a content-filter message | Azure's filter blocked the question or one of the posts it found | Expected for harmful text. If it keeps happening for normal questions, look for a hostile post in the results and hold it. |
 | The `/ask` page shows 404 | `NEXT_PUBLIC_AI_ENABLED` is not `true` | Set it and restart the frontend |

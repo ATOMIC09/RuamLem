@@ -132,6 +132,7 @@ The original tables (profiles, posts, comments, files, tags, post_tags, likes) w
 | `003b_finish_hardening.sql` | Removes the old open policies on `post_views`, `file_downloads` and both storage buckets, cuts table privileges back to what each role needs, adds `admin_delete_user` | **Applied** |
 | `003c_owner_reads_own_uploads.sql` | Lets an uploader see (and so delete) their own exam files before the post links them; removes anon's access to the two admin functions | **Applied** |
 | `004_cleanup_unused_tags.sql` | Adds `delete_unused_tags()`, which the backend calls when a post is deleted or changes tag, so a tag nobody uses any more is removed | **Applied** |
+| `006_keyword_search.sql` | Adds `keyword_match_posts()`, the plain-text search for names and rare words that runs next to the embedding search. See [ask-ruamlem.md](ask-ruamlem.md#2-finding-the-right-posts). | **Run it** (until then Ask uses the meaning search only) |
 | `005_ai_usage.sql` | Adds the `ai_usage` table (one row per AI call: who, feature, tokens, time), its policies, the 200,000-row loop trigger, `my_ask_usage_since()` and `admin_ai_usage_summary()`. See [ai-usage.md](ai-usage.md). | **Run it** (until then usage is not recorded and the daily limit uses the in-memory counter) |
 
 Run them in the Supabase SQL editor, in order. Every file can be run again safely.
