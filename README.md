@@ -28,7 +28,7 @@ It also has two AI helpers: one is a study chatbot that knows the material on th
 
 ### Ask RuamLem
 
-A chat where the answer appears word by word, and follow-up questions work. It has two modes. When posts on RuamLem match your message, the answer is written **only from those posts**, and every statement has a small number like `[1]` that links to the post it came from. When nothing matches (a greeting, a concept to explain, study advice), it answers as a study assistant and labels the answer as general, so you know it is not from RuamLem's posts. It stays on studying and RuamLem: requests to build an app, role-play, or "ignore your rules" are politely refused. It is never allowed to invent posts or links.
+A chat where the answer appears word by word, and follow-up questions work. Finished chats are saved in your browser (not on the server), so you can open an old chat later and keep asking in it. It has two modes. When posts on RuamLem match your message, the answer is written **only from those posts**, and every statement has a small number like `[1]` that links to the post it came from. When nothing matches (a greeting, a concept to explain, study advice), it answers as a study assistant and labels the answer as general, so you know it is not from RuamLem's posts. It stays on studying and RuamLem: requests to build an app, role-play, or "ignore your rules" are politely refused. It is never allowed to invent posts or links.
 
 ### Automatic checking, with people in charge
 

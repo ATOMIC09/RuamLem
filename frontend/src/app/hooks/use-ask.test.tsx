@@ -135,3 +135,127 @@ describe("useAsk", () => {
     expect(result.current.turns).toHaveLength(1);
   });
 });
+
+describe("useAsk: saved chats", () => {
+  beforeEach(() => localStorage.clear());
+  const key = (u: string) => `ruamlem.chats.v1.${u}`;
+  const answer = (text: string) => reply([{ type: "sources", sources: [] }, { type: "delta", text }, doneEvent]);
+
+  it("saves a finished chat in this browser, titled by its first question", async () => {
+    answer("คำตอบแรก");
+    const { result } = renderHook(() => useAsk("user-1"));
+    await act(() => result.current.ask("มีข้อสอบ Database ไหม"));
+
+    await waitFor(() => expect(result.current.chats).toHaveLength(1));
+    expect(result.current.chats[0]).toMatchObject({ title: "มีข้อสอบ Database ไหม" });
+    expect(result.current.chats[0].turns).toEqual([{ question: "มีข้อสอบ Database ไหม", text: "คำตอบแรก", sources: [], status: "done" }]);
+    expect(result.current.activeId).toBe(result.current.chats[0].id);
+    expect(JSON.parse(localStorage.getItem(key("user-1"))!)).toHaveLength(1);
+  });
+
+  it("keeps adding to the same saved chat as the conversation goes on", async () => {
+    answer("หนึ่ง");
+    answer("สอง");
+    const { result } = renderHook(() => useAsk("user-1"));
+    await act(() => result.current.ask("ข้อหนึ่ง"));
+    await act(() => result.current.ask("ข้อสอง"));
+
+    await waitFor(() => expect(result.current.chats[0].turns).toHaveLength(2));
+    expect(result.current.chats).toHaveLength(1);
+  });
+
+  it("opens an old chat and continues it, sending its earlier answers as context", async () => {
+    answer("คำตอบเรื่อง JWT");
+    const first = renderHook(() => useAsk("user-1"));
+    await act(() => first.result.current.ask("JWT คืออะไร"));
+    await waitFor(() => expect(first.result.current.chats).toHaveLength(1));
+    first.unmount();
+
+    // a later visit: a new hook instance loads the saved list
+    const { result } = renderHook(() => useAsk("user-1"));
+    await waitFor(() => expect(result.current.chats).toHaveLength(1));
+    expect(result.current.turns).toEqual([]); // the page opens on a fresh chat
+
+    act(() => result.current.openChat(result.current.chats[0].id));
+    expect(result.current.turns.map((t) => t.question)).toEqual(["JWT คืออะไร"]);
+
+    answer("ใช้กับ cookie ได้");
+    await act(() => result.current.ask("แล้วเก็บใน cookie ได้ไหม"));
+    expect(streamAsk.mock.calls.at(-1)![1]).toEqual([
+      { role: "user", content: "JWT คืออะไร" },
+      { role: "assistant", content: "คำตอบเรื่อง JWT" },
+    ]);
+    await waitFor(() => expect(result.current.chats[0].turns).toHaveLength(2));
+    expect(result.current.chats).toHaveLength(1); // continued, not copied
+  });
+
+  it("merely opening a chat does not move it to the top of the list", async () => {
+    answer("a");
+    answer("b");
+    const { result } = renderHook(() => useAsk("user-1"));
+    await act(() => result.current.ask("แรก"));
+    act(() => result.current.reset());
+    await act(() => result.current.ask("สอง"));
+    await waitFor(() => expect(result.current.chats).toHaveLength(2));
+
+    const before = result.current.chats.map((c) => [c.id, c.updatedAt]);
+    const older = result.current.chats[1].id;
+    act(() => result.current.openChat(older));
+    await new Promise((r) => setTimeout(r, 5));
+    expect(result.current.chats.map((c) => [c.id, c.updatedAt])).toEqual(before);
+  });
+
+  it("a new chat starts empty and leaves the old one saved", async () => {
+    answer("a");
+    const { result } = renderHook(() => useAsk("user-1"));
+    await act(() => result.current.ask("แรก"));
+    act(() => result.current.reset());
+    expect(result.current.turns).toEqual([]);
+    expect(result.current.activeId).toBeNull();
+    expect(result.current.chats).toHaveLength(1);
+  });
+
+  it("a failed or unfinished question is not saved", async () => {
+    streamAsk.mockImplementationOnce(async (_q, _h, _s, onEvent) => onEvent({ type: "error", code: "unavailable" }));
+    const { result } = renderHook(() => useAsk("user-1"));
+    await act(() => result.current.ask("จะพัง"));
+    expect(result.current.chats).toEqual([]);
+    expect(localStorage.getItem(key("user-1"))).toBeNull();
+  });
+
+  it("deletes one chat, or all of them", async () => {
+    answer("a");
+    answer("b");
+    const { result } = renderHook(() => useAsk("user-1"));
+    await act(() => result.current.ask("แรก"));
+    act(() => result.current.reset());
+    await act(() => result.current.ask("สอง"));
+    await waitFor(() => expect(result.current.chats).toHaveLength(2));
+
+    act(() => result.current.deleteChat(result.current.chats[0].id)); // the open one
+    expect(result.current.chats).toHaveLength(1);
+    expect(result.current.turns).toEqual([]); // deleting the open chat closes it
+
+    act(() => result.current.deleteAllChats());
+    expect(result.current.chats).toEqual([]);
+    expect(localStorage.getItem(key("user-1"))).toBeNull();
+  });
+
+  it("each user has their own list on the same browser", async () => {
+    answer("a");
+    const a = renderHook(() => useAsk("user-a"));
+    await act(() => a.result.current.ask("ของ A"));
+    await waitFor(() => expect(a.result.current.chats).toHaveLength(1));
+
+    const b = renderHook(() => useAsk("user-b"));
+    expect(b.result.current.chats).toEqual([]);
+  });
+
+  it("without a user nothing is saved", async () => {
+    answer("a");
+    const { result } = renderHook(() => useAsk(null));
+    await act(() => result.current.ask("ไม่มีบัญชี"));
+    expect(result.current.chats).toEqual([]);
+    expect(localStorage.length).toBe(0);
+  });
+});

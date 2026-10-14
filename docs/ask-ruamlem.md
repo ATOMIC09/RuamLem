@@ -103,9 +103,19 @@ Azure's own content filter adds a second layer: when it detects a jailbreak atte
 
 ## 4. The conversation
 
-The browser keeps the chat and sends the **last 8 messages** (4 questions and 4 answers) with each new question. Only turns that produced an answer are included; a failed or empty turn is left out. Each earlier message is cut to 1500 characters. "เริ่มบทสนทนาใหม่" clears the chat.
+**What the model sees.** With each new question the browser sends the **last 8 messages** (4 questions and 4 answers) of the open chat. Only turns that produced an answer are included; a failed or empty turn is left out. Each earlier message is cut to 1500 characters. So a long chat keeps working, but the model only "remembers" the most recent exchanges.
 
-The server keeps no conversations. Closing the page ends the chat, and nothing about it is stored.
+**Saved chats.** Finished chats are saved so you can come back later, open one and keep asking in it:
+
+- They are stored **in this browser only** (`localStorage`, one list per signed-in user, key `ruamlem.chats.v1.<user id>`). Nothing is sent to the server or written to the database, so there is no server-side chat log to protect, grow or delete. A chat is not available on another device or browser.
+- Only **finished answers** are saved. A failed question, or one still streaming, is not. A stopped answer is saved with the text that had arrived.
+- The page always opens on a new empty chat. The saved chats are listed beside it (a side list on wide screens, a fold-out "ประวัติการสนทนา" panel on phones), newest first, each with its first question as the title. Opening one restores it; the next question continues the same chat and its saved earlier answers are sent as context. Merely opening a chat does not move it up the list.
+- "+ แชตใหม่" starts another chat and leaves the old one saved. Each chat has a delete button, and "ลบประวัติทั้งหมด" deletes all (it asks twice).
+- **The store is bounded, like a CCTV loop.** It keeps the newest **30 chats**, the newest **40 question-and-answer pairs** in each chat, at most **8,000 characters** of one answer, and about **1.5 MB** in total. When a limit is hit the oldest chats (or the oldest turns of a huge chat) are dropped first. If the browser reports that its storage is full, the oldest chats are dropped until the rest fits. If storage is blocked altogether (some private windows), the chat still works and is simply not saved.
+- Saved data is read back defensively: a broken or older-format entry is ignored.
+- Chats stay in the browser after sign-out, but each user's list is stored under their own id, so another account on the same browser does not see them in the page. Anyone with access to the browser's developer tools could read them, so use "ลบประวัติทั้งหมด" on a shared computer.
+
+Code: `frontend/src/lib/chat-store.ts` (limits, saving, loading), `frontend/src/app/hooks/use-ask.ts` (open, new, delete), `frontend/src/app/components/ai/ChatHistory.tsx` (the list).
 
 ## 5. Streaming the answer
 
@@ -156,6 +166,7 @@ The page is `frontend/src/app/ask/page.tsx`, built from these pieces:
 | Piece | Job |
 |---|---|
 | `useAsk` (`app/hooks/use-ask.ts`) | The chat state: a list of turns, each with its question, streamed answer, sources and status. It builds the history for each new question (`lib/conversation.ts`). |
+| `ChatHistory` | The list of saved chats: open, start a new one, delete one or all. |
 | `AskForm` | The message box. Enter sends, Shift+Enter adds a line, a counter shows the 500-character limit, the box clears after sending, and Stop appears while an answer is coming. |
 | `AnswerStream` | One question and its answer: searching, streaming, done, stopped, or an error message. A finished answer without sources carries the "general answer" label. |
 | `SafeMarkdown` | Renders the model's text safely (below). |
@@ -199,4 +210,4 @@ The similarity cutoff (0.43) and the number of sources (5) are constants at the 
 - The keyword search scans the text of every published post for each message. That is fine for thousands of posts. For far more, add a trigram or full-text index.
 - Very short test posts in the database (for example "สวัสดีชาวโลก") sometimes appear as weak sources. Removing junk posts improves answers.
 - The answer arrives in a burst after a short wait, because of how the Azure deployment releases text.
-- The conversation lives only in the browser tab. There is no saved history.
+- Saved chats live in one browser only and are limited to the newest 30. There is no server-side history and no sync between devices. The model only sees the last 8 messages of a chat, however long it is.

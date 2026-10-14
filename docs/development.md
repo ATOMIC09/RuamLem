@@ -123,7 +123,7 @@ Student Azure subscriptions often have no quota for some models. Check **Usage +
 | Where | Count | What they cover |
 |---|---|---|
 | `backend/src/**/*.test.ts` | 402 tests in 25 files | Per-request tokens (including 40 interleaved requests), a guard that no server file mentions the service-role key, prompts and escaping, citations, keyword pieces, the hijack guard (blocked and allowed phrases), SSE, the Ask flow with a fake model (both modes, history, keyword hits), the daily limits, usage recording and cost estimate, error classification, file-type checks, Thai ID and phone rules, the moderation schema, decision, service, actions, recheck and eval scoring, the visibility rule, and the post read paths against an in-memory database |
-| `frontend/src/**/*.test.ts(x)` | 113 tests in 11 files | `SafeMarkdown` against XSS payloads, the SSE parser, the stream client, the chat hook and history builder, the ask form and answer states, the moderation labels, notice, queue and tabs |
+| `frontend/src/**/*.test.ts(x)` | 141 tests in 13 files | `SafeMarkdown` against XSS payloads, the SSE parser, the stream client, the chat hook, the history builder and the saved-chat store (limits, quota, broken data), the ask form and answer states, the moderation labels, notice, queue and tabs |
 
 No test calls a real model or the real database. Anything that needs a service gets a fake.
 

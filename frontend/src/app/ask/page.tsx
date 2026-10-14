@@ -8,6 +8,7 @@ import { useAuth } from "../hooks/use-auth";
 import { useAsk } from "../hooks/use-ask";
 import AskForm from "../components/ai/AskForm";
 import AnswerStream from "../components/ai/AnswerStream";
+import ChatHistory from "../components/ai/ChatHistory";
 
 const EXAMPLES = ["มีข้อสอบ Database ไหม", "อธิบาย deadlock ให้เข้าใจง่าย ๆ", "แนะนำวิธีเตรียมตัวสอบ"];
 
@@ -18,8 +19,8 @@ export default function AskPage() {
 }
 
 function AskContent() {
-  const { isSignedIn } = useAuth();
-  const { turns, busy, ask, stop, reset } = useAsk();
+  const { isSignedIn, user } = useAuth();
+  const { turns, busy, ask, stop, reset, chats, activeId, openChat, deleteChat, deleteAllChats } = useAsk(isSignedIn ? user?.id : null);
   const endRef = useRef<HTMLDivElement>(null);
 
   // Keep the newest question in view as the conversation grows.
@@ -27,8 +28,12 @@ function AskContent() {
     if (turns.length > 0) endRef.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }, [turns.length]);
 
+  const history = (
+    <ChatHistory chats={chats} activeId={activeId} disabled={busy} onNew={reset} onOpen={openChat} onDelete={deleteChat} onDeleteAll={deleteAllChats} />
+  );
+
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 text-[#405168]">
+    <main className="mx-auto w-full max-w-5xl px-4 py-8 text-[#405168]">
       <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-[#1c2a48] sm:text-3xl">ถามรวมเล่ม</h1>
         {turns.length > 0 && !busy && (
@@ -58,7 +63,17 @@ function AskContent() {
           </Link>
         </div>
       ) : (
-        <>
+        <div className="lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-8">
+          {/* Saved chats: a side list on wide screens, a fold-out panel above the chat on small ones */}
+          <aside className="mb-6 lg:mb-0">
+            <div className="hidden lg:block">{history}</div>
+            <details className="rounded-2xl border border-[#dee5ed] bg-white p-3 lg:hidden">
+              <summary className="cursor-pointer select-none font-medium text-[#405168]">ประวัติการสนทนา ({chats.length})</summary>
+              <div className="mt-3">{history}</div>
+            </details>
+          </aside>
+
+          <section aria-label="บทสนทนา" className="min-w-0">
           {turns.length === 0 && (
             <div className="mb-6">
               <p className="mb-2 text-sm text-[#7a8b99]">ลองถามดู:</p>
@@ -85,7 +100,8 @@ function AskContent() {
           <div className="mt-6">
             <AskForm busy={busy} onSubmit={ask} onStop={stop} />
           </div>
-        </>
+          </section>
+        </div>
       )}
     </main>
   );
