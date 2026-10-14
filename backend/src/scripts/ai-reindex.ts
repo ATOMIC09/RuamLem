@@ -7,7 +7,7 @@ import { listPostIds } from "../repositories/embedding-repo";
 // This is an operator command, so it does not depend on the AI_ENABLED kill switch.
 
 const force = process.argv.includes("--force");
-const counts = { embedded: 0, unchanged: 0, missing: 0, failed: 0 };
+const counts = { embedded: 0, unchanged: 0, missing: 0, skipped: 0, failed: 0 };
 
 const ids = await listPostIds();
 console.log(`Reindexing ${ids.length} posts${force ? " (force)" : ""}`);

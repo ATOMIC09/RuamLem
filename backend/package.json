@@ -6,7 +6,8 @@
     "dev": "bun run --watch src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
     "start": "bun run dist/index.js",
-    "ai:reindex": "bun run src/scripts/ai-reindex.ts"
+    "ai:reindex": "bun run src/scripts/ai-reindex.ts",
+    "ai:recheck": "bun run src/scripts/ai-recheck.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.0",

@@ -4,6 +4,9 @@ import {
   updateUserRole,
   deletePostAsAdmin
 } from "../repositories/admin-repo";
+import { isModerationEnabled } from "../ai/client";
+import { listQueue } from "../repositories/moderation-repo";
+import { approveItem, rejectItem } from "../services/ai/moderation-actions";
 
 /**
  * Get all users (admin only)
@@ -70,5 +73,46 @@ export async function deletePostAsAdminController(postId: number) {
   } catch (err: any) {
     console.error("Error in deletePostAsAdminController:", err);
     return { error: err.message || "Failed to delete post" };
+  }
+}
+
+/**
+ * Moderation queue: held items (appealed ones first) with the AI's reason (admin only)
+ */
+export async function getModerationQueueController() {
+  try {
+    // With moderation off nothing is ever held, so the queue is simply reported as off.
+    if (!isModerationEnabled()) return { success: true, enabled: false, data: [] };
+
+    return { success: true, enabled: true, data: await listQueue() };
+  } catch (err: any) {
+    console.error("Error in getModerationQueueController:", err);
+    return { error: err.message || "Failed to load the moderation queue" };
+  }
+}
+
+/**
+ * Approve or reject one held item. Both are written to the audit log under the admin's id.
+ */
+export async function moderationDecisionController(
+  adminId: string,
+  type: string,
+  idText: string,
+  decision: "approve" | "reject"
+) {
+  try {
+    const id = parseInt(idText);
+    if ((type !== "post" && type !== "comment") || isNaN(id)) {
+      return { status: 400, error: "Invalid item" };
+    }
+
+    const result =
+      decision === "approve" ? await approveItem(adminId, type, id) : await rejectItem(adminId, type, id);
+    if (!result.ok) return { status: result.code, error: result.message };
+
+    return { success: true, status: result.status };
+  } catch (err: any) {
+    console.error("Error in moderationDecisionController:", err);
+    return { error: err.message || "Failed to save the decision" };
   }
 }

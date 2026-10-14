@@ -4,7 +4,9 @@ import {
   getAllUsersController,
   deleteUserController,
   updateUserRoleController,
-  deletePostAsAdminController
+  deletePostAsAdminController,
+  getModerationQueueController,
+  moderationDecisionController
 } from "../controllers/admin-controller";
 
 /**
@@ -183,6 +185,56 @@ export const adminRoute = (app: Elysia) => {
       security: [{ bearerAuth: [] }]
     }
   });
+
+  /**
+   * Moderation queue (admin only)
+   */
+  app.get("/admin/moderation", async (c) => {
+    const authHeader = c.request.headers.get("authorization");
+    if (!authHeader) return { status: 401, message: "No token provided" };
+
+    const authCheck = await checkAdminRole(authHeader.split(" ")[1]);
+    if (!authCheck.isAdmin) {
+      return { status: 403, error: authCheck.error || "Access denied" };
+    }
+
+    return getModerationQueueController();
+  }, {
+    detail: {
+      tags: ['Admin'],
+      summary: 'Moderation Queue',
+      description: 'Held posts and comments waiting for an admin, appealed items first (admin only)',
+      security: [{ bearerAuth: [] }]
+    }
+  });
+
+  /**
+   * Approve or reject a held item (admin only). Every decision is logged under the admin's id.
+   */
+  for (const decision of ["approve", "reject"] as const) {
+    app.post(`/admin/moderation/:type/:id/${decision}`, async (c) => {
+      const authHeader = c.request.headers.get("authorization");
+      if (!authHeader) return { status: 401, message: "No token provided" };
+
+      const authCheck = await checkAdminRole(authHeader.split(" ")[1]);
+      if (!authCheck.isAdmin || !authCheck.userId) {
+        return { status: 403, error: authCheck.error || "Access denied" };
+      }
+
+      return moderationDecisionController(authCheck.userId, c.params.type, c.params.id, decision);
+    }, {
+      params: t.Object({
+        type: t.String({ description: "post or comment" }),
+        id: t.String({ description: "Item id" })
+      }),
+      detail: {
+        tags: ['Admin'],
+        summary: decision === "approve" ? 'Approve Held Item' : 'Reject Held Item',
+        description: 'Overrides the AI decision (admin only)',
+        security: [{ bearerAuth: [] }]
+      }
+    });
+  }
 
   return app;
 };

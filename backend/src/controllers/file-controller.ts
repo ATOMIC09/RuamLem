@@ -2,6 +2,9 @@ import { status } from "elysia";
 import { supabase } from "../supabase";
 import { uploadFiles, uploadFileToPost, downloadPDF, deleteFileFromPost, deleteMultipleFilesFromPost } from "../repositories/file-repo";
 import { checkUpload } from "../utils/file-validation";
+import { isModerationEnabled } from "../ai/client";
+import { detectPii } from "../ai/pii";
+import { holdPostForFileName } from "../services/ai/moderation-actions";
 
 export async function uploadFile(token: string, file: File) {
     try {
@@ -50,7 +53,17 @@ export async function uploadFileToPostController(token: string, file: File, post
         const checked = await checkUpload(file);
         if (!checked.ok) return { success: false, message: checked.message };
 
-        return uploadFileToPost(checked.file, userId, postId);
+        const uploaded = await uploadFileToPost(checked.file, userId, postId);
+
+        // The real file name is checked for personal data. The file's contents are out of scope.
+        if (isModerationEnabled() && uploaded && (uploaded as any).success) {
+            const pii = detectPii(checked.file.name);
+            if (pii.nationalId || pii.phone) {
+                const held = await holdPostForFileName(postId);
+                if (held.ok) return { ...uploaded, moderation: { status: held.status, reason: held.reason } };
+            }
+        }
+        return uploaded;
     }
     catch (err: any) {
         return { status: 500, message: err.message };

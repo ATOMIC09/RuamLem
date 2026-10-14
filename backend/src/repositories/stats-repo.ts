@@ -1,11 +1,13 @@
 import { supabase } from "../supabase";
+import { withVisibility } from "../utils/visibility";
 
 export async function getStatistics() {
   try {
     // Get total posts count
-    const { count: totalPosts, error: postsError } = await supabase
-      .from("posts")
-      .select("id", { count: "exact", head: true });
+    const { count: totalPosts, error: postsError } = await withVisibility(
+      supabase.from("posts").select("id", { count: "exact", head: true }),
+      null
+    );
 
     if (postsError) {
       console.error("Error fetching posts count:", postsError);
@@ -24,19 +26,20 @@ export async function getStatistics() {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     
-    const { count: postsThisMonth, error: monthPostsError } = await supabase
-      .from("posts")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", firstDayOfMonth);
+    const { count: postsThisMonth, error: monthPostsError } = await withVisibility(
+      supabase.from("posts").select("id", { count: "exact", head: true }),
+      null
+    ).gte("created_at", firstDayOfMonth);
 
     if (monthPostsError) {
       console.error("Error fetching posts this month:", monthPostsError);
     }
 
     // Get total comments count
-    const { count: totalComments, error: commentsError } = await supabase
-      .from("comments")
-      .select("id", { count: "exact", head: true });
+    const { count: totalComments, error: commentsError } = await withVisibility(
+      supabase.from("comments").select("id", { count: "exact", head: true }),
+      null
+    );
 
     if (commentsError) {
       console.error("Error fetching comments count:", commentsError);

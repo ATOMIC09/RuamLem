@@ -1,6 +1,14 @@
 import { status } from "elysia";
 import { supabase } from "../supabase";
 import { post } from "../controllers/post-controller";
+import { withVisibility } from "../utils/visibility";
+
+// What a post or comment is saved with when moderation is on. Undefined means "as before".
+export type ModerationColumns = { status: "published" | "held" | "rejected"; reason: string | null };
+
+function moderationColumns(m?: ModerationColumns) {
+  return m ? { moderation_status: m.status, moderation_reason: m.reason } : {};
+}
 
 // Helper function to get user info
 async function getUserInfo(userId: string) {
@@ -59,12 +67,12 @@ async function getPostTags(postId: number) {
 }
 
 // Helper function to get comment count for a post
-async function getCommentCount(postId: number) {
+async function getCommentCount(postId: number, viewerId?: string | null) {
   try {
-    const { count, error } = await supabase
-      .from("comments")
-      .select("id", { count: "exact", head: true })
-      .eq("post_id", postId);
+    const { count, error } = await withVisibility(
+      supabase.from("comments").select("id", { count: "exact", head: true }).eq("post_id", postId),
+      viewerId
+    );
 
     if (error) return 0;
     return count || 0;
@@ -74,14 +82,14 @@ async function getCommentCount(postId: number) {
 }
 
 // Helper function to add file, tags, and comment count to posts
-async function addPostDetails(posts: any[]) {
+async function addPostDetails(posts: any[], viewerId?: string | null) {
   return Promise.all(
     posts.map(async (post) => ({
       ...post,
       user_info: await getUserInfo(post.user_id),
       attachments: await getFileInfo(post.id),
       tags: await getPostTags(post.id),
-      comment_count: await getCommentCount(post.id)
+      comment_count: await getCommentCount(post.id, viewerId)
     }))
   );
 }
@@ -96,11 +104,11 @@ async function addUserInfoToPosts(posts: any[]) {
   );
 }
 
-export async function uploadPost(userId: string, title: string, body: string, tag: string) {
+export async function uploadPost(userId: string, title: string, body: string, tag: string, moderation?: ModerationColumns) {
   try {
     const { data: postTable, error: errorPostTable } = await supabase
       .from("posts")
-      .insert([{ user_id: userId, title, body }])
+      .insert([{ user_id: userId, title, body, ...moderationColumns(moderation) }])
       .select("id")
       .single();
 
@@ -159,7 +167,7 @@ export async function uploadPost(userId: string, title: string, body: string, ta
   }
 }
 
-export async function uploadComment(userId: string, postId: string, body: string) {
+export async function uploadComment(userId: string, postId: string, body: string, moderation?: ModerationColumns) {
   try {
     const { data: commentData, error: errorComment } = await supabase
       .from("comments")
@@ -167,7 +175,8 @@ export async function uploadComment(userId: string, postId: string, body: string
         {
           user_id: userId,
           post_id: postId,
-          body: body
+          body: body,
+          ...moderationColumns(moderation)
         }
       ])
       .select("*")
@@ -185,17 +194,15 @@ export async function uploadComment(userId: string, postId: string, body: string
 }
 
 
-export async function getPost(count: number = 10) {
+export async function getPost(count: number = 10, viewerId?: string | null) {
   try {
-    const { data, error } = await supabase
-      .from("posts")
-      .select("*")
+    const { data, error } = await withVisibility(supabase.from("posts").select("*"), viewerId)
       .limit(count)
       .order("id", { ascending: false });
 
     if (error) throw error;
 
-    const postsWithDetails = await addPostDetails(data || []);
+    const postsWithDetails = await addPostDetails(data || [], viewerId);
     return { status: 200, data: postsWithDetails };
   } catch (err: any) {
     return { status: 500, message: err.message };
@@ -203,25 +210,23 @@ export async function getPost(count: number = 10) {
 }
 
 
-export async function getPostAfter(lastId: number, count: number = 10) {
+export async function getPostAfter(lastId: number, count: number = 10, viewerId?: string | null) {
   try {
-    const { data, error } = await supabase
-      .from("posts")
-      .select("*")
+    const { data, error } = await withVisibility(supabase.from("posts").select("*"), viewerId)
       .lt("id", lastId) 
       .order("id", { ascending: false }) 
       .limit(count);
 
     if (error) throw error;
 
-    const postsWithDetails = await addPostDetails(data || []);
+    const postsWithDetails = await addPostDetails(data || [], viewerId);
     return { status: 200, data: postsWithDetails };
   } catch (err: any) {
     return { status: 500, message: err.message };
   }
 }
 
-export async function getPostFilter(tags: string, count: number = 10) {
+export async function getPostFilter(tags: string, count: number = 10, viewerId?: string | null) {
   try {
     const { data: dataTags, error: errorTags } = await supabase
       .from("tags")
@@ -249,28 +254,25 @@ export async function getPostFilter(tags: string, count: number = 10) {
 
     const postIds = postTags.map((p) => p.post_id);
 
-    const { data: dataPost, error: errorPosts } = await supabase
-      .from("posts")
-      .select("*")
+    const { data: dataPost, error: errorPosts } = await withVisibility(supabase.from("posts").select("*"), viewerId)
       .in("id", postIds)
       .limit(count);
 
     if (errorPosts) throw errorPosts;
 
-    const postsWithDetails = await addPostDetails(dataPost || []);
+    const postsWithDetails = await addPostDetails(dataPost || [], viewerId);
     return { status: 200, data: postsWithDetails };
   } catch (err: any) {
     return { status: 500, message: err.message };
   }
 }
 
-export async function getComment(post_id: number) {
+export async function getComment(post_id: number, viewerId?: string | null) {
   try {
-    const { data: dataComment, error: errorComment } = await supabase
-      .from("comments")
-      .select("*")
-      .eq("post_id", post_id)
-      .order("created_at", { ascending: false });
+    const { data: dataComment, error: errorComment } = await withVisibility(
+      supabase.from("comments").select("*").eq("post_id", post_id),
+      viewerId
+    ).order("created_at", { ascending: false });
 
     if (errorComment) throw errorComment;
 
@@ -281,19 +283,18 @@ export async function getComment(post_id: number) {
   }
 }
 
-export async function getPostById(postId: number) {
+export async function getPostById(postId: number, viewerId?: string | null) {
   try {
-    const { data: post, error } = await supabase
-      .from("posts")
-      .select("*")
-      .eq("id", postId)
-      .single();
+    const { data: post, error } = await withVisibility(
+      supabase.from("posts").select("*").eq("id", postId),
+      viewerId
+    ).single();
 
     if (error || !post) {
       return { status: 404, message: "Post not found" };
     }
 
-    const postsWithDetails = await addPostDetails([post]);
+    const postsWithDetails = await addPostDetails([post], viewerId);
     return { status: 200, data: postsWithDetails[0] };
   } catch (err: any) {
     console.error("getPostById error:", err);
@@ -321,7 +322,7 @@ export async function getAllTags() {
   }
 }
 
-export async function editPost(userId: string, postId: number, title: string, body: string, tag: string) {
+export async function editPost(userId: string, postId: number, title: string, body: string, tag: string, moderation?: ModerationColumns) {
   try {
     // Verify that the user owns this post
     const { data: postData, error: getPostError } = await supabase
@@ -341,7 +342,12 @@ export async function editPost(userId: string, postId: number, title: string, bo
     // Update post title and body
     const { data: updatedPost, error: updateError } = await supabase
       .from("posts")
-      .update({ title, body, updated_at: new Date().toISOString() })
+      .update({
+        title,
+        body,
+        updated_at: new Date().toISOString(),
+        ...(moderation ? { ...moderationColumns(moderation), moderation_appealed: false } : {})
+      })
       .eq("id", postId)
       .select()
       .single();

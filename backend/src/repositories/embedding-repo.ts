@@ -1,15 +1,27 @@
+import { isModerationEnabled } from "../ai/client";
 import { getSupabaseAdmin } from "../supabase-admin";
 
-export type PostSource = { id: number; title: string; body: string; tags: string[] };
+// `moderationStatus` is only filled in when moderation is on (the column is not read otherwise).
+export type PostSource = { id: number; title: string; body: string; tags: string[]; moderationStatus?: string };
 
-export async function getPostSources(postIds: number[]): Promise<PostSource[]> {
+const BASE_COLUMNS = "id, title, body, post_tags(tags(subject_name))";
+
+// With `publishedOnly`, a held or rejected post is never returned (when moderation is on).
+// Ask RuamLem uses it so that even a stale index entry cannot leak a hidden post.
+export async function getPostSources(
+  postIds: number[],
+  opts: { publishedOnly?: boolean } = {}
+): Promise<PostSource[]> {
   if (postIds.length === 0) return [];
 
-  const { data, error } = await getSupabaseAdmin()
+  const moderated = isModerationEnabled();
+  let query = getSupabaseAdmin()
     .from("posts")
-    .select("id, title, body, post_tags(tags(subject_name))")
+    .select(moderated ? `${BASE_COLUMNS}, moderation_status` : BASE_COLUMNS)
     .in("id", postIds);
+  if (moderated && opts.publishedOnly) query = query.eq("moderation_status", "published");
 
+  const { data, error } = await query;
   if (error) throw new Error(`getPostSources failed: ${error.message}`);
 
   return (data ?? []).map((row: any) => ({
@@ -19,6 +31,7 @@ export async function getPostSources(postIds: number[]): Promise<PostSource[]> {
     tags: (row.post_tags ?? [])
       .map((pt: any) => pt.tags?.subject_name)
       .filter((name: unknown): name is string => typeof name === "string"),
+    ...(row.moderation_status ? { moderationStatus: row.moderation_status as string } : {}),
   }));
 }
 
@@ -66,6 +79,12 @@ export async function upsertEmbedding(postId: number, contentHash: string, embed
   });
 
   if (error) throw new Error(`upsertEmbedding failed: ${error.message}`);
+}
+
+// A post that is held, rejected or deleted must not stay searchable.
+export async function deleteEmbedding(postId: number) {
+  const { error } = await getSupabaseAdmin().from("post_embeddings").delete().eq("post_id", postId);
+  if (error) throw new Error(`deleteEmbedding failed: ${error.message}`);
 }
 
 export type PostMatch = { postId: number; similarity: number };

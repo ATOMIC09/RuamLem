@@ -6,6 +6,8 @@ import OpenAI from "openai";
 // Web-standard fetch only, so this also runs on Node.
 
 export const isAiEnabled = () => process.env.AI_ENABLED === "true";
+// Separate kill switch: with it off, every post and comment is published as before.
+export const isModerationEnabled = () => process.env.AI_MODERATION_ENABLED === "true";
 
 export const embedDeployment = () => process.env.AZURE_OPENAI_EMBED_DEPLOYMENT ?? "";
 export const chatDeployment = () => process.env.AZURE_OPENAI_CHAT_DEPLOYMENT ?? "";

@@ -1,7 +1,13 @@
 import { createHash } from "node:crypto";
-import { embedDeployment, isAiEnabled } from "../../ai/client";
+import { embedDeployment, isAiEnabled, isModerationEnabled } from "../../ai/client";
 import { embedText } from "../../ai/embeddings";
-import { getContentHash, getPostSource, upsertEmbedding, type PostSource } from "../../repositories/embedding-repo";
+import {
+  deleteEmbedding,
+  getContentHash,
+  getPostSource,
+  upsertEmbedding,
+  type PostSource,
+} from "../../repositories/embedding-repo";
 import { logger } from "../../utils/logger";
 
 // About 6000 characters keeps a post well under the embedding model's input limit.
@@ -18,23 +24,53 @@ export function contentHash(text: string, model: string): string {
   return createHash("sha256").update(`${model}\n${text}`).digest("hex");
 }
 
-export type EmbedResult = "embedded" | "unchanged" | "missing";
+export type EmbedResult = "embedded" | "unchanged" | "missing" | "skipped";
 
-export async function embedPost(postId: number, opts: { force?: boolean } = {}): Promise<EmbedResult> {
-  const post = await getPostSource(postId);
+export type EmbedDeps = {
+  getPostSource: typeof getPostSource;
+  getContentHash: typeof getContentHash;
+  upsertEmbedding: typeof upsertEmbedding;
+  deleteEmbedding: typeof deleteEmbedding;
+  embedText: typeof embedText;
+};
+
+const defaultDeps: EmbedDeps = { getPostSource, getContentHash, upsertEmbedding, deleteEmbedding, embedText };
+
+export async function embedPost(
+  postId: number,
+  opts: { force?: boolean } = {},
+  deps: EmbedDeps = defaultDeps
+): Promise<EmbedResult> {
+  const post = await deps.getPostSource(postId);
   if (!post) return "missing";
+
+  // Only published posts are searchable. A held or rejected post is removed from the index.
+  if (isModerationEnabled() && post.moderationStatus && post.moderationStatus !== "published") {
+    await deps.deleteEmbedding(postId);
+    return "skipped";
+  }
 
   const text = buildEmbeddingText(post);
   const hash = contentHash(text, embedDeployment());
 
-  if (!opts.force && (await getContentHash(postId)) === hash) return "unchanged";
+  if (!opts.force && (await deps.getContentHash(postId)) === hash) return "unchanged";
 
   const started = Date.now();
-  const { vector, tokens } = await embedText(text);
-  await upsertEmbedding(postId, hash, vector);
+  const { vector, tokens } = await deps.embedText(text);
+  await deps.upsertEmbedding(postId, hash, vector);
 
   logger.info("post embedded", { postId, tokens, ms: Date.now() - started });
   return "embedded";
+}
+
+// Brings the index in line with a post's moderation status: published posts are (re)indexed,
+// anything else is removed. Fire and forget, like queueEmbedPost.
+export function syncPostIndex(postId: number, status: string): void {
+  if (status === "published") return queueEmbedPost(postId);
+
+  deleteEmbedding(postId).catch((err: any) => {
+    logger.error("post unindex failed", { postId, message: err?.message });
+  });
 }
 
 // Fire and forget: the HTTP request that created or edited the post must never fail

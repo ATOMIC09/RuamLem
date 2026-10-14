@@ -23,7 +23,8 @@ export type AskDeps = {
 const defaultDeps: AskDeps = {
   embedQuestion: embedText,
   matchPosts,
-  loadSources: getPostSources,
+  // Published posts only: even a stale index entry can never surface a held or rejected post.
+  loadSources: (postIds) => getPostSources(postIds, { publishedOnly: true }),
   streamChat,
 };
 
