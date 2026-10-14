@@ -99,6 +99,7 @@ Foreign keys cascade:
 - **Deleting an account** removes its profile, and through it the user's posts (with everything attached to them), comments and files rows. Likes the user gave to other people's posts stay, because `post_likes.user_id` has no foreign key.
 - **Deleting a post** removes its comments, files rows, likes, tag links and embedding.
 - When an **author** or an **admin** deletes a post, the backend also removes its files from storage.
+- A **tag** is removed when the last post using it is deleted, or moved to another tag. The backend remembers the post's tag ids, deletes the post, then calls `delete_unused_tags`, which only deletes tags that no post links to.
 - `post_views`, `file_downloads` and `moderation_log` rows are kept, because those tables have no foreign keys.
 
 ### The `match_posts` function
@@ -128,9 +129,11 @@ The original tables (profiles, posts, comments, files, tags, post_tags, likes) w
 | `001_ai_embeddings.sql` | Turns on `pgvector`, creates `post_embeddings` and `match_posts()` | Applied |
 | `002_moderation.sql` | Adds `moderation_status`, `moderation_reason`, `moderation_appealed` to `posts` and `comments` (existing rows stay `published`), adds `moderation_log` | Applied |
 | `003_database_hardening.sql` | Row level security on every table with all policies, the guard triggers, the sign-up trigger, the narrow functions, new storage policies | **Applied** |
-| `003b_finish_hardening.sql` | Removes the old open policies on `post_views`, `file_downloads` and both storage buckets, cuts table privileges back to what each role needs, adds `admin_delete_user` | **Not applied yet.** Read it, then run it in the SQL editor. See [security.md](security.md). |
+| `003b_finish_hardening.sql` | Removes the old open policies on `post_views`, `file_downloads` and both storage buckets, cuts table privileges back to what each role needs, adds `admin_delete_user` | **Applied** |
+| `003c_owner_reads_own_uploads.sql` | Lets an uploader see (and so delete) their own exam files before the post links them; removes anon's access to the two admin functions | **Applied** |
+| `004_cleanup_unused_tags.sql` | Adds `delete_unused_tags()`, which the backend calls when a post is deleted or changes tag, so a tag nobody uses any more is removed | **Run it** (the backend only logs a warning until it exists) |
 
-Run them in the Supabase SQL editor, in order. Both hardening files can be run again safely.
+Run them in the Supabase SQL editor, in order. Every file can be run again safely.
 
 ### Row level security
 

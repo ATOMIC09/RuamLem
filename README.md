@@ -60,7 +60,7 @@ The website only ever talks to the RuamLem server. The server holds every passwo
 - Answers from the AI can never run code in your browser, and they only link to RuamLem's own posts.
 - Phone numbers and ID numbers in posts are held back for a person to review.
 - The server holds **no all-powerful database key**. Every request runs as the person who sent it, and the database itself decides, row by row, what that person can see or change (row level security is on for every table).
-- A final database step (`backend/sql/003b_finish_hardening.sql`) is prepared and waits for the owner to run it. Until then a few older open rules remain. The details are in [docs/security.md](docs/security.md).
+- The old open database rules were closed and tested against the database directly with real tokens (77 checks). The details are in [docs/security.md](docs/security.md).
 
 ## Run it on your own computer
 

@@ -77,11 +77,12 @@ The Supabase security advisor reported RLS switched off on seven tables, and rea
 
 1. **Code (done, committed).** The server runs every request as its caller (above). Analytics and the admin features moved to database functions. The service-role key left the server entirely.
 2. **Database, part one (applied to the live project):** `sql/003_database_hardening.sql`: RLS on everywhere, every policy, both guard triggers, the sign-up trigger, the functions, and the new storage policies.
-3. **Database, part two (NOT applied yet): `sql/003b_finish_hardening.sql`.** It removes the old open policies on the visitor logs and both storage buckets, cuts the table privileges back to what each role needs, and adds `admin_delete_user`. The assistant that applied part one was not permitted to run these statements, because they remove access or delete data. **Until you run `003b`, these holes remain open to anyone with the anon key:** reading and inserting visitor-log rows, and listing, downloading, uploading and deleting exam files and avatars. Open the file, read it, and run it in the Supabase SQL editor.
+3. **Database, part two (applied): `sql/003b_finish_hardening.sql`.** It removed the old open policies on the visitor logs and both storage buckets, cut the table privileges back to what each role needs, and added `admin_delete_user`. The assistant that wrote it was not permitted to run these statements (they remove access), so the owner ran it by hand after reading it.
+4. **Database, part three (applied): `sql/003c_owner_reads_own_uploads.sql`.** The matrix found that a member could not delete a file they had just uploaded (Storage deletes also need read access, and the file was not linked to a post yet). It adds a policy for that and removes anon's access to the two admin functions.
 
 ### How it was tested
 
-- **A policy matrix** (`77 checks`) talks to Supabase directly with real tokens, bypassing the backend, as a visitor, as two ordinary members and as the admin. With part one applied, **66 of 77 passed**, and the 11 that failed were exactly the ones that part two fixes (the visitor-log tables and the storage buckets). Re-run it after `003b`; all 77 should pass.
+- **A policy matrix** (`77 checks`) talks to Supabase directly with real tokens, bypassing the backend, as a visitor, as two ordinary members and as the admin. With part one applied, **66 of 77 passed**, and the 11 that failed were exactly the ones that part two fixes (the visitor-log tables and the storage buckets). After `003b` it passed 76, and after `003c` **all 77**.
 - **Every feature, through the real API with the server holding no service-role key:** the backend smoke test (26 checks), the moderation API test (44), the upload test (8), and two browser tests (Ask RuamLem chat, 15; moderation screens, 18).
 - **Code rules:** a test fails if any server file mentions the service-role key or uses the auth admin API, or if a script is imported by the server.
 
@@ -93,7 +94,6 @@ With `AI_MODERATION_ENABLED=false` the backend stops screening new content and n
 
 | Gap | Why it matters | Suggested fix |
 |---|---|---|
-| `003b_finish_hardening.sql` is not applied | See above: visitor logs and file buckets are still open to the anon key | Run it |
 | A signed-in author can mark their own post as published directly in the database | The AI decision is enforced by the backend. A user who also held the server's anon key (which is never sent to browsers) and their own token could skip it. The database does stop them overturning an admin's rejection. | Keep the anon key private. For stronger enforcement, have the database accept only signed moderation decisions. |
 | The session token is stored in `localStorage` | Any script injected into the page could read it | Move it to an httpOnly cookie |
 | Password reset uses one shared Supabase client (`setSession`, then `updateUser`) | Two resets at the same moment could interfere | Create a client per request for that flow |
