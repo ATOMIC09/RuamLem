@@ -8,6 +8,7 @@ import { useAuth } from "../hooks/use-auth";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import * as profileService from "@/services/profile.service";
+import { AI_ENABLED } from "@/lib/features";
 
 export default function Navbar() {
     const { isSignedIn, user, signOut } = useAuth();
@@ -86,6 +87,12 @@ export default function Navbar() {
                         }`}>
                         ชุมชน
                     </Link>
+                    {AI_ENABLED && (
+                        <Link href="/ask" className={`hover:text-[#5e7593] transition-colors text-base ${pathname === '/ask' ? 'font-bold text-[#1c2a48]' : 'font-medium'
+                            }`}>
+                            ถามรวมเล่ม
+                        </Link>
+                    )}
 
                     {/* Authentication Section */}
                     {isSignedIn === null ? (
@@ -222,6 +229,16 @@ export default function Navbar() {
                             >
                                 ชุมชน
                             </Link>
+                            {AI_ENABLED && (
+                                <Link
+                                    href="/ask"
+                                    className={`block py-2 text-[#405168] hover:text-[#5e7593] transition-colors text-base ${pathname === '/ask' ? 'font-bold' : 'font-medium'
+                                        }`}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    ถามรวมเล่ม
+                                </Link>
+                            )}
 
                             <div className="pt-4 border-t border-[#dee5ed]">
                                 {isSignedIn === null ? (

@@ -1,7 +1,7 @@
 // API configuration and utilities
 import axios, { AxiosInstance, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3030';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3030';
 
 export interface ApiResponse<T = unknown> {
   data?: T;
