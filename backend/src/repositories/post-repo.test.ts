@@ -87,7 +87,10 @@ class Query implements PromiseLike<any> {
   }
 }
 
-mock.module("../supabase", () => ({ supabase: { from: (table: string) => new Query(table), auth: {} } }));
+mock.module("../supabase", () => ({
+  supabase: { from: (table: string) => new Query(table), auth: {} },
+  supabaseAuth: { auth: {} },
+}));
 
 // ---- Fixtures ---------------------------------------------------------------------------------
 

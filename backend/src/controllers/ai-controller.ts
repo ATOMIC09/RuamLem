@@ -2,7 +2,7 @@ import { isAiEnabled } from "../ai/client";
 import { errorStream, sseResponse } from "../ai/sse";
 import { askStream } from "../services/ai/ask-service";
 import { createDailyLimiter } from "../services/ai/rate-limit";
-import { supabase } from "../supabase";
+import { supabaseAuth } from "../supabase";
 
 const limiter = createDailyLimiter(Number(process.env.AI_DAILY_LIMIT_PER_USER) || 20);
 
@@ -10,7 +10,7 @@ async function getUserId(request: Request): Promise<string | null> {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return null;
 
-  const { data, error } = await supabase.auth.getClaims(token);
+  const { data, error } = await supabaseAuth.auth.getClaims(token);
   if (error || !data) return null;
   return data.claims.sub ?? null;
 }

@@ -1,5 +1,5 @@
 import { isModerationEnabled } from "../ai/client";
-import { supabase } from "../supabase";
+import { supabaseAuth } from "../supabase";
 
 // Public read endpoints don't require a login, but when one is present the author must be able
 // to see their own held or rejected items. A missing, malformed or expired token just means
@@ -12,7 +12,7 @@ export async function getOptionalViewerId(request: Request): Promise<string | nu
   if (!token) return null;
 
   try {
-    const { data, error } = await supabase.auth.getClaims(token);
+    const { data, error } = await supabaseAuth.auth.getClaims(token);
     if (error || !data) return null;
     return data.claims.sub ?? null;
   } catch {

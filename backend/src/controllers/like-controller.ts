@@ -1,4 +1,4 @@
-import { supabase } from "../supabase";
+import { supabaseAuth } from "../supabase";
 import {
   togglePostLike,
   getPostLikeStatus,
@@ -15,7 +15,7 @@ export const toggleLike = async ({ body, request }: any) => {
       throw new Error("No authorization token provided");
     }
 
-    const { data: user, error } = await supabase.auth.getClaims(token);
+    const { data: user, error } = await supabaseAuth.auth.getClaims(token);
     if (error || !user) {
       throw new Error("Invalid session");
     }
@@ -51,7 +51,7 @@ export const getLikeStatus = async ({ body, request }: any) => {
     let userId = null;
     const token = request.headers.get("Authorization")?.replace("Bearer ", "");
     if (token) {
-      const { data: user } = await supabase.auth.getClaims(token);
+      const { data: user } = await supabaseAuth.auth.getClaims(token);
       userId = user?.claims.sub || null;
     }
 

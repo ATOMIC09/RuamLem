@@ -1,5 +1,5 @@
 import { status } from "elysia";
-import { supabase } from "../supabase";
+import { supabaseAuth } from "../supabase";
 import { uploadFiles, uploadFileToPost, downloadPDF, deleteFileFromPost, deleteMultipleFilesFromPost } from "../repositories/file-repo";
 import { checkUpload } from "../utils/file-validation";
 import { isModerationEnabled } from "../ai/client";
@@ -15,7 +15,7 @@ export async function uploadFile(token: string, file: File) {
         }
 
         //    console.log(token, file.name, file.type, file.size)
-        const { data: user, error } = await supabase.auth.getClaims(token);
+        const { data: user, error } = await supabaseAuth.auth.getClaims(token);
         if (error || !user) {
             return { success: false, message: "Invalid session" };
         } else {
@@ -41,7 +41,7 @@ export async function uploadFileToPostController(token: string, file: File, post
             return { success: false, message: "File size must be under 50MB" };
         }
 
-        const { data: user, error } = await supabase.auth.getClaims(token);
+        const { data: user, error } = await supabaseAuth.auth.getClaims(token);
         if (error || !user) {
             return { success: false, message: "Invalid session" };
         }
@@ -81,7 +81,7 @@ export async function downloadFile(realnameFile:string) {
 
 export async function deleteFileController(token: string, fileId: number, postId: number) {
     try {
-        const { data: user, error } = await supabase.auth.getClaims(token);
+        const { data: user, error } = await supabaseAuth.auth.getClaims(token);
         if (error || !user) {
             return { success: false, message: "Invalid session" };
         }
@@ -95,7 +95,7 @@ export async function deleteFileController(token: string, fileId: number, postId
 
 export async function deleteMultipleFilesController(token: string, fileIds: number[], postId: number) {
     try {
-        const { data: user, error } = await supabase.auth.getClaims(token);
+        const { data: user, error } = await supabaseAuth.auth.getClaims(token);
         if (error || !user) {
             return { success: false, message: "Invalid session" };
         }

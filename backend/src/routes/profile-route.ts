@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { supabase } from "../supabase";
+import { supabaseAuth } from "../supabase";
 import { 
   getProfileController, 
   updateProfileController,
@@ -16,7 +16,7 @@ export const profileRoute = (app: Elysia) => {
     const token = authHeader.split(" ")[1];
 
     try {
-      const { data: user, error } = await supabase.auth.getClaims(token);
+      const { data: user, error } = await supabaseAuth.auth.getClaims(token);
       
       if (error || !user) {
         return { status: 401, message: "Invalid token" };
@@ -45,7 +45,7 @@ export const profileRoute = (app: Elysia) => {
     const body = c.body as any;
 
     try {
-      const { data: user, error } = await supabase.auth.getClaims(token);
+      const { data: user, error } = await supabaseAuth.auth.getClaims(token);
       
       if (error || !user) {
         return { status: 401, message: "Invalid token" };
@@ -85,7 +85,7 @@ export const profileRoute = (app: Elysia) => {
     const token = authHeader.split(" ")[1];
 
     try {
-      const { data: user, error } = await supabase.auth.getClaims(token);
+      const { data: user, error } = await supabaseAuth.auth.getClaims(token);
       
       if (error || !user) {
         return { status: 401, message: "Invalid token" };

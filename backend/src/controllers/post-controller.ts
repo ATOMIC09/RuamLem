@@ -10,7 +10,7 @@ import {
   editPost,
   deletePost
 } from "../repositories/post-repo";
-import { supabase } from "../supabase";
+import { supabaseAuth } from "../supabase";
 import { isModerationEnabled } from "../ai/client";
 import { getItem, getPostTagsAndFiles, type TargetType } from "../repositories/moderation-repo";
 import { queueEmbedPost, syncPostIndex } from "../services/ai/embed-service";
@@ -25,7 +25,7 @@ async function requireUserId(request: Request): Promise<string> {
     throw new Error("No authorization token provided");
   }
 
-  const { data: user, error } = await supabase.auth.getClaims(token);
+  const { data: user, error } = await supabaseAuth.auth.getClaims(token);
   if (error || !user) {
     throw new Error("Invalid session");
   }

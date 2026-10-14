@@ -1,4 +1,4 @@
-import { supabase } from "../supabase";
+import { supabaseAuth } from "../supabase";
 import {
   recordPostView,
   getPostViewCount,
@@ -22,7 +22,7 @@ export const recordView = async ({ body, request }: any) => {
     let userId = null;
     const token = request.headers.get("Authorization")?.replace("Bearer ", "");
     if (token) {
-      const { data: user } = await supabase.auth.getClaims(token);
+      const { data: user } = await supabaseAuth.auth.getClaims(token);
       userId = user?.claims.sub || null;
     }
 
@@ -89,7 +89,7 @@ export const recordDownload = async ({ body, request }: any) => {
     let userId = null;
     const token = request.headers.get("Authorization")?.replace("Bearer ", "");
     if (token) {
-      const { data: user } = await supabase.auth.getClaims(token);
+      const { data: user } = await supabaseAuth.auth.getClaims(token);
       userId = user?.claims.sub || null;
     }
 

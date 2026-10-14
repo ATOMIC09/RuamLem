@@ -1,4 +1,4 @@
-import { supabase } from "../supabase";
+import { supabase, supabaseAuth } from "../supabase";
 
 export enum Role {
   Admin = "admin",
@@ -8,7 +8,7 @@ export enum Role {
 
 export async function createAuthUser(email: string, password: string, firstName: string, lastName: string) {
   try {
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await supabaseAuth.auth.signUp({
       email,
       password,
       options: {
@@ -49,7 +49,7 @@ export async function createProfile(id: string, firstName: string, lastName: str
 }
 
 export async function signInWithPassword(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabaseAuth.auth.signInWithPassword({
     email,
     password,
   });
@@ -98,7 +98,7 @@ export async function signOutWithSession(token:string) {
 
 export async function forgetPassword(email: string) {
   try {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabaseAuth.auth.resetPasswordForEmail(email, {
       redirectTo: process.env.FRONTEND_URL + "/reset-password",
     });
 
@@ -119,7 +119,7 @@ export async function forgetPassword(email: string) {
 export async function updatePassword(token: string, newPassword: string) {
   try {
     // Set the session using the token from the reset link
-    const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+    const { data: sessionData, error: sessionError } = await supabaseAuth.auth.setSession({
       access_token: token,
       refresh_token: token, // In recovery flow, both tokens are the same
     });
@@ -127,7 +127,7 @@ export async function updatePassword(token: string, newPassword: string) {
     if (sessionError) throw sessionError;
 
     // Update the password
-    const { error: updateError } = await supabase.auth.updateUser({
+    const { error: updateError } = await supabaseAuth.auth.updateUser({
       password: newPassword
     });
 
@@ -148,7 +148,7 @@ export async function updatePassword(token: string, newPassword: string) {
 export async function verifyResetToken(token: string) {
   try {
     // Verify the token by setting the session
-    const { data, error } = await supabase.auth.setSession({
+    const { data, error } = await supabaseAuth.auth.setSession({
       access_token: token,
       refresh_token: token,
     });

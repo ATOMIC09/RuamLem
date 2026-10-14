@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { supabase } from "../supabase";
+import { supabase, supabaseAuth } from "../supabase";
 import {
   getAllUsersController,
   deleteUserController,
@@ -14,7 +14,7 @@ import {
  */
 async function checkAdminRole(token: string): Promise<{ isAdmin: boolean; userId?: string; error?: string }> {
   try {
-    const { data: user, error } = await supabase.auth.getClaims(token);
+    const { data: user, error } = await supabaseAuth.auth.getClaims(token);
     
     if (error || !user) {
       return { isAdmin: false, error: "Invalid token" };
