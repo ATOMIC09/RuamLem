@@ -1,5 +1,6 @@
 import { status } from "elysia";
 import { supabase } from "../supabase";
+import { getPostTagIds, removeUnusedTags } from "./tag-repo";
 import { post } from "../controllers/post-controller";
 import { withVisibility } from "../utils/visibility";
 
@@ -418,6 +419,11 @@ export async function editPost(userId: string, postId: number, title: string, bo
           throw insertTagError;
         }
       }
+
+      // The old tag may have lost its last post
+      if (existingPostTag && existingPostTag.tag_id !== tagId) {
+        await removeUnusedTags([existingPostTag.tag_id]);
+      }
     }
 
     return { 
@@ -492,6 +498,9 @@ export async function deletePost(userId: string, postId: number) {
       console.error("Error deleting comments:", deleteCommentsError);
     }
 
+    // Remember the tags first, so the ones nobody uses any more can be removed afterwards
+    const tagIds = await getPostTagIds(postId);
+
     // Delete post_tags relationship
     const { error: deletePostTagsError } = await supabase
       .from("post_tags")
@@ -511,6 +520,8 @@ export async function deletePost(userId: string, postId: number) {
     if (deletePostError) {
       throw new Error("Failed to delete post");
     }
+
+    await removeUnusedTags(tagIds);
 
     return {
       status: 200,

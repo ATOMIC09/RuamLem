@@ -1,4 +1,5 @@
 import { supabase } from "../supabase";
+import { getPostTagIds, removeUnusedTags } from "./tag-repo";
 
 /**
  * Get all users with their email address and post and comment counts.
@@ -82,6 +83,8 @@ export async function deletePostAsAdmin(postId: number) {
       if (storageError) console.error("Storage deletion error:", storageError);
     }
 
+    const tagIds = await getPostTagIds(postId);
+
     // The database then cascades to comments, likes, files rows, tag links and the search index.
     const { error } = await supabase
       .from("posts")
@@ -89,6 +92,8 @@ export async function deletePostAsAdmin(postId: number) {
       .eq('id', postId);
 
     if (error) throw error;
+
+    await removeUnusedTags(tagIds);
 
     return { success: true };
   } catch (err) {
