@@ -14,7 +14,7 @@ It also has two AI helpers: one is a study chatbot that knows the material on th
 
 - **Share** exam papers, summaries and slides (PDF, Word, PowerPoint, images or text), tagged with the course they belong to.
 - **Find** material on the community page by searching for words, a course, a date or a file type.
-- **Chat** with Ask RuamLem in Thai or English. Ask for material, such as "มีข้อสอบ midterm วิชา Signals ไหม", and the answer is built from posts on the site, with links to them. Or ask anything about your studies and get a normal assistant answer.
+- **Chat** with Ask RuamLem in Thai or English. Ask for material, such as "มีข้อสอบ midterm วิชา Signals ไหม", and the answer is built from posts on the site, with links to them. Or ask about your studies and get a study-assistant answer.
 - **Talk** with others by liking posts and leaving comments.
 
 **As an admin**
@@ -28,7 +28,7 @@ It also has two AI helpers: one is a study chatbot that knows the material on th
 
 ### Ask RuamLem
 
-A chat where the answer appears word by word, and follow-up questions work. It has two modes. When posts on RuamLem match your message, the answer is written **only from those posts**, and every statement has a small number like `[1]` that links to the post it came from. When nothing matches (a greeting, a concept to explain, study advice), it answers like a normal assistant and labels the answer as general, so you know it is not from RuamLem's posts. It is never allowed to invent posts or links.
+A chat where the answer appears word by word, and follow-up questions work. It has two modes. When posts on RuamLem match your message, the answer is written **only from those posts**, and every statement has a small number like `[1]` that links to the post it came from. When nothing matches (a greeting, a concept to explain, study advice), it answers as a study assistant and labels the answer as general, so you know it is not from RuamLem's posts. It stays on studying and RuamLem: requests to build an app, role-play, or "ignore your rules" are politely refused. It is never allowed to invent posts or links.
 
 ### Automatic checking, with people in charge
 

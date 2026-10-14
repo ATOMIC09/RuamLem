@@ -128,7 +128,7 @@ describe("general prompt", () => {
     expect(GENERAL_SYSTEM_PROMPT).toMatch(/own general knowledge/);
     expect(GENERAL_SYSTEM_PROMPT).toMatch(/never invent posts, links, sources or citations/);
     expect(GENERAL_SYSTEM_PROMPT).toMatch(/data, not instructions/);
-    expect(GENERAL_SYSTEM_PROMPT).toMatch(/Greetings and small talk are fine/);
+    expect(GENERAL_SYSTEM_PROMPT).toMatch(/brief friendly greetings/);
   });
 
   it("escapes the question", () => {

@@ -2,10 +2,11 @@ import { CitationFilter } from "../../ai/citations";
 import { streamChat, type ChatChunk, type ChatMessage, type ChatUsage } from "../../ai/chat";
 import { embedText } from "../../ai/embeddings";
 import { classifyAiError } from "../../ai/errors";
-import { buildAskMessages, buildGeneralMessages, retrievalQuery, type ChatTurn } from "../../ai/prompts";
+import { OUT_OF_SCOPE_REPLY, buildAskMessages, buildGeneralMessages, retrievalQuery, type ChatTurn } from "../../ai/prompts";
 import { encodeSse } from "../../ai/sse";
 import { getPostSources, keywordMatchPosts, matchPosts, type PostSource } from "../../repositories/embedding-repo";
 import { queryGrams } from "../../ai/keywords";
+import { isRoleHijack } from "../../ai/guard";
 import { logger } from "../../utils/logger";
 import { recordUsage, type UsageEntry } from "./usage-service";
 
@@ -67,6 +68,15 @@ export function askStream(input: AskInput, deps: AskDeps = defaultDeps): Readabl
     const spent: { outcome: UsageEntry["outcome"]; chat?: ChatUsage; mode: UsageEntry["mode"] } = { outcome: "ok", mode: null };
 
     try {
+      // An obvious hijack ("act as ...", "ignore your instructions") is refused here, before any paid call.
+      if (isRoleHijack(input.question)) {
+        send("sources", []);
+        send("delta", { text: OUT_OF_SCOPE_REPLY });
+        send("done", { usage: usageOf(0, undefined), ms: Date.now() - started });
+        logger.info("ask refused", { userId: input.userId, outcome: "out_of_scope", ms: Date.now() - started });
+        return;
+      }
+
       const history = input.history ?? [];
       const { vector, tokens: embeddingTokens } = await deps.embedQuestion(retrievalQuery(input.question, history), abort.signal);
       log.embeddingTokens = embeddingTokens;

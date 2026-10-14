@@ -12,6 +12,11 @@ describe("queryGrams", () => {
     expect(queryGrams("อาจารย์ศิริโภคาภิรมย์")).toEqual(queryGrams("ศิริโภคาภิรมย์"));
   });
 
+  it("a greeting or thanks is not a search (a post titled 'สวัสดีชาวโลก' must not answer 'สวัสดี')", () => {
+    expect(queryGrams("สวัสดี")).toEqual([]);
+    expect(queryGrams("สวัสดีครับ ขอบคุณ")).toEqual([]);
+  });
+
   it("has nothing to search for when the question is only generic words", () => {
     expect(queryGrams("มีข้อสอบไหม")).toEqual([]);
     expect(queryGrams("ขอข้อสอบหน่อยครับ")).toEqual([]);

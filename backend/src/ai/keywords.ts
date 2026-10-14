@@ -14,7 +14,8 @@ const MAX_GRAMS = 80;
 const GENERIC_WORDS = [
   "แนวข้อสอบ", "ข้อสอบ", "หรือเปล่า", "เกี่ยวกับ", "อยากได้", "อาจารย์", "ช่วยหา", "วิชา", "ช่วย", "หน่อย", "ครับ", "ค่ะ",
   "มั้ย", "ไหม", "ของ", "มี", "ขอ", "ปี", "นะ", "คะ", "หา", "อ.",
-  "midterm", "final", "exam", "have", "with", "any", "the", "for",
+  "สวัสดี", "หวัดดี", "ขอบคุณ", "ขอบใจ",
+  "midterm", "final", "exam", "have", "with", "any", "the", "for", "hello", "thanks", "thank",
 ].sort((a, b) => b.length - a.length);
 
 // The distinct lowercase pieces of `text` to look for. Empty when nothing specific is left (for example
