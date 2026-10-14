@@ -1,11 +1,11 @@
-import { supabaseAdmin } from "../supabase-admin";
+import { getSupabaseAdmin } from "../supabase-admin";
 
 export type PostSource = { id: number; title: string; body: string; tags: string[] };
 
 export async function getPostSources(postIds: number[]): Promise<PostSource[]> {
   if (postIds.length === 0) return [];
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from("posts")
     .select("id, title, body, post_tags(tags(subject_name))")
     .in("id", postIds);
@@ -31,7 +31,7 @@ export async function listPostIds(): Promise<number[]> {
   const pageSize = 1000;
 
   for (let from = 0; ; from += pageSize) {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from("posts")
       .select("id")
       .order("id", { ascending: true })
@@ -46,7 +46,7 @@ export async function listPostIds(): Promise<number[]> {
 }
 
 export async function getContentHash(postId: number): Promise<string | null> {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from("post_embeddings")
     .select("content_hash")
     .eq("post_id", postId)
@@ -57,7 +57,7 @@ export async function getContentHash(postId: number): Promise<string | null> {
 }
 
 export async function upsertEmbedding(postId: number, contentHash: string, embedding: number[]) {
-  const { error } = await supabaseAdmin.from("post_embeddings").upsert({
+  const { error } = await getSupabaseAdmin().from("post_embeddings").upsert({
     post_id: postId,
     content_hash: contentHash,
     // pgvector accepts the "[0.1,0.2,...]" text form, which is what JSON.stringify produces.
@@ -75,7 +75,7 @@ export async function matchPosts(
   matchCount: number,
   minSimilarity: number
 ): Promise<PostMatch[]> {
-  const { data, error } = await supabaseAdmin.rpc("match_posts", {
+  const { data, error } = await getSupabaseAdmin().rpc("match_posts", {
     query_embedding: JSON.stringify(queryEmbedding),
     match_count: matchCount,
     min_similarity: minSimilarity,

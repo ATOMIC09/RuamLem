@@ -1,10 +1,18 @@
 import "dotenv/config";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 // Service-role client: bypasses RLS. Server-side only, and only for the AI tables
-// (post_embeddings and, later, moderation_log). Everything else keeps using ./supabase.
-export const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false, autoRefreshToken: false } }
-);
+// (post_embeddings, moderation_log) and moderation reads/writes. Everything else keeps using ./supabase.
+// Created on first use so importing this module (in tests, say) needs no environment variables.
+let client: SupabaseClient | null = null;
+
+export function getSupabaseAdmin(): SupabaseClient {
+  if (client) return client;
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("Supabase service role is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)");
+
+  client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  return client;
+}
