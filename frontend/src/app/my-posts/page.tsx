@@ -15,6 +15,7 @@ interface Post {
   title: string;
   body: string;
   tag?: string;
+  user_id?: string;
   user_info?: {
     firstName: string;
     lastName: string;
@@ -75,9 +76,9 @@ export default function MyPostsPage() {
       }
 
       if (result.posts) {
-        // Filter posts that belong to the current user
+        // Filter posts that belong to the current user (by id: first names are not unique)
         const myPosts = result.posts.filter(
-          post => post.user_info?.firstName === user?.firstName
+          post => !!user?.id && post.user_id === user.id
         );
         setPosts(myPosts);
       }
