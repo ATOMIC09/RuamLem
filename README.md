@@ -8,6 +8,36 @@ It also has two AI helpers: one is a study chatbot that knows the material on th
 
 ---
 
+## Screenshots
+
+The live site is at [ruamlem.vercel.app](https://ruamlem.vercel.app/). The interface is in Thai.
+
+**Home**
+
+![Home page](docs/images/home.png)
+
+**Community**: search, filter by course, file type and date, and download the files.
+
+![Community page](docs/images/community.png)
+
+**A post** with its file, likes and comments.
+
+![Post page](docs/images/post.png)
+
+**Ask RuamLem**: the answer is written only from matching posts, with numbered sources that link to them.
+
+![Ask RuamLem](docs/images/ask.png)
+
+**Admin**: statistics, the review queue for posts the AI was unsure about, and AI usage.
+
+![Admin overview](docs/images/admin-overview.png)
+
+![Admin review queue](docs/images/admin-moderation.png)
+
+![Admin AI usage](docs/images/admin-ai-usage.png)
+
+---
+
 ## What you can do
 
 **As a student**
