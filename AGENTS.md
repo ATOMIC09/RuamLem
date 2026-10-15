@@ -26,7 +26,6 @@ Read this file first, then the page in `docs/` for the area you will touch. Do n
 | AI usage tracking, daily limits, cost estimate, dashboard | `docs/ai-usage.md` |
 | Protections, audit results, known gaps | `docs/security.md` |
 | Setup, environment variables, scripts, tests, deploy, troubleshooting | `docs/development.md` |
-| Original plan (history only, partly outdated) | `RuamLem-AI-PLAN.md` |
 
 ## Layout
 
