@@ -16,7 +16,7 @@
     "@sinclair/typebox": "^0.34.52",
     "@supabase/supabase-js": "^2.119.0",
     "bcrypt": "^6.0.0",
-    "dotenv": "^17.2.2",
+    "dotenv": "^18.0.9",
     "elysia": "latest",
     "form-data": "^4.0.6",
     "jsdom": "^27.0.0",
