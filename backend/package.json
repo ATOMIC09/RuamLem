@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "bun-types": "latest",
-    "typescript": "^5.9"
+    "typescript": "^7.0"
   },
   "module": "src/index.js"
 }
