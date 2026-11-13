@@ -21,7 +21,7 @@ The browser only ever calls the backend. It never holds a database key or an AI 
 
 | Piece | Technology | Hosted on | Notes |
 |---|---|---|---|
-| Frontend | Next.js 15 (App Router), React 19, Tailwind CSS 4, Axios | Vercel | Vercel Analytics is enabled. |
+| Frontend | Next.js 16 (App Router), React 19, Tailwind CSS 4, Axios | Vercel | Vercel Analytics is enabled. |
 | Backend | Bun 1.3, ElysiaJS 1.4, TypeScript | Render (Docker image built from `backend/Dockerfile`) | Listens on port **3030** (fixed in `src/index.ts`). Interactive API docs at `/openapi`. |
 | Database | Supabase Postgres with the `vector` extension | Supabase | Schema in [database.md](database.md). |
 | Accounts | Supabase Auth (email and password, email confirmation) | Supabase | |

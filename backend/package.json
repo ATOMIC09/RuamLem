@@ -11,20 +11,20 @@
     "ai:moderation-eval": "bun run src/scripts/ai-moderation-eval.ts"
   },
   "dependencies": {
-    "@elysiajs/cors": "^1.4.0",
-    "@elysiajs/openapi": "^1.4.11",
-    "@sinclair/typebox": "^0.34.41",
-    "@supabase/supabase-js": "^2.57.4",
+    "@elysiajs/cors": "^1.4.3",
+    "@elysiajs/openapi": "^1.4.17",
+    "@sinclair/typebox": "^0.34.52",
+    "@supabase/supabase-js": "^2.119.0",
     "bcrypt": "^6.0.0",
-    "dotenv": "^17.2.2",
-    "elysia": "latest",
-    "form-data": "^4.0.4",
-    "jsdom": "^27.0.0",
-    "openai": "^7.32.0"
+    "dotenv": "^18.0.10",
+    "elysia": "^1.4.32",
+    "form-data": "^4.0.6",
+    "jsdom": "^31.0.1",
+    "openai": "^7.56.0"
   },
   "devDependencies": {
-    "bun-types": "latest",
-    "typescript": "^5.9"
+    "bun-types": "^1.4.4",
+    "typescript": "^7.0.2"
   },
   "module": "src/index.js"
 }

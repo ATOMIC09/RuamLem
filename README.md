@@ -120,7 +120,7 @@ Start with the [documentation index](docs/README.md) if you are new.
 
 ## Built with
 
-- **Website:** Next.js 15, React 19, Tailwind CSS 4, hosted on Vercel
+- **Website:** Next.js 16, React 19, Tailwind CSS 4, hosted on Vercel
 - **Server:** Bun and ElysiaJS in TypeScript, hosted on Render
 - **Data, accounts and files:** Supabase (Postgres with pgvector)
 - **AI:** Azure OpenAI and Azure AI Content Safety

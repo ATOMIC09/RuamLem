@@ -3,6 +3,10 @@ updates:
   # Keep Bun dependencies up to date (requires text-based bun.lock)
   - package-ecosystem: "bun"
     directory: "/frontend"
+    ignore:
+      # typescript-eslint does not support TypeScript 7 yet
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     schedule:
       interval: "weekly"
       day: "monday"
