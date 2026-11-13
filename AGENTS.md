@@ -8,7 +8,7 @@ Read this file first, then the page in `docs/` for the area you will touch. Do n
 
 | Part | Tech | Folder |
 |---|---|---|
-| Frontend | Next.js 15, React 19, Tailwind 4 (Vercel) | `frontend/` |
+| Frontend | Next.js 16, React 19, Tailwind 4 (Vercel) | `frontend/` |
 | Backend | Bun + ElysiaJS, TypeScript (Render, Docker) | `backend/` |
 | Data, auth, files | Supabase: Postgres + pgvector, Auth, Storage | `backend/sql/` |
 | AI | Azure OpenAI (chat + embeddings) and Azure AI Content Safety | `backend/src/ai/` |

@@ -187,3 +187,10 @@ The chat deployment on the student subscription allows **15 requests and 15,000 
 - Every new environment variable goes into the matching `.env.example` with a comment.
 - Every database change goes into a new numbered file in `backend/sql/`, with its undo section.
 - Commit messages are short: `type(scope): summary`, for example `fix(backend): reject empty uploads`.
+
+## Dependencies
+
+- Dependabot opens weekly PRs for both packages (`.github/dependabot.yml`).
+- The **frontend stays on TypeScript 6**: `typescript-eslint` (used by `eslint-config-next`) does not support TypeScript 7 yet. Dependabot ignores TypeScript major updates in `frontend/`; lift that when typescript-eslint supports 7.
+- The backend uses TypeScript 7 with `moduleResolution: "bundler"`.
+- `eslint-config-next` 16 turns on React Compiler rules. `react-hooks/immutability`, `set-state-in-effect` and `preserve-manual-memoization` are set to `warn` in `frontend/eslint.config.mjs` because existing pages trip them; fix the warnings page by page.
