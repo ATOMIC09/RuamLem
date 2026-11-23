@@ -14,13 +14,13 @@
     "@elysiajs/cors": "^1.4.3",
     "@elysiajs/openapi": "^1.4.17",
     "@sinclair/typebox": "^0.34.52",
-    "@supabase/supabase-js": "^2.119.0",
+    "@supabase/supabase-js": "^2.119.2",
     "bcrypt": "^6.0.0",
     "dotenv": "^18.0.10",
     "elysia": "^1.4.32",
     "form-data": "^4.0.6",
     "jsdom": "^31.0.1",
-    "openai": "^7.56.0"
+    "openai": "^7.62.0"
   },
   "devDependencies": {
     "bun-types": "^1.4.4",
